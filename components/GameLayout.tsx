@@ -44,7 +44,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChang
       { label: 'Inventory', tabName: 'inventory', icon: <BackpackIcon/>, condition: (char?: Character | null) => true },
       { label: 'Quests', tabName: 'quests', icon: <BookOpenIcon/>, condition: (char?: Character | null) => true },
       { label: 'Dungeon', tabName: 'dungeon', icon: <MapIcon/>, condition: (char?: Character | null) => true },
-      { label: 'Social', tabName: 'social', icon: <UserGroupIcon/>, condition: (char?: Character | null) => !!char && char.level >= 2 },
+      { label: 'Social', tabName: 'social', icon: <UserGroupIcon/>, condition: (char?: Character | null) => !!char && char.level >= 1 },
       { label: 'Guild', tabName: 'guild', icon: <ShieldCheckIcon />, condition: (char?: Character | null) => !!char && char.level >= 20 },
       { label: 'Achievements', tabName: 'achievements', icon: <TrophyIcon />, condition: (char?: Character | null) => true },
       { label: 'Family Tree', tabName: 'family', icon: <UsersIcon/>, condition: (char?: Character | null) => !!char && char.generation >= 2 },
