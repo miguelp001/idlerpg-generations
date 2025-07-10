@@ -69,6 +69,23 @@ export const ABILITIES: { [id: string]: Ability } = {
     },
 
     // === MAGE ===
+    'mage_bolt': {
+        id: 'mage_bolt',
+        name: 'Bolt',
+        description: 'Fires a quick bolt of energy, dealing 100% of Intelligence damage.',
+        log_templates: [
+            '[{caster}] hurls a Bolt of energy at {target} for {damage} damage!',
+            'A crackle of arcane power as [{caster}] zaps {target} with a Bolt, dealing {damage} damage.',
+            '[{caster}] unleashes a concentrated Bolt, striking {target} for {damage} damage.'
+        ],
+        type: 'active',
+        class: 'mage',
+        levelRequirement: 1,
+        manaCost: 5,
+        cooldown: 2,
+        effect: { type: 'damage', multiplier: 1.0, stat: 'intelligence' },
+        target: 'enemy',
+    },
     'mage_fireball': {
         id: 'mage_fireball',
         name: 'Fireball',
