@@ -26,6 +26,7 @@ export interface Equipment {
   isHeirloom?: boolean;
   classAffinity?: { [key in CharacterClassType]?: number };
   setId?: string;
+  price: number; // New property for shop items
 }
 
 export interface Ability {
@@ -277,6 +278,7 @@ export interface GameState {
   relationships: Relationship[];
   socialLog: SocialLogEntry[];
   isGrinding: boolean;
+  shopItems: Equipment[]; // New state for shop items
 }
 
 export interface SaveData {
@@ -318,4 +320,7 @@ export type Action =
   | { type: 'EQUIP_TITLE'; payload: { characterId: string; title: string | null; } }
   | { type: 'TOGGLE_PASSIVE_ABILITY'; payload: { characterId: string; abilityId: string; } }
   | { type: 'SET_GRINDING'; payload: boolean }
-  | { type: 'SELL_ALL_BY_RARITY'; payload: { characterId: string; maxRarity: EquipmentRarity; } };
+  | { type: 'SELL_ALL_BY_RARITY'; payload: { characterId: string; maxRarity: EquipmentRarity; } }
+  | { type: 'SET_SHOP_ITEMS'; payload: Equipment[]; }
+  | { type: 'REFRESH_SHOP'; payload: { characterId: string; } }
+  | { type: 'BUY_ITEM'; payload: { characterId: string; itemId: string; } };

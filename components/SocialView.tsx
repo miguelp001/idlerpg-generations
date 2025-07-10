@@ -1,19 +1,23 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
-import { Adventurer, Relationship } from '../types';
-import { CLASSES, REFRESH_TAVERN_COST, PERSONALITY_TRAITS } from '../constants';
+import { Adventurer, Relationship, Equipment, Character, CharacterClassType } from '../types';
+import { CLASSES, REFRESH_TAVERN_COST, PERSONALITY_TRAITS, SHOP_REFRESH_COST, RARITY_COLORS } from '../constants'; // Added SHOP_REFRESH_COST and RARITY_COLORS
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { calculateMaxPartySize } from '../services/socialService';
+import { ExclamationTriangleIcon } from './ui/Icons'; // Import ExclamationTriangleIcon for ItemCard
+import { SETS } from '../data/sets'; // Import SETS for ItemCard
 
-const AdventurerCard: React.FC<{
+interface AdventurerCardProps {
     adventurer: Adventurer;
     action: 'recruit' | 'dismiss';
     onAction: (id: string) => void;
     disabled?: boolean;
     isMarriedToPlayer?: boolean;
-}> = React.memo(({ adventurer, action, onAction, disabled = false, isMarriedToPlayer = false }) => {
+}
+
+const AdventurerCard: React.FC<AdventurerCardProps> = React.memo(({ adventurer, action, onAction, disabled = false, isMarriedToPlayer = false }) => {
     const classInfo = CLASSES[adventurer.class];
     const personality = PERSONALITY_TRAITS[adventurer.personality];
     return (
@@ -126,6 +130,66 @@ const SocialLogDisplay: React.FC = () => {
     )
 }
 
+interface ItemCardProps {
+    item: Equipment;
+    onAction: () => void;
+    actionLabel: string;
+    onUpgrade?: () => void; // Made optional for shop items
+    canAffordUpgrade?: boolean; // Made optional for shop items
+    upgradeCost?: number; // Made optional for shop items
+    onSell?: () => void;
+    sellPrice?: number;
+    onGive?: () => void;
+    characterClass: CharacterClassType;
+}
+
+const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, onAction, actionLabel, onUpgrade, canAffordUpgrade, upgradeCost, onSell, sellPrice, onGive, characterClass }) => {
+    const affinity = item.classAffinity?.[characterClass] ?? 1.0;
+    const hasLowAffinity = affinity < 0.7;
+    const affinityTitle = hasLowAffinity ? `Ineffective for your class (${Math.round((1 - affinity) * 100)}% penalty)` : undefined;
+
+    return (
+        <div className="bg-surface-2 p-3 rounded-lg flex flex-col justify-between h-full">
+            <div>
+                <p className={`font-bold ${RARITY_COLORS[item.rarity]} ${item.isHeirloom ? 'underline decoration-secondary' : ''} ${hasLowAffinity ? 'text-on-background/60' : ''}`} title={affinityTitle}>
+                    {item.name} {hasLowAffinity && <ExclamationTriangleIcon />}
+                </p>
+                {item.setId && <p className="text-sm text-purple-400">{SETS[item.setId].name}</p>}
+                <p className="text-sm capitalize text-on-background/70">
+                    {item.slot} {item.upgradeLevel > 0 && <span className="text-secondary">(+{item.upgradeLevel})</span>}
+                </p>
+                <div className="text-sm mt-2 space-y-1">
+                    {Object.entries(item.stats).map(([stat, value]) => (
+                        <p key={stat} className="text-green-400">
+                            +{Math.round(value * affinity)} <span className="capitalize text-on-background/70">{stat}</span>
+                        </p>
+                    ))}
+                </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-1">
+                {onUpgrade && upgradeCost !== undefined && canAffordUpgrade !== undefined && (
+                    <Button onClick={onUpgrade} variant="secondary" className="col-span-2 text-xs py-1" disabled={!canAffordUpgrade || !!item.isHeirloom} title={item.isHeirloom ? "Heirlooms cannot be upgraded" : ""}>
+                        {item.isHeirloom ? "Heirloom" : `Upgrade (${upgradeCost}G)`}
+                    </Button>
+                )}
+                 <Button onClick={onAction} variant="ghost" className="text-xs py-1">
+                    {actionLabel}
+                </Button>
+                {onGive && (
+                    <Button onClick={onGive} variant="ghost" className="text-xs py-1 text-green-400 hover:bg-green-900/50">
+                        Give
+                    </Button>
+                )}
+                {onSell && sellPrice !== undefined && (
+                    <Button onClick={onSell} variant="ghost" className="text-xs py-1 text-red-400 hover:bg-red-900/50 col-span-2" disabled={!!item.isHeirloom} title={item.isHeirloom ? "Priceless heirlooms cannot be sold" : `Sell for ${sellPrice}G`}>
+                        {item.isHeirloom ? "Priceless" : `Sell (${sellPrice}G)`}
+                    </Button>
+                )}
+            </div>
+        </div>
+    );
+});
+
 const SocialView: React.FC = () => {
     const { state, dispatch, activeCharacter } = useGame();
     const [activeTab, setActiveTab] = useState('tavern');
@@ -144,9 +208,18 @@ const SocialView: React.FC = () => {
         dispatch({ type: 'REFRESH_TAVERN_ADVENTURERS', payload: { characterId: activeCharacter.id } });
     };
 
+    const handleShopRefresh = () => {
+        dispatch({ type: 'REFRESH_SHOP', payload: { characterId: activeCharacter.id } });
+    };
+
+    const handleBuyItem = (itemId: string) => {
+        dispatch({ type: 'BUY_ITEM', payload: { characterId: activeCharacter.id, itemId } });
+    };
+
     const maxPartySize = calculateMaxPartySize(activeCharacter.level);
     const isPartyFull = activeCharacter.party.length >= maxPartySize - 1;
     const canAffordRefresh = activeCharacter.gold >= REFRESH_TAVERN_COST;
+    const canAffordShopRefresh = activeCharacter.gold >= SHOP_REFRESH_COST;
 
     const renderTavern = () => (
          <div className="space-y-8">
@@ -203,44 +276,84 @@ const SocialView: React.FC = () => {
             </div>
         </div>
     );
-    
+
     const renderRelationships = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-                <h2 className="text-3xl font-bold mb-4 text-secondary">Party Dynamics</h2>
-                <RelationshipDisplay />
+        <div className="space-y-8">
+            <h2 className="text-3xl font-bold mb-4 text-secondary">Relationships</h2>
+            <RelationshipDisplay />
+        </div>
+    );
+
+    const renderSocialLog = () => (
+        <div className="space-y-8">
+            <h2 className="text-3xl font-bold mb-4 text-secondary">Social Log</h2>
+            <SocialLogDisplay />
+        </div>
+    );
+
+    const renderShop = () => (
+        <div className="space-y-8">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-3xl font-bold text-secondary">Shop</h2>
+                <Button onClick={handleShopRefresh} disabled={!canAffordShopRefresh} title={!canAffordShopRefresh ? `You need ${SHOP_REFRESH_COST}G` : ''}>
+                    Refresh Selection ({SHOP_REFRESH_COST}G)
+                </Button>
             </div>
-             <div>
-                <h2 className="text-3xl font-bold mb-4 text-secondary">Social Log</h2>
-                <SocialLogDisplay />
-            </div>
+            <Card>
+                {state.shopItems.length === 0 ? (
+                    <p className="text-center p-8 text-on-background/70">The shop is empty. Try refreshing!</p>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {state.shopItems.map(item => (
+                            <ItemCard
+                                key={item.id}
+                                item={item}
+                                onAction={() => handleBuyItem(item.id)}
+                                actionLabel={`Buy (${item.price}G)`}
+                                characterClass={activeCharacter.class}
+                            />
+                        ))}
+                    </div>
+                )}
+            </Card>
         </div>
     );
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            <div>
-                <h1 className="text-4xl font-bold mb-2 text-primary" style={{ fontFamily: "'Orbitron', sans-serif" }}>Social Hub</h1>
-                <p className="text-lg text-on-background/80">Manage your party, witness their bonds, and find new companions.</p>
-            </div>
-
-             <div className="flex space-x-2 border-b-2 border-surface-2">
-                <button 
-                    onClick={() => setActiveTab('tavern')} 
-                    className={`px-6 py-2 text-lg font-semibold transition-colors ${activeTab === 'tavern' ? 'text-primary border-b-2 border-primary' : 'text-on-background/70'}`}
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+            <div className="flex border-b border-surface-3 mb-4">
+                <button
+                    className={`px-4 py-2 text-lg font-semibold ${activeTab === 'tavern' ? 'text-primary border-b-2 border-primary' : 'text-on-background/60 hover:text-on-background'}`}
+                    onClick={() => setActiveTab('tavern')}
                 >
                     Tavern
                 </button>
-                <button 
-                    onClick={() => setActiveTab('relationships')} 
-                    className={`px-6 py-2 text-lg font-semibold transition-colors ${activeTab === 'relationships' ? 'text-primary border-b-2 border-primary' : 'text-on-background/70'}`}
+                <button
+                    className={`ml-4 px-4 py-2 text-lg font-semibold ${activeTab === 'relationships' ? 'text-primary border-b-2 border-primary' : 'text-on-background/60 hover:text-on-background'}`}
+                    onClick={() => setActiveTab('relationships')}
                 >
                     Relationships
                 </button>
+                <button
+                    className={`ml-4 px-4 py-2 text-lg font-semibold ${activeTab === 'socialLog' ? 'text-primary border-b-2 border-primary' : 'text-on-background/60 hover:text-on-background'}`}
+                    onClick={() => setActiveTab('socialLog')}
+                >
+                    Social Log
+                </button>
+                <button
+                    className={`ml-4 px-4 py-2 text-lg font-semibold ${activeTab === 'shop' ? 'text-primary border-b-2 border-primary' : 'text-on-background/60 hover:text-on-background'}`}
+                    onClick={() => setActiveTab('shop')}
+                >
+                    Shop
+                </button>
             </div>
 
-            {activeTab === 'tavern' ? renderTavern() : renderRelationships()}
-            
+            <div>
+                {activeTab === 'tavern' && renderTavern()}
+                {activeTab === 'relationships' && renderRelationships()}
+                {activeTab === 'socialLog' && renderSocialLog()}
+                {activeTab === 'shop' && renderShop()}
+            </div>
         </div>
     );
 };

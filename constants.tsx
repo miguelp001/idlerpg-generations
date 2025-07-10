@@ -12,6 +12,7 @@ export const calculateXpForLevel = (level: number): number => {
 export const RETIREMENT_LEVEL = 5;
 export const MAX_PARTY_SIZE = 4; // Player + 3 members
 export const REFRESH_TAVERN_COST = 100;
+export const SHOP_REFRESH_COST = 200; // New constant for shop refresh cost
 export const GUILD_CREATE_COST = 5000;
 export const GUILD_DONATION_GOLD = 500;
 export const GUILD_DONATION_XP = 100;
@@ -119,6 +120,9 @@ export const SELL_PRICE = (item: Equipment): number => {
     const upgradeBonus = item.upgradeLevel * (UPGRADE_COST({ ...item, upgradeLevel: 0 }) * 0.2);
     return Math.floor(baseValue + upgradeBonus);
 };
+
+export const SHOP_ITEM_BASE_PRICE = 20; // Base price for common items in shop
+export const SHOP_ITEM_PRICE_MULTIPLIER = 3; // Multiplier for rarity and level
 
 export const ADVENTURER_FIRST_NAMES = [
     'Aric', 'Bryn', 'Cael', 'Dara', 'Erin', 'Finn', 'Gwen', 'Hale', 'Iris', 'Jorn', 'Kael', 'Lyra', 'Merek', 'Nia', 'Orin', 'Perrin', 'Quinn', 'Roric', 'Saria', 'Talon'

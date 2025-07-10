@@ -3,7 +3,7 @@
 import React, { createContext, useReducer, useEffect, useContext, ReactNode, useCallback, useMemo } from 'react';
 import { GameState, Action, Character, CombatLogEntry, Equipment, GameStats, Adventurer, Guild, PlayerQuest, PotentialHeir, Relationship, RelationshipStatus, SocialLogEntry, PersonalityTrait, CharacterClassType, DungeonState, RaidState, ParentInfo, DungeonStatus, RaidStatus, EquipmentRarity } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { calculateXpForLevel, CLASSES, UPGRADE_COST, RETIREMENT_LEVEL, REFRESH_TAVERN_COST, GUILD_CREATE_COST, GUILD_DONATION_GOLD, GUILD_DONATION_XP, GUILD_XP_TABLE, SELL_PRICE, PERSONALITY_TRAITS, RELATIONSHIP_THRESHOLDS, RARITY_ORDER } from '../constants';
+import { calculateXpForLevel, CLASSES, UPGRADE_COST, RETIREMENT_LEVEL, REFRESH_TAVERN_COST, SHOP_REFRESH_COST, GUILD_CREATE_COST, GUILD_DONATION_GOLD, GUILD_DONATION_XP, GUILD_XP_TABLE, SELL_PRICE, PERSONALITY_TRAITS, RELATIONSHIP_THRESHOLDS, RARITY_ORDER } from '../constants';
 import { ITEMS } from '../data/items';
 import { ALL_MONSTERS } from '../data/monsters';
 import { DUNGEONS } from '../data/dungeons';
@@ -16,6 +16,7 @@ import { getActivePassiveBonuses } from '../services/abilityService';
 import { checkAllAchievements, checkKillAchievements } from '../services/achievementService';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { OFFLINE_SOCIAL_EVENTS } from '../data/socialEvents';
+import { generateShopItems } from '../services/shopService'; // Import the new service
 
 const SAVE_KEY = 'idleRpgSaveData';
 
@@ -65,6 +66,7 @@ const initialState: GameState = {
   relationships: [],
   socialLog: [],
   isGrinding: false,
+  shopItems: [], // Initialize shopItems
 };
 
 const recalculateStats = (character: Character): { stats: GameStats, maxStats: GameStats } => {
@@ -152,6 +154,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         
         loadedState.relationships = (loadedState.relationships || []).map(r => ({ ...r, giftCount: r.giftCount || 0 }));
         loadedState.socialLog = loadedState.socialLog || [];
+        loadedState.shopItems = loadedState.shopItems && loadedState.shopItems.length > 0
+            ? loadedState.shopItems
+            : generateShopItems(activeChar ? activeChar.level : 1); // Initialize shop items on load
 
 
         return { ...loadedState, isLoaded: true };
@@ -212,6 +217,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         guild: newGuild,
         relationships: newRelationships,
         socialLog: newSocialLog,
+        shopItems: generateShopItems(newCharacter.level), // Initialize shop items for new character
       };
       
       const newlyUnlocked = checkAllAchievements(newCharacter, newState);
@@ -602,6 +608,48 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         const newState = {
             ...state,
             characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c),
+        };
+
+        const newlyUnlocked = checkAllAchievements(updatedCharacter, newState);
+        if (newlyUnlocked.length > 0) {
+            return gameReducer(newState, { type: 'ADD_ACHIEVEMENTS', payload: { characterId: updatedCharacter.id, achievementIds: newlyUnlocked } });
+        }
+        return newState;
+    }
+    case 'REFRESH_SHOP': {
+        const { characterId } = action.payload;
+        const character = state.characters.find(c => c.id === characterId)!;
+        if (character.gold < SHOP_REFRESH_COST) return state;
+
+        const updatedCharacter = { ...character, gold: character.gold - SHOP_REFRESH_COST };
+        const newShopItems = generateShopItems(updatedCharacter.level);
+
+        const newState = {
+            ...state,
+            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c),
+            shopItems: newShopItems,
+        };
+        return newState;
+    }
+    case 'BUY_ITEM': {
+        const { characterId, itemId } = action.payload;
+        const character = state.characters.find(c => c.id === characterId)!;
+        const itemToBuy = state.shopItems.find(item => item.id === itemId);
+
+        if (!itemToBuy || character.gold < itemToBuy.price) return state; // Assuming items have a 'price' property
+
+        const updatedCharacter = {
+            ...character,
+            gold: character.gold - itemToBuy.price,
+            inventory: [...character.inventory, itemToBuy],
+        };
+
+        const newShopItems = state.shopItems.filter(item => item.id !== itemId);
+
+        const newState = {
+            ...state,
+            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c),
+            shopItems: newShopItems,
         };
 
         const newlyUnlocked = checkAllAchievements(updatedCharacter, newState);
