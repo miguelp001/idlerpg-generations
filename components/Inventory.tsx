@@ -313,6 +313,18 @@ const Inventory: React.FC = () => {
     const equippedArmor = activeCharacter.equipment.find(i => i.slot === 'armor');
     const equippedAccessory = activeCharacter.equipment.find(i => i.slot === 'accessory');
 
+    const groupedInventory = useMemo(() => {
+        const grouped: Record<EquipmentSlot, Equipment[]> = {
+            weapon: [],
+            armor: [],
+            accessory: [],
+        };
+        activeCharacter.inventory.forEach(item => {
+            grouped[item.slot]?.push(item);
+        });
+        return grouped;
+    }, [activeCharacter.inventory]);
+
     return (
         <div className="space-y-8">
             {itemToSell && (
@@ -350,27 +362,35 @@ const Inventory: React.FC = () => {
                     {activeCharacter.inventory.length === 0 ? (
                         <p className="text-center p-8 text-on-background/70">Your bags are empty. Go find some loot!</p>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {activeCharacter.inventory.map(item => {
-                                const upgradeCost = UPGRADE_COST(item);
-                                const sellPrice = SELL_PRICE(item);
-                                
-                                return (
-                                    <ItemCard
-                                        key={item.id}
-                                        item={item}
-                                        onAction={() => handleEquip(item.id)}
-                                        actionLabel="Equip"
-                                        onUpgrade={() => handleUpgrade(item.id)}
-                                        canAffordUpgrade={activeCharacter.gold >= upgradeCost}
-                                        upgradeCost={upgradeCost}
-                                        onSell={() => handleSellClick(item)}
-                                        sellPrice={sellPrice}
-                                        onGive={() => handleGiveClick(item)}
-                                        characterClass={activeCharacter.class}
-                                    />
-                                );
-                            })}
+                        <div className="space-y-6">
+                            {Object.entries(groupedInventory).map(([slot, items]) => (
+                                items.length > 0 && (
+                                    <div key={slot}>
+                                        <h2 className="text-2xl font-bold mb-3 capitalize text-secondary">{slot}s</h2>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                            {items.sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity)).map(item => {
+                                                const upgradeCost = UPGRADE_COST(item);
+                                                const sellPrice = SELL_PRICE(item);
+                                                return (
+                                                    <ItemCard
+                                                        key={item.id}
+                                                        item={item}
+                                                        onAction={() => handleEquip(item.id)}
+                                                        actionLabel="Equip"
+                                                        onUpgrade={() => handleUpgrade(item.id)}
+                                                        canAffordUpgrade={activeCharacter.gold >= upgradeCost}
+                                                        upgradeCost={upgradeCost}
+                                                        onSell={() => handleSellClick(item)}
+                                                        sellPrice={sellPrice}
+                                                        onGive={() => handleGiveClick(item)}
+                                                        characterClass={activeCharacter.class}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )
+                            ))}
                         </div>
                     )}
                 </Card>
