@@ -176,7 +176,7 @@ export const DUNGEONS: Dungeon[] = [
         description: 'A foul-smelling cavern home to a clan of dim-witted but powerful ogres.',
         levelRequirement: 9,
         monsters: ['ogre_brute', 'orc_grunt', 'ogre_brute', 'ogre_brute', 'orc_grunt', 'ogre_brute'],
-        boss: 'ogre_brute',
+        boss: 'cultist_champion',
         lootTable: ['healing_charm', 'kobold_pickaxe'],
     },
     {

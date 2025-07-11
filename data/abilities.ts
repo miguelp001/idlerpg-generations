@@ -81,7 +81,7 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'active',
         class: 'mage',
         levelRequirement: 1,
-        manaCost: 5,
+        manaCost: 2,
         cooldown: 1,
         effect: { type: 'damage', multiplier: 1.0, stat: 'intelligence' },
         target: 'enemy',
