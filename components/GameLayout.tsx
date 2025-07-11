@@ -3,7 +3,8 @@ import React, { useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import Button from './ui/Button';
 import { Character } from '../types';
-import { UserIcon, BackpackIcon, MapIcon, UsersIcon, UserGroupIcon, ShieldCheckIcon, BookOpenIcon, TrophyIcon, GoldIcon, SaveIcon } from './ui/Icons';
+import { UserIcon, BackpackIcon, MapIcon, UsersIcon, UserGroupIcon, ShieldCheckIcon, BookOpenIcon, TrophyIcon, GoldIcon, SaveIcon, QuestionMarkCircleIcon } from './ui/Icons';
+import TutorialModal from './TutorialModal';
 
 interface GameLayoutProps {
   children: React.ReactNode;
@@ -36,7 +37,17 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ label, tabName, activeTab,
 
 
 const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChange }) => {
-  const { saveGame, activeCharacter } = useGame();
+  const { saveGame, activeCharacter, dispatch, state } = useGame(); // Destructure dispatch and state
+  const [showTutorial, setShowTutorial] = React.useState(false); // State for tutorial modal visibility
+
+  const handleShowTutorial = () => {
+    setShowTutorial(true);
+    dispatch({ type: 'SET_TUTORIAL_SHOWN', payload: true }); // Mark tutorial as shown when opened via button
+  };
+
+  const handleCloseTutorial = () => {
+    setShowTutorial(false);
+  };
   
   const navItems = useMemo(() => {
     const allNavItems = [
@@ -91,7 +102,11 @@ const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChang
         </div>
 
         {/* Desktop-only Save Button */}
-        <div className="hidden md:block p-4 mt-auto absolute bottom-0 w-full md:w-20 lg:w-64">
+        <div className="hidden md:block p-4 mt-auto absolute bottom-0 w-full md:w-20 lg:w-64 space-y-2">
+            <Button variant="ghost" onClick={handleShowTutorial} className="w-full flex items-center justify-center lg:justify-start">
+                <QuestionMarkCircleIcon />
+                <span className="hidden lg:inline ml-2">Help</span>
+            </Button>
             <Button variant="ghost" onClick={saveGame} className="w-full flex items-center justify-center lg:justify-start">
                 <SaveIcon />
                 <span className="hidden lg:inline ml-2">Save Game</span>
@@ -119,6 +134,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChang
             {children}
           </main>
       </div>
+      {showTutorial && <TutorialModal onClose={handleCloseTutorial} />}
     </div>
   );
 };

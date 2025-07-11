@@ -66,7 +66,8 @@ const initialState: GameState = {
   relationships: [],
   socialLog: [],
   isGrinding: false,
-  shopItems: [], // Initialize shopItems
+  shopItems: [],
+  tutorialShown: false, // Initialize tutorialShown to false
 };
 
 const recalculateStats = (character: Character): { stats: GameStats, maxStats: GameStats } => {
@@ -158,6 +159,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             ? loadedState.shopItems
             : generateShopItems(activeChar ? activeChar.level : 1); // Initialize shop items on load
 
+        loadedState.tutorialShown = loadedState.tutorialShown ?? false; // Ensure tutorialShown is set
 
         return { ...loadedState, isLoaded: true };
     }
@@ -218,6 +220,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         relationships: newRelationships,
         socialLog: newSocialLog,
         shopItems: generateShopItems(newCharacter.level), // Initialize shop items for new character
+        tutorialShown: false, // Set tutorialShown to false for a new game
       };
       
       const newlyUnlocked = checkAllAchievements(newCharacter, newState);
@@ -411,6 +414,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             baseId: droppedItemBaseId,
                             baseName: itemTemplate.name,
                             upgradeLevel: 0,
+                            price: 0, // Initialize price for newly found loot
                         };
                         lootFound.push(newItem);
                         combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
@@ -894,7 +898,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const droppedItemBaseId = raid.lootTable[Math.floor(Math.random() * raid.lootTable.length)];
                 const itemTemplate = ITEMS[droppedItemBaseId];
                 if (itemTemplate) {
-                     const newItem: Equipment = { ...itemTemplate, id: uuidv4(), baseId: droppedItemBaseId, baseName: itemTemplate.name, upgradeLevel: 0 };
+                     const newItem: Equipment = { ...itemTemplate, id: uuidv4(), baseId: droppedItemBaseId, baseName: itemTemplate.name, upgradeLevel: 0, price: 0 }; // Initialize price for newly found loot
                      lootFound.push(newItem);
                      combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
                 }
@@ -980,7 +984,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         if (items) {
             const newItems = items.map(itemId => {
                 const itemTemplate = ITEMS[itemId];
-                return { ...itemTemplate, id: uuidv4(), baseId: itemId, baseName: itemTemplate.name, upgradeLevel: 0 };
+                return { ...itemTemplate, id: uuidv4(), baseId: itemId, baseName: itemTemplate.name, upgradeLevel: 0, price: 0 }; // Initialize price for quest rewards
             });
             updatedCharacter.inventory = [...updatedCharacter.inventory, ...newItems];
         }
@@ -1256,6 +1260,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
         };
     }
+    case 'SET_TUTORIAL_SHOWN': {
+        return {
+            ...state,
+            tutorialShown: action.payload,
+        };
+    }
     default:
         return state;
   }
@@ -1288,7 +1298,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } catch (error) {
             console.error("Failed to load game state from localStorage", error);
         }
-        dispatch({ type: 'LOAD_STATE', payload: initialState });
+        dispatch({ type: 'LOAD_STATE', payload: { ...initialState, tutorialShown: false } }); // Ensure tutorial is shown for new games
     }, []);
 
     useEffect(() => {

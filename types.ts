@@ -264,6 +264,7 @@ export interface GameState {
   worldState: WorldState;
   settings: GameSettings;
   dungeonState: DungeonState;
+  raidState: RaidState;
   isLoaded: boolean;
   pendingGeneration: {
     parentId: string;
@@ -274,11 +275,11 @@ export interface GameState {
   } | null;
   tavernAdventurers: Adventurer[];
   guild: Guild | null;
-  raidState: RaidState;
   relationships: Relationship[];
   socialLog: SocialLogEntry[];
   isGrinding: boolean;
-  shopItems: Equipment[]; // New state for shop items
+  shopItems: Equipment[];
+  tutorialShown: boolean; // New flag to track if the tutorial has been shown
 }
 
 export interface SaveData {
@@ -323,4 +324,5 @@ export type Action =
   | { type: 'SELL_ALL_BY_RARITY'; payload: { characterId: string; maxRarity: EquipmentRarity; } }
   | { type: 'SET_SHOP_ITEMS'; payload: Equipment[]; }
   | { type: 'REFRESH_SHOP'; payload: { characterId: string; } }
-  | { type: 'BUY_ITEM'; payload: { characterId: string; itemId: string; } };
+  | { type: 'BUY_ITEM'; payload: { characterId: string; itemId: string; } }
+  | { type: 'SET_TUTORIAL_SHOWN'; payload: boolean };
