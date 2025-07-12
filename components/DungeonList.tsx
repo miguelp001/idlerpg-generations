@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
-import { DUNGEONS } from '../data/dungeons';
+import { getSortedDungeonsByLevel } from '../services/dungeonService';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { DANGEROUS_DUNGEON_LEVEL_OFFSET } from '../constants';
@@ -36,7 +36,7 @@ const DungeonList: React.FC = () => {
 
     if (!activeCharacter) return <div>Loading character...</div>;
 
-    const availableDungeons = DUNGEONS.filter(dungeon => 
+    const availableDungeons = getSortedDungeonsByLevel().filter(dungeon => 
         dungeon.levelRequirement <= activeCharacter.level + DANGEROUS_DUNGEON_LEVEL_OFFSET
     );
 

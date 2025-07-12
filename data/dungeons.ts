@@ -1,8 +1,7 @@
-
-
 import { Dungeon } from '../types';
 
 export const DUNGEONS: Dungeon[] = [
+    // Level 1
     {
         id: 'dungeon_goblin_cave',
         name: 'Goblin Cave',
@@ -12,9 +11,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'goblin_chief',
         lootTable: ['rusty_dagger', 'tattered_cowl', 'chiefs_shoulder_guards'],
     },
-    // --- 99 New Dungeons ---
 
-    // Level 2-5 (10 Dungeons)
+    // Level 2
     {
         id: 'dungeon_rat_cellar',
         name: 'Rat-Infested Cellar',
@@ -33,6 +31,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'wild_boar',
         lootTable: ['splintered_shortbow', 'faded_wizard_hat'],
     },
+
+    // Level 3
     {
         id: 'dungeon_kobold_mine',
         name: 'Kobold Mining Tunnel',
@@ -51,6 +51,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'bandit_thug', // A stronger one
         lootTable: ['gnarled_walking_stick', 'dented_pot_lid', 'shadow_mask'],
     },
+
+    // Level 4
     {
         id: 'dungeon_boar_pen',
         name: 'Overgrown Boar Pen',
@@ -69,6 +71,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'lizardfolk_warrior',
         lootTable: ['lucky_rabbit_foot', 'canvas_belt'],
     },
+
+    // Level 5
     {
         id: 'dungeon_gnoll_outpost',
         name: 'Gnoll Scavenger Outpost',
@@ -106,7 +110,7 @@ export const DUNGEONS: Dungeon[] = [
         lootTable: ['warriors_broadsword', 'ring_of_protection'],
     },
 
-    // Level 6-10 (20 Dungeons)
+    // Level 6
     {
         id: 'dungeon_orcish_war_camp',
         name: 'Orcish War Camp',
@@ -125,6 +129,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'owlbear',
         lootTable: ['iron_greaves', 'cleric_mace'],
     },
+
+    // Level 7
     {
         id: 'dungeon_owlbear_nest',
         name: 'Owlbear Nest',
@@ -143,6 +149,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'wight',
         lootTable: ['orcish_choppa', 'chainmail_coif'],
     },
+
+    // Level 8
     {
         id: 'dungeon_hobgoblin_barracks',
         name: 'Hobgoblin Barracks',
@@ -161,6 +169,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'basilisk',
         lootTable: ['sorcerers_robes', 'steel_gauntlets'],
     },
+
+    // Level 9
     {
         id: 'dungeon_scorpion_den',
         name: 'Scorpion Den',
@@ -179,6 +189,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'cultist_champion',
         lootTable: ['healing_charm', 'kobold_pickaxe'],
     },
+
+    // Level 10
     {
         id: 'dungeon_centaur_plains',
         name: 'Centaur Plains',
@@ -206,6 +218,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'spectre',
         lootTable: ['barbarian_axe', 'sandals_of_the_oasis', 'acolyte_gloves'],
     },
+
+    // Level 11
     {
         id: 'dungeon_minotaur_maze',
         name: 'Minotaur\'s Maze',
@@ -224,6 +238,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'lesser_fire_elemental',
         lootTable: ['dwarven_hammer', 'elven_chainmail'],
     },
+
+    // Level 12
     {
         id: 'dungeon_harpy_peak',
         name: 'Harpy Peak',
@@ -233,6 +249,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'air_elemental',
         lootTable: ['greatsword_of_valor', 'staff_of_lightning'],
     },
+
+    // Level 13
     {
         id: 'dungeon_mummy_tomb',
         name: 'Tomb of the Mummy Lord',
@@ -242,6 +260,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'mummy',
         lootTable: ['shadow_cloak', 'ring_of_regeneration'],
     },
+
+    // Level 14
     {
         id: 'dungeon_troll_bridge',
         name: 'Troll Bridge',
@@ -249,163 +269,149 @@ export const DUNGEONS: Dungeon[] = [
         levelRequirement: 14,
         monsters: ['troll_berserker', 'ogre_brute', 'orc_warlord', 'troll_berserker', 'ogre_brute', 'orc_warlord'],
         boss: 'troll_berserker',
-        lootTable: ['amulet_of_power', 'dragonhide_boots'],
+        lootTable: ['troll_club', 'ring_of_strength'],
     },
     {
-        id: 'dungeon_orcish_citadel',
-        name: 'Orcish Citadel',
-        description: 'The heart of the orcish war machine, led by a fearsome warlord.',
-        levelRequirement: 15,
-        monsters: ['orc_grunt', 'ogre_brute', 'orc_warlord', 'orc_grunt', 'ogre_brute', 'orc_warlord'],
-        boss: 'orc_warlord',
-        lootTable: ['plate_helm_of_command', 'blessed_warhammer'],
-    },
-    {
-        id: 'dungeon_sunken_temple',
-        name: 'Sunken Temple',
-        description: 'A once-great temple now submerged, guarded by aquatic monstrosities.',
-        levelRequirement: 15,
-        monsters: ['lizardfolk_warrior', 'lesser_water_elemental', 'hydra', 'lizardfolk_warrior', 'lesser_water_elemental', 'hydra'],
-        boss: 'water_elemental',
-        lootTable: ['daggers_of_silence', 'orb_of_winter'],
-    },
-    {
-        id: 'dungeon_cinder_pit',
-        name: 'The Cinder Pit',
-        description: 'A volcanic cave where fire elementals dance among the lava flows.',
-        levelRequirement: 15,
-        monsters: ['lesser_fire_elemental', 'imp', 'fire_elemental', 'lesser_fire_elemental', 'imp', 'fire_elemental'],
-        boss: 'fire_elemental',
-        lootTable: ['golem_fist', 'phoenix_down_mantle'],
-    },
-    {
-        id: 'dungeon_golem_foundry',
-        name: 'The Golem Foundry',
-        description: 'Abandoned by its creators, this foundry is now run by its own constructs.',
-        levelRequirement: 15,
-        monsters: ['lesser_earth_elemental', 'earth_elemental', 'iron_golem', 'lesser_earth_elemental', 'earth_elemental', 'iron_golem'],
-        boss: 'iron_golem',
-        lootTable: ['giants_belt', 'runic_longbow'],
+        id: 'dungeon_gorgon_cave',
+        name: 'Gorgon\'s Lair',
+        description: 'The air grows cold, and strange petrified statues line the path. Don\'t look them in the eye.',
+        levelRequirement: 14,
+        monsters: ['gorgon', 'basilisk', 'mummy', 'gorgon', 'basilisk', 'mummy'],
+        boss: 'gorgon',
+        lootTable: ['gorgon_scales', 'amulet_of_medusa'],
     },
 
-    // Level 16-20 (15 Dungeons)
-    {
-        id: 'dungeon_ogre_mage_tower',
-        name: 'Ogre-Mage Tower',
-        description: 'A surprisingly magical tower controlled by a cunning Ogre Mage.',
-        levelRequirement: 16,
-        monsters: ['ogre_brute', 'imp', 'ogre_mage', 'ogre_brute', 'imp', 'ogre_mage'],
-        boss: 'ogre_mage',
-        lootTable: ['archmage_robes', 'vampiric_gauntlets'],
-    },
-    {
-        id: 'dungeon_vampire_crypt',
-        name: 'Vampire Crypt',
-        description: 'The resting place of a noble vampire and its undying spawn. Crimson Dawn champions stalk the halls.',
-        levelRequirement: 16,
-        monsters: ['ghoul', 'cultist_champion', 'vampire_spawn', 'ghoul', 'wight', 'vampire_spawn'],
-        boss: 'vampire_spawn',
-        lootTable: ['sentinels_emblem', 'blade_of_the_assassin', 'shadow_boots'],
-    },
-    {
-        id: 'dungeon_lichs_study',
-        name: 'Lich\'s Study',
-        description: 'A library of forbidden lore, guarded by a powerful lich-in-training.',
-        levelRequirement: 17,
-        monsters: ['wight', 'spectre', 'lich_acolyte', 'wight', 'spectre', 'lich_acolyte'],
-        boss: 'lich_acolyte',
-        lootTable: ['libram_of_souls', 'minotaur_labrys'],
-    },
-    {
-        id: 'dungeon_wyvern_peak',
-        name: 'Wyvern Peak',
-        description: 'Poisonous, flying beasts circle this treacherous mountain peak.',
-        levelRequirement: 17,
-        monsters: ['harpy', 'drake_rider', 'wyvern', 'harpy', 'drake_rider', 'wyvern'],
-        boss: 'wyvern',
-        lootTable: ['wyvern_scale_shield', 'diadem_of_the_savant'],
-    },
-    {
-        id: 'dungeon_wraith_barrow',
-        name: 'Wraith Barrow',
-        description: 'An ancient burial mound from which life-draining wraiths emerge at night.',
-        levelRequirement: 18,
-        monsters: ['spectre', 'wight', 'wraith', 'spectre', 'wight', 'wraith'],
-        boss: 'wraith',
-        lootTable: ['stormcallers_focus', 'earthshaker_maul'],
-    },
-    {
-        id: 'dungeon_dragon_nursery',
-        name: 'Verdant Dragon Nursery',
-        description: 'A secluded grove where a young green dragon guards its clutch of eggs.',
-        levelRequirement: 18,
-        monsters: ['drake_rider', 'lizardfolk_warrior', 'young_green_dragon', 'drake_rider', 'lizardfolk_warrior', 'young_green_dragon'],
-        boss: 'young_green_dragon',
-        lootTable: ['robes_of_the_oracle', 'ring_of_the_marksman'],
-    },
-    {
-        id: 'dungeon_demonic_gate',
-        name: 'The Demonic Gate',
-        description: 'A tear in reality where imps and other fiends spill into the world.',
-        levelRequirement: 19,
-        monsters: ['imp', 'succubus', 'horned_devil', 'imp', 'succubus', 'horned_devil'],
-        boss: 'horned_devil',
-        lootTable: ['tome_of_forbidden_knowledge', 'spiders_fang_dagger'],
-    },
-    {
-        id: 'dungeon_giant_encampment',
-        name: 'Giant Encampment',
-        description: 'An entire tribe of Hill Giants has settled in these foothills, led by the charismatic cult leader, High Priest Malak.',
-        levelRequirement: 20,
-        monsters: ['ogre_brute', 'hill_giant', 'hill_giant', 'ogre_brute', 'hill_giant', 'hill_giant'],
-        boss: 'high_priest_malak',
-        lootTable: ['guardian_plate', 'dragonscale_armor'],
-    },
-    {
-        id: 'dungeon_chimera_den',
-        name: 'Chimera\'s Den',
-        description: 'A cave echoing with the roars, bleats, and hisses of a three-headed beast.',
-        levelRequirement: 21,
-        monsters: ['owlbear', 'minotaur', 'chimera', 'owlbear', 'minotaur', 'chimera'],
-        boss: 'chimera',
-        lootTable: ['frostmourne_replica', 'staff_of_the_archon'],
-    },
-    {
-        id: 'dungeon_frost_giant_stronghold',
-        name: 'Frost Giant Stronghold',
-        description: 'A fortress of ice and stone, ruled by a jarl of the Frost Giants.',
-        levelRequirement: 22,
-        monsters: ['troll_berserker', 'frost_giant', 'frost_giant', 'troll_berserker', 'frost_giant', 'frost_giant'],
-        boss: 'frost_giant',
-        lootTable: ['voidwalkers_shroud', 'heart_of_the_phoenix'],
-    },
+    // Level 15
     {
         id: 'dungeon_fire_giant_forge',
         name: 'Fire Giant Forge',
-        description: 'The heat is immense in this volcanic forge where Fire Giants craft weapons of war.',
-        levelRequirement: 23,
-        monsters: ['fire_elemental', 'fire_giant', 'fire_giant', 'fire_elemental', 'fire_giant', 'fire_giant'],
+        description: 'The heat is immense, and the clang of hammers echoes as massive fire giants craft their weapons.',
+        levelRequirement: 15,
+        monsters: ['fire_giant', 'fire_elemental', 'troll_berserker', 'fire_giant', 'fire_elemental', 'troll_berserker'],
         boss: 'fire_giant',
-        lootTable: ['band_of_elemental_mastery', 'boots_of_the_comet'],
+        lootTable: ['giant_plate_armor', 'flame_tongue_sword'],
     },
     {
-        id: 'dungeon_hydra_lake',
-        name: 'Hydra\'s Lake',
-        description: 'A serene lake hides a multi-headed terror beneath its surface.',
+        id: 'dungeon_vampire_castle',
+        name: 'Vampire Lord\'s Castle',
+        description: 'An ancient, decaying castle, home to a powerful vampire and their thralls.',
+        levelRequirement: 15,
+        monsters: ['vampire_spawn', 'spectre', 'ghoul', 'vampire_spawn', 'spectre', 'ghoul'],
+        boss: 'vampire_lord',
+        lootTable: ['vampiric_scepter', 'cloak_of_bat'],
+    },
+
+    // Level 16
+    {
+        id: 'dungeon_dragon_nest',
+        name: 'Dragon\'s Nest',
+        description: 'Mountains of gold and jewels, guarded by a slumbering dragon. Approach with extreme caution.',
+        levelRequirement: 16,
+        monsters: ['dragon_whelp', 'fire_giant', 'gorgon', 'dragon_whelp', 'fire_giant', 'gorgon'],
+        boss: 'young_dragon',
+        lootTable: ['dragon_hide_armor', 'dragon_tooth_necklace'],
+    },
+
+    // Level 17
+    {
+        id: 'dungeon_lich_crypt',
+        name: 'Lich\'s Crypt',
+        description: 'The air is thick with necromantic energy. This is the lair of an ancient lich.',
+        levelRequirement: 17,
+        monsters: ['lich_minion', 'wight', 'spectre', 'lich_minion', 'wight', 'spectre'],
+        boss: 'lich',
+        lootTable: ['lich_phylactery', 'staff_of_necromancy'],
+    },
+
+    // Level 18
+    {
+        id: 'dungeon_demon_portal',
+        name: 'Demon Portal',
+        description: 'A tear in reality, spewing forth horrors from the Abyss. Unspeakable evil dwells here.',
+        levelRequirement: 18,
+        monsters: ['demon_imp', 'demon_hound', 'demon_brute', 'demon_imp', 'demon_hound', 'demon_brute'],
+        boss: 'demon_lord',
+        lootTable: ['demonic_greatsword', 'amulet_of_damnation'],
+    },
+
+    // Level 19
+    {
+        id: 'dungeon_ancient_city',
+        name: 'Ruins of an Ancient City',
+        description: 'Long-lost secrets and powerful constructs guard the remnants of a fallen civilization.',
+        levelRequirement: 19,
+        monsters: ['ancient_construct', 'stone_golem', 'ancient_guardian', 'ancient_construct', 'stone_golem', 'ancient_guardian'],
+        boss: 'ancient_guardian',
+        lootTable: ['artifact_shard', 'ancient_knowledge_tome'],
+    },
+
+    // Level 20
+    {
+        id: 'dungeon_celestial_nexus',
+        name: 'Celestial Nexus',
+        description: 'A shimmering gateway to the heavens, guarded by powerful celestial beings.',
+        levelRequirement: 20,
+        monsters: ['celestial_watcher', 'celestial_guardian', 'celestial_champion', 'celestial_watcher', 'celestial_guardian', 'celestial_champion'],
+        boss: 'celestial_avatar',
+        lootTable: ['divine_essence', 'celestial_armor'],
+    },
+
+    // Level 21
+    {
+        id: 'dungeon_void_rift',
+        name: 'Void Rift',
+        description: 'Reality warps and shimmers here, where the very fabric of existence is tearing apart. Eldritch horrors spill forth.',
+        levelRequirement: 21,
+        monsters: ['void_spawn', 'void_fiend', 'void_abomination', 'void_spawn', 'void_fiend', 'void_abomination'],
+        boss: 'void_lord',
+        lootTable: ['void_shrouded_blade', 'abyssal_grimoire'],
+    },
+
+    // Level 22
+    {
+        id: 'dungeon_shadowfell_citadel',
+        name: 'Shadowfell Citadel',
+        description: 'A fortress of eternal night and despair, ruled by a master of shadows.',
+        levelRequirement: 22,
+        monsters: ['shadow_wraith', 'nightmare', 'shadow_assassin', 'shadow_wraith', 'nightmare', 'shadow_assassin'],
+        boss: 'shadow_king',
+        lootTable: ['shadow_blade', 'cloak_of_night'],
+    },
+
+    // Level 23
+    {
+        id: 'dungeon_cosmic_horror',
+        name: 'Cosmic Horror\'s Domain',
+        description: 'Beyond comprehension, a being of pure madness and cosmic power resides here, twisting minds and reality.',
+        levelRequirement: 23,
+        monsters: ['mind_flayer', 'beholder', 'aberrant_horror', 'mind_flayer', 'beholder', 'aberrant_horror'],
+        boss: 'cosmic_entity',
+        lootTable: ['madness_inducing_staff', 'cosmic_fragment'],
+    },
+
+    // Level 24
+    {
+        id: 'dungeon_infernal_abyss',
+        name: 'Infernal Abyss',
+        description: 'The deepest pits of hell, where arch-devils and demons wage eternal war.',
         levelRequirement: 24,
-        monsters: ['lizardfolk_warrior', 'water_elemental', 'hydra', 'lizardfolk_warrior', 'water_elemental', 'hydra'],
-        boss: 'hydra',
-        lootTable: ['helm_of_the_behemoth', 'scepter_of_divinity'],
+        monsters: ['arch_devil', 'pit_fiend', 'demon_titan', 'arch_devil', 'pit_fiend', 'demon_titan'],
+        boss: 'satan',
+        lootTable: ['infernal_greatsword', 'ring_of_damnation'],
     },
+
+    // Level 25
     {
-        id: 'dungeon_golem_graveyard',
-        name: 'Golem Graveyard',
-        description: 'Massive, dormant Iron Golems litter this valley. Some are not so dormant.',
+        id: 'dungeon_divine_ascension',
+        name: 'Divine Ascension',
+        description: 'The final trial. A path to true godhood, guarded by the most powerful beings in existence.',
         levelRequirement: 25,
-        monsters: ['earth_elemental', 'iron_golem', 'iron_golem', 'earth_elemental', 'iron_golem', 'iron_golem'],
-        boss: 'iron_golem',
-        lootTable: ['soulreaver_daggers', 'eye_of_the_maelstrom'],
+        monsters: ['archangel', 'seraph', 'deity_fragment', 'archangel', 'seraph', 'deity_fragment'],
+        boss: 'supreme_deity',
+        lootTable: ['divine_relic', 'ascension_gem'],
     },
+
+    // Level 28
     {
         id: 'dungeon_abyssal_rift',
         name: 'Abyssal Rift',
@@ -415,6 +421,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'horned_devil',
         lootTable: ['world_serpent_buckle', 'sunfury_bow'],
     },
+
+    // Level 30
     {
         id: 'dungeon_world_summit',
         name: 'Summit of the World',
@@ -424,7 +432,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'chimera',
         lootTable: ['titanforged_gauntlets', 'demonsoul_edge'],
     },
-     // Level 31-40 (9 Dungeons)
+
+    // Level 31
     {
         id: 'dungeon_dragons_maw',
         name: 'Dragon\'s Maw',
@@ -434,6 +443,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'hydra',
         lootTable: ['dragonscale_armor', 'frostmourne_replica']
     },
+
+    // Level 32
     {
         id: 'dungeon_lich_phylactery',
         name: 'Lich\'s Phylactery',
@@ -443,6 +454,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'lich_acolyte',
         lootTable: ['staff_of_the_archon', 'voidwalkers_shroud']
     },
+
+    // Level 34
     {
         id: 'dungeon_titan_foundry',
         name: 'The Titan Foundry',
@@ -452,6 +465,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'iron_golem',
         lootTable: ['heart_of_the_phoenix', 'band_of_elemental_mastery']
     },
+
+    // Level 35
     {
         id: 'dungeon_elemental_chaos',
         name: 'Plane of Elemental Chaos',
@@ -459,8 +474,19 @@ export const DUNGEONS: Dungeon[] = [
         levelRequirement: 35,
         monsters: ['fire_elemental', 'water_elemental', 'earth_elemental', 'air_elemental', 'fire_elemental', 'water_elemental', 'earth_elemental', 'air_elemental'],
         boss: 'chimera',
-        lootTable: ['boots_of_the_comet', 'helm_of_the_behemoth']
+        lootTable: ['boots_of_the_comet', 'helm_of_the_behemoth'],
     },
+    {
+        id: 'dungeon_lair_firelord',
+        name: 'Lair of the Firelord',
+        description: "A quest-specific encounter. The Fire Lord Razorvane awaits within this molten chamber, his power corrupted by Olphia's influence.",
+        levelRequirement: 35,
+        monsters: ['fire_elemental', 'lesser_fire_elemental', 'fire_elemental', 'lesser_fire_elemental'],
+        boss: 'firelord_razorvane',
+        lootTable: ["firelords_blade", "crown_of_embers"],
+    },
+
+    // Level 36
     {
         id: 'dungeon_pit_of_the_damned',
         name: 'Pit of the Damned',
@@ -470,6 +496,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'horned_devil',
         lootTable: ['scepter_of_divinity', 'soulreaver_daggers']
     },
+
+    // Level 37
     {
         id: 'dungeon_lair_of_the_hydra',
         name: 'Lair of the Many-Headed',
@@ -479,6 +507,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'hydra',
         lootTable: ['eye_of_the_maelstrom', 'world_serpent_buckle']
     },
+
+    // Level 38
     {
         id: 'dungeon_giants_war',
         name: 'The Giant War',
@@ -488,6 +518,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'fire_giant',
         lootTable: ['sunfury_bow', 'titanforged_gauntlets']
     },
+
+    // Level 39
     {
         id: 'dungeon_dragons_roost',
         name: 'The Dragon\'s Roost',
@@ -497,6 +529,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'young_green_dragon',
         lootTable: ['demonsoul_edge', 'razorvanes_heart']
     },
+
+    // Level 40
     {
         id: 'dungeon_edge_of_reality',
         name: 'Edge of Reality',
@@ -507,25 +541,6 @@ export const DUNGEONS: Dungeon[] = [
         lootTable: ['thunderfury_blessed_blade', 'aegis_of_the_world_forger']
     },
     {
-        id: 'dungeon_crimson_sanctuary',
-        name: 'Crimson Sanctuary',
-        description: 'A hidden sanctuary where the Crimson Dawn trains its most elite champions.',
-        levelRequirement: 75,
-        monsters: ['cultist_champion', 'cultist_champion', 'cultist_champion', 'cultist_champion', 'cultist_champion'],
-        boss: 'cultist_champion',
-        lootTable: ['demonsoul_edge', 'heart_of_corruption'],
-    },
-    // --- Quest Lairs for Crimson Corruption Saga ---
-    {
-        id: 'dungeon_lair_firelord',
-        name: 'Lair of the Firelord',
-        description: "A quest-specific encounter. The Fire Lord Razorvane awaits within this molten chamber, his power corrupted by Olphia's influence.",
-        levelRequirement: 35,
-        monsters: ['fire_elemental', 'lesser_fire_elemental', 'fire_elemental', 'lesser_fire_elemental'],
-        boss: 'firelord_razorvane',
-        lootTable: ["firelords_blade", "crown_of_embers"],
-    },
-    {
         id: 'dungeon_crypt_frost_lich',
         name: 'Crypt of the Frost Lich',
         description: "A quest-specific encounter. Koralon the Frost Lich reigns over this frozen tomb, his soul bound to Olphia's will.",
@@ -534,6 +549,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'koralon_the_frost_lich',
         lootTable: ["frostmourne_replica", "orb_of_winter"],
     },
+
+    // Level 45
     {
         id: 'dungeon_peak_stone_titan',
         name: 'Peak of the Stone Titan',
@@ -543,6 +560,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'terragor_the_stone_titan',
         lootTable: ["world_serpent_buckle", "golem_fist"],
     },
+
+    // Level 50
     {
         id: 'dungeon_perch_sky_tyrant',
         name: 'Perch of the Sky Tyrant',
@@ -552,6 +571,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'aetherion_sky_tyrant',
         lootTable: ["staff_of_lightning", "stormcallers_focus"],
     },
+
+    // Level 56
     {
         id: 'dungeon_trench_abyssal_horror',
         name: 'Trench of the Abyssal Horror',
@@ -561,6 +582,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'malakor_abyssal_horror',
         lootTable: ["tome_of_forbidden_knowledge", "voidwalkers_shroud"],
     },
+
+    // Level 62
     {
         id: 'dungeon_court_celestial_sentinel',
         name: 'Court of the Celestial Sentinel',
@@ -570,6 +593,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'lumina_celestial_sentinel',
         lootTable: ["scepter_of_divinity", "blessed_warhammer"],
     },
+
+    // Level 68
     {
         id: 'dungeon_sanctum_dread_king',
         name: 'Sanctum of the Dread King',
@@ -579,6 +604,19 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'vexor_the_dread_king',
         lootTable: ["kingslayers", "libram_of_souls"],
     },
+
+    // Level 75
+    {
+        id: 'dungeon_crimson_sanctuary',
+        name: 'Crimson Sanctuary',
+        description: 'A hidden sanctuary where the Crimson Dawn trains its most elite champions.',
+        levelRequirement: 75,
+        monsters: ['cultist_champion', 'cultist_champion', 'cultist_champion', 'cultist_champion', 'cultist_champion'],
+        boss: 'cultist_champion',
+        lootTable: ['demonsoul_edge', 'heart_of_corruption'],
+    },
+
+    // Level 82
     {
         id: 'dungeon_prison_void_maw',
         name: 'Prison of the Void Maw',
@@ -588,6 +626,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'grommash_the_void_maw',
         lootTable: ["greatsword_of_valor", "heart_of_the_phoenix"],
     },
+
+    // Level 88
     {
         id: 'dungeon_foundry_automaton_prime',
         name: 'Foundry of the Automaton Prime',
@@ -597,6 +637,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'automaton_prime',
         lootTable: ["bulwark_of_azzinoth", "titanforged_gauntlets"],
     },
+
+    // Level 95
     {
         id: 'dungeon_timeless_conundrum',
         name: 'The Timeless Conundrum',
@@ -606,6 +648,8 @@ export const DUNGEONS: Dungeon[] = [
         boss: 'chronos_the_timeless',
         lootTable: ["atiyeh_greatstaff_of_the_guardian", "talisman_of_binding_shard"],
     },
+
+    // Level 128
     {
         id: 'dungeon_weeping_chasm_final',
         name: 'The Weeping Chasm (Sanctum)',
@@ -614,5 +658,5 @@ export const DUNGEONS: Dungeon[] = [
         monsters: ['koralon_the_frost_lich', 'terragor_the_stone_titan', 'aetherion_sky_tyrant', 'malakor_abyssal_horror'],
         boss: 'olphia_the_fallen_goddess',
         lootTable: ['tears_of_olphia', 'talisman_of_binding_shard', 'aegis_of_the_world_forger', 'vestments_of_the_celestial'],
-    }
+    },
 ];
