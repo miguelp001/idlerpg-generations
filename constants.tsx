@@ -125,9 +125,43 @@ export const SHOP_ITEM_BASE_PRICE = 20; // Base price for common items in shop
 export const SHOP_ITEM_PRICE_MULTIPLIER = 3; // Multiplier for rarity and level
 
 export const ADVENTURER_FIRST_NAMES = [
-    'Aric', 'Bryn', 'Cael', 'Dara', 'Erin', 'Finn', 'Gwen', 'Hale', 'Iris', 'Jorn', 'Kael', 'Lyra', 'Merek', 'Nia', 'Orin', 'Perrin', 'Quinn', 'Roric', 'Saria', 'Talon'
+    'Aric', 'Bryn', 'Cael', 'Dara', 'Erin', 'Finn', 'Gwen', 'Hale', 'Iris', 'Jorn', 'Kael', 'Lyra', 'Merek', 'Nia', 'Orin', 'Perrin', 'Quinn', 'Roric', 'Saria', 'Talon',
+    // Additional first names
+    'Alden', 'Briar', 'Corbin', 'Delia', 'Elias', 'Fiona', 'Gareth', 'Hazel', 'Ivan', 'Jade', 'Kaelen', 'Lira', 'Milo', 'Nola', 'Owen', 'Piper', 'Rhys', 'Sage', 'Thorne', 'Una',
+    'Vance', 'Willow', 'Xavier', 'Yara', 'Zane', 'Anya', 'Blaine', 'Cinder', 'Dax', 'Elara', 'Flint', 'Glynnis', 'Harkin', 'Isolde', 'Jax', 'Kaelen', 'Larkin', 'Maelis', 'Niamh', 'Orrin',
+    'Pippin', 'Quill', 'Riona', 'Seraphina', 'Taran', 'Ulysses', 'Vesper', 'Wren', 'Xylos', 'Ysabeau', 'Zephyr', 'Aella', 'Brandt', 'Cora', 'Dorian', 'Elara', 'Faelan', 'Gemma', 'Hagen',
+    'Indira', 'Jareth', 'Keira', 'Lochlan', 'Maeve', 'Niall', 'Oona', 'Phelan', 'Quiana', 'Rohan', 'Saoirse', 'Tiernan', 'Urien', 'Valerius', 'Winona', 'Xanthus', 'Yara', 'Zephyrine',
+    'Alaric', 'Bronte', 'Caspian', 'Delyth', 'Eira', 'Fenris', 'Gideon', 'Hadley', 'Imogen', 'Jareth', 'Kaelen', 'Lirael', 'Maelon', 'Nerys', 'Orion', 'Petra', 'Quentin', 'Rowan',
+    'Silas', 'Tamsin', 'Uther', 'Vivian', 'Wyatt', 'Xenia', 'Ylva', 'Zoltan', 'Adair', 'Blair', 'Cade', 'Dahlia', 'Eamon', 'Faelan', 'Gareth', 'Bronte', 'Caspian', 'Delyth', 'Eira',
+    'Fenris', 'Gideon', 'Hadley', 'Imogen', 'Jareth', 'Kaelen', 'Lirael', 'Maelon', 'Nerys', 'Orion', 'Petra', 'Quentin', 'Rowan', 'Silas', 'Tamsin', 'Uther', 'Vivian', 'Wyatt',
+    'Xenia', 'Ylva', 'Zoltan', 'Adair', 'Blair', 'Cade', 'Dahlia', 'Eamon', 'Faelan', 'Gareth', 'Hamish', 'Iona', 'Jasper', 'Kiera', 'Lysander', 'Morgana', 'Niko', 'Olenna', 'Perrin',
+    'Raina', 'Stellan', 'Theron', 'Ursula', 'Valerius', 'Willow', 'Xanthe', 'Yvain', 'Zelda', 'Asher', 'Briar', 'Corbin', 'Delia', 'Elias', 'Fiona', 'Gareth', 'Hazel', 'Ivan', 'Jade',
+    'Kaelen', 'Lira', 'Milo', 'Nola', 'Owen', 'Piper', 'Rhys', 'Sage', 'Thorne', 'Una', 'Vance', 'Willow', 'Xavier', 'Yara', 'Zane', 'Anya', 'Blaine', 'Cinder', 'Dax', 'Elara',
+    'Flint', 'Glynnis', 'Harkin', 'Isolde', 'Jax', 'Kaelen', 'Larkin', 'Maelis', 'Niamh', 'Orrin', 'Pippin', 'Quill', 'Riona', 'Seraphina', 'Taran', 'Ulysses', 'Vesper', 'Wren',
+    'Xylos', 'Ysabeau', 'Zephyr', 'Aella', 'Brandt', 'Cora', 'Dorian', 'Elara', 'Faelan', 'Gemma', 'Hagen', 'Indira', 'Jareth', 'Keira', 'Lochlan', 'Maeve', 'Niall', 'Oona', 'Phelan',
+    'Quiana', 'Rohan', 'Saoirse', 'Tiernan', 'Urien', 'Valerius', 'Winona', 'Xanthus', 'Yara', 'Zephyrine', 'Alaric', 'Bronte', 'Caspian', 'Delyth', 'Eira', 'Fenris', 'Gideon',
+    'Hadley', 'Imogen', 'Jareth', 'Kaelen', 'Lirael', 'Maelon', 'Nerys', 'Orion', 'Petra', 'Quentin', 'Rowan', 'Silas', 'Tamsin', 'Uther', 'Vivian', 'Wyatt', 'Xenia', 'Ylva',
+    'Zoltan', 'Adair', 'Blair', 'Cade', 'Dahlia', 'Eamon', 'Faelan', 'Gareth', 'Hamish', 'Iona', 'Jasper', 'Kiera', 'Lysander', 'Morgana', 'Niko', 'Olenna', 'Perrin', 'Raina',
+    'Stellan', 'Theron', 'Ursula', 'Valerius', 'Willow', 'Xanthe', 'Yvain', 'Zelda'
 ];
 
 export const ADVENTURER_LAST_NAMES = [
-    'Stonehand', 'Silverwood', 'Stormcaller', 'Blackwater', 'Ironhelm', 'Sunstrider', 'Shadowend', 'Swiftwind', 'Fireheart', 'Winterfall'
+    'Stonehand', 'Silverwood', 'Stormcaller', 'Blackwater', 'Ironhelm', 'Sunstrider', 'Shadowend', 'Swiftwind', 'Fireheart', 'Winterfall',
+    // Additional last names
+    'Axehammer', 'Brightblade', 'Deepriver', 'Fairwind', 'Grimfang', 'Hardrock', 'Lightfoot', 'Moonwhisper', 'Oakhart', 'Proudfoot',
+    'Redshield', 'Strongarm', 'Truearrow', 'Whisperwind', 'Wilder', 'Ashwood', 'Boulderfist', 'Cinderfall', 'Darkwood', 'Emberglow',
+    'Fellhammer', 'Goldenshield', 'Ironhide', 'Keeneye', 'Longstride', 'Mistwalker', 'Nightshade', 'Oakhaven', 'Proudbeard', 'Ravenscroft',
+    'Shadowbrook', 'Silentfoot', 'Stonemarch', 'Thornwood', 'Trueheart', 'Vancroft', 'Whitewater', 'Windrider', 'Wyvernfall', 'Youngblood',
+    'Barrelbottom', 'Blackbriar', 'Brightwood', 'Caskwick', 'Deepdelve', 'Everlight', 'Farhaven', 'Frostbeard', 'Grimstone', 'Hallowell',
+    'Ironfoot', 'Kindlewood', 'Lightbringer', 'Moonbrook', 'Nighthaven', 'Olden', 'Proudhand', 'Quickstep', 'Riverbend', 'Shadowglen',
+    'Silverstream', 'Stoutarm', 'Thistlewick', 'Trueblood', 'Underhill', 'Valeford', 'Whisperwood', 'Wilds', 'Winterborne', 'Woodcutter',
+    'Ashfall', 'Blackaxe', 'Brightstone', 'Cinderbrook', 'Darkheart', 'Emberwind', 'Fellstone', 'Goldhand', 'Ironwood', 'Keenblade',
+    'Longriver', 'Mistborn', 'Nightfall', 'Oakhaven', 'Proudfoot', 'Ravenswood', 'Shadowfen', 'Silentstep', 'Stonewick', 'Thornhill',
+    'Truegrip', 'Underwood', 'Valiant', 'Whispervale', 'Wildheart', 'Winterglen', 'Wolfsbane', 'Wyvernwood', 'Youngheart', 'Zweihander',
+    'Ashworth', 'Blackpine', 'Brightshield', 'Cinderwood', 'Darkmoon', 'Emberheart', 'Fellwater', 'Goldengate', 'Ironclad', 'Keenheart',
+    'Longshadow', 'Mistvale', 'Nightwhisper', 'Oakenshield', 'Proudstrike', 'Ravenshadow', 'Shadowmoon', 'Silentwood', 'Stonewall', 'Thornblade',
+    'Truevalor', 'Underfall', 'Valerius', 'Whisperwind', 'Wildfire', 'Wintermoon', 'Wolfheart', 'Wyvernclaw', 'Youngblood', 'Zemlin',
+    'Ashcroft', 'Blackthorn', 'Brightsun', 'Cinderstone', 'Darkwater', 'Emberstone', 'Fellglen', 'Goldwood', 'Ironwill', 'Keenwood',
+    'Longwood', 'Mistwood', 'Nightwood', 'Oakwood', 'Proudwood', 'Ravensong', 'Shadowwood', 'Silentriver', 'Stonewood', 'Thornbush',
+    'Trueshot', 'Underbright', 'Valor', 'Whisperdale', 'Wildsong', 'Winterlight', 'Wolfsong', 'Wyvernwing', 'Youngwood', 'Zorn'
 ];
