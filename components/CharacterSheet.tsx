@@ -120,11 +120,23 @@ const AdventurerEquipmentDisplay: React.FC<{ adventurer: Adventurer }> = React.m
     )
 });
 
-const SetBonusDisplay: React.FC<{ equipment: Equipment[] }> = React.memo(({ equipment }) => {
+const SetBonusDisplay: React.FC<{ equipment: Equipment[], accessorySlots: (Equipment | null)[] }> = React.memo(({ equipment, accessorySlots }) => {
     const equippedSets: Record<string, { count: number, max: number }> = {};
     
+    // Count items from main equipment
     for (const item of equipment) {
         if (item.setId) {
+            if (!equippedSets[item.setId]) {
+                const setMax = Math.max(...Object.keys(SETS[item.setId].bonuses).map(Number));
+                equippedSets[item.setId] = { count: 0, max: setMax };
+            }
+            equippedSets[item.setId].count++;
+        }
+    }
+
+    // Count items from accessory slots
+    for (const item of accessorySlots) {
+        if (item && item.setId) {
             if (!equippedSets[item.setId]) {
                 const setMax = Math.max(...Object.keys(SETS[item.setId].bonuses).map(Number));
                 equippedSets[item.setId] = { count: 0, max: setMax };
@@ -259,7 +271,7 @@ const CharacterSheet: React.FC = () => {
                   <ProgressBar label="Mana" value={character.currentMana ?? character.stats.mana} max={character.maxStats.mana} colorClass="bg-blue-500" />
               </div>
           </Card>
-          <SetBonusDisplay equipment={character.equipment} />
+           <SetBonusDisplay equipment={character.equipment} accessorySlots={character.accessorySlots} />
           {guild && (
               <Card>
                   <h2 className="text-xl font-bold mb-4 text-primary">Guild</h2>

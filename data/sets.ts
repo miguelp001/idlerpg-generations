@@ -82,4 +82,12 @@ export const SETS: { [id: string]: ItemSet } = {
             4: { intelligence: 20, mana: 75, health: 50 },
         },
     },
+    'starting_gear_set': {
+        id: 'starting_gear_set',
+        name: "Adventurer's Humble Beginnings",
+        bonuses: {
+            2: { health: 10, mana: 5 },
+            4: { attack: 2, defense: 2, agility: 2, intelligence: 2 },
+        },
+    },
 };

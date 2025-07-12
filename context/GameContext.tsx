@@ -87,8 +87,11 @@ const recalculateStats = (character: Character): { stats: GameStats, maxStats: G
         (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + value;
     }
 
+    console.log("Base Stats:", newMaxStats);
+
     for (const item of character.equipment) {
         const affinity = item.classAffinity?.[character.class] ?? 1.0;
+        console.log(`Applying stats from ${item.name} (${item.slot}):`, item.stats);
         for (const [stat, value] of Object.entries(item.stats)) {
             (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + Math.round(value * affinity);
         }
@@ -97,6 +100,7 @@ const recalculateStats = (character: Character): { stats: GameStats, maxStats: G
     for (const item of character.accessorySlots) {
         if (item) {
             const affinity = item.classAffinity?.[character.class] ?? 1.0;
+            console.log(`Applying stats from accessory ${item.name}:`, item.stats);
             for (const [stat, value] of Object.entries(item.stats)) {
                 (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + Math.round(value * affinity);
             }
@@ -116,11 +120,16 @@ const recalculateStats = (character: Character): { stats: GameStats, maxStats: G
         }
     }
 
+    console.log("Equipped Sets Count:", equippedSets);
+
     for (const [setId, count] of Object.entries(equippedSets)) {
         const set = SETS[setId];
         if (set) {
+            console.log(`Checking set ${set.name} with ${count} items equipped.`);
             for (const [requiredCount, bonus] of Object.entries(set.bonuses)) {
+                console.log(`  Processing requiredCount: ${requiredCount}, Actual equipped count: ${count}, Bonus object:`, bonus);
                 if (count >= Number(requiredCount)) {
+                    console.log(`Applying ${requiredCount}-piece bonus for ${set.name}:`, bonus);
                     for (const [stat, value] of Object.entries(bonus)) {
                         (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + value;
                     }
@@ -129,6 +138,8 @@ const recalculateStats = (character: Character): { stats: GameStats, maxStats: G
         }
     }
     
+    console.log("Final Stats after bonuses:", newMaxStats);
+
     const currentHealthPercent = character.maxStats.health > 0 ? (character.currentHealth ?? character.stats.health) / character.maxStats.health : 1;
     const currentManaPercent = character.maxStats.mana > 0 ? (character.currentMana ?? character.stats.mana) / character.maxStats.mana : 1;
     
@@ -189,7 +200,20 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         activePassives: [],
         unlockedAchievements: [],
         equippedTitle: null,
+        equipment: [], // Initialize equipment as empty
+        accessorySlots: [null, null], // Initialize accessory slots as empty
       };
+
+      // Equip starting gear
+      const startingWeapon = { ...ITEMS.worn_sword, id: uuidv4(), baseId: 'worn_sword', baseName: ITEMS.worn_sword.name, upgradeLevel: 0, price: 0 };
+      const startingArmor = { ...ITEMS.tattered_tunic, id: uuidv4(), baseId: 'tattered_tunic', baseName: ITEMS.tattered_tunic.name, upgradeLevel: 0, price: 0 };
+      const startingAccessory1 = { ...ITEMS.simple_pendant, id: uuidv4(), baseId: 'simple_pendant', baseName: ITEMS.simple_pendant.name, upgradeLevel: 0, price: 0 };
+      const startingAccessory2 = { ...ITEMS.plain_ring, id: uuidv4(), baseId: 'plain_ring', baseName: ITEMS.plain_ring.name, upgradeLevel: 0, price: 0 };
+
+      newCharacter.equipment.push(startingWeapon);
+      newCharacter.equipment.push(startingArmor);
+      newCharacter.accessorySlots[0] = startingAccessory1;
+      newCharacter.accessorySlots[1] = startingAccessory2;
 
       let characters = [...state.characters];
       let newRelationships = [...state.relationships];
