@@ -45,5 +45,41 @@ export const SETS: { [id: string]: ItemSet } = {
         bonuses: {
             2: { attack: 50, agility: 50 },
         }
-    }
+    },
+    'archmage_artifacts_set': {
+        id: 'archmage_artifacts_set',
+        name: "Archmage's Artifacts",
+        bonuses: {
+            2: { intelligence: 75, mana: 150 },
+            3: { intelligence: 100, mana: 250, attack: 50 },
+            4: { intelligence: 150, mana: 400, attack: 75, health: 150 }
+        }
+    },
+    'dragonslayer_set': {
+        id: 'dragonslayer_set',
+        name: "Dragonslayer's Battlegear",
+        bonuses: {
+            2: { attack: 75, health: 200 },
+            3: { attack: 100, health: 300, defense: 50 },
+            4: { attack: 150, health: 500, defense: 75, agility: 20 }
+        }
+    },
+    'shadowblade_rogue_set': {
+        id: 'shadowblade_rogue_set',
+        name: "Shadowblade's Assassin Gear",
+        bonuses: {
+            2: { agility: 75, attack: 50 },
+            3: { agility: 100, attack: 75, defense: 30 },
+            4: { agility: 150, attack: 100, defense: 50, health: 100 }
+        }
+    },
+    'divine_protector_vestments': {
+        id: 'divine_protector_vestments',
+        name: "Divine Protector's Vestments",
+        bonuses: {
+            2: { defense: 10, intelligence: 10 },
+            3: { health: 75, mana: 50 },
+            4: { intelligence: 20, mana: 75, health: 50 },
+        },
+    },
 };
