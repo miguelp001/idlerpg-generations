@@ -94,9 +94,24 @@ const recalculateStats = (character: Character): { stats: GameStats, maxStats: G
         }
     }
 
+    for (const item of character.accessorySlots) {
+        if (item) {
+            const affinity = item.classAffinity?.[character.class] ?? 1.0;
+            for (const [stat, value] of Object.entries(item.stats)) {
+                (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + Math.round(value * affinity);
+            }
+        }
+    }
+
     const equippedSets: Record<string, number> = {};
     for (const item of character.equipment) {
         if (item.setId) {
+            equippedSets[item.setId] = (equippedSets[item.setId] || 0) + 1;
+        }
+    }
+
+    for (const item of character.accessorySlots) {
+        if (item && item.setId) {
             equippedSets[item.setId] = (equippedSets[item.setId] || 0) + 1;
         }
     }
@@ -145,6 +160,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             partnerId: c.partnerId,
             unlockedAchievements: c.unlockedAchievements || [],
             equippedTitle: c.equippedTitle || null,
+            accessorySlots: c.accessorySlots || [null, null], // Initialize accessory slots
         }));
         
         const activeChar = loadedState.characters.find(c => c.id === loadedState.activeCharacterId);
@@ -506,16 +522,30 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         
         let newInventory = character.inventory.filter(i => i.id !== itemId);
         let newEquipment = [...character.equipment];
-        
-        const existingItemIndex = newEquipment.findIndex(i => i.slot === itemToEquip.slot);
-        if (existingItemIndex > -1) {
-            const itemToUnequip = newEquipment[existingItemIndex];
-            newEquipment.splice(existingItemIndex, 1);
-            newInventory.push(itemToUnequip);
-        }
-        newEquipment.push(itemToEquip);
+        let newAccessorySlots: [Equipment | null, Equipment | null] = [...character.accessorySlots];
 
-        let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment };
+        if (itemToEquip.slot === 'accessory') {
+            if (newAccessorySlots[0] === null) {
+                newAccessorySlots[0] = itemToEquip;
+            } else if (newAccessorySlots[1] === null) {
+                newAccessorySlots[1] = itemToEquip;
+            } else {
+                // Both accessory slots are occupied, unequip the first one and equip the new one in its place
+                newInventory.push(newAccessorySlots[0]);
+                newAccessorySlots[0] = itemToEquip;
+            }
+        } else {
+            // For weapon and armor slots
+            const existingItemIndex = newEquipment.findIndex(i => i.slot === itemToEquip.slot);
+            if (existingItemIndex > -1) {
+                const itemToUnequip = newEquipment[existingItemIndex];
+                newEquipment.splice(existingItemIndex, 1);
+                newInventory.push(itemToUnequip);
+            }
+            newEquipment.push(itemToEquip);
+        }
+
+        let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
         const { stats, maxStats } = recalculateStats(updatedCharacter);
         updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
 
@@ -533,12 +563,34 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'UNEQUIP_ITEM': {
         const { characterId, itemId } = action.payload;
         let character = state.characters.find(c => c.id === characterId)!;
-        const itemToUnequip = character.equipment.find(i => i.id === itemId)!;
         
-        const newEquipment = character.equipment.filter(i => i.id !== itemId);
-        const newInventory = [...character.inventory, itemToUnequip];
+        let newEquipment = [...character.equipment];
+        let newInventory = [...character.inventory];
+        let newAccessorySlots: [Equipment | null, Equipment | null] = [...character.accessorySlots];
+
+        let itemToUnequip: Equipment | undefined;
+
+        // Check accessory slots first
+        if (newAccessorySlots[0]?.id === itemId) {
+            itemToUnequip = newAccessorySlots[0];
+            newAccessorySlots[0] = null;
+        } else if (newAccessorySlots[1]?.id === itemId) {
+            itemToUnequip = newAccessorySlots[1];
+            newAccessorySlots[1] = null;
+        } else {
+            // If not in accessory slots, check other equipment slots
+            const existingItemIndex = newEquipment.findIndex(i => i.id === itemId);
+            if (existingItemIndex > -1) {
+                itemToUnequip = newEquipment[existingItemIndex];
+                newEquipment.splice(existingItemIndex, 1);
+            }
+        }
+
+        if (!itemToUnequip) return state; // Item not found
+
+        newInventory.push(itemToUnequip);
         
-        let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment };
+        let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
         const { stats, maxStats } = recalculateStats(updatedCharacter);
         updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
 

@@ -158,15 +158,20 @@ const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, onAction, actionLa
     );
 });
 
-const EquipmentSlotDisplay: React.FC<{
+interface EquipmentSlotDisplayProps {
     slot: EquipmentSlot;
     item: Equipment | undefined;
     onUnequip: (itemId: string) => void;
     onUpgrade: (itemId: string) => void;
     character: Character;
-}> = React.memo(({ slot, item, onUnequip, onUpgrade, character }) => (
+    slotIndex?: number; // Optional prop to differentiate accessory slots
+}
+
+const EquipmentSlotDisplay: React.FC<EquipmentSlotDisplayProps> = React.memo(({ slot, item, onUnequip, onUpgrade, character, slotIndex }) => (
     <Card className="h-56 flex flex-col justify-between">
-        <h3 className="text-lg font-semibold capitalize text-primary text-center border-b border-surface-2 pb-2">{slot}</h3>
+        <h3 className="text-lg font-semibold capitalize text-primary text-center border-b border-surface-2 pb-2">
+            {slot === 'accessory' && slotIndex !== undefined ? `Accessory ${slotIndex + 1}` : slot}
+        </h3>
         <div className="flex-grow flex items-center justify-center p-2">
             {item ? (
                 <ItemCard
@@ -311,7 +316,6 @@ const Inventory: React.FC = () => {
 
     const equippedWeapon = activeCharacter.equipment.find(i => i.slot === 'weapon');
     const equippedArmor = activeCharacter.equipment.find(i => i.slot === 'armor');
-    const equippedAccessory = activeCharacter.equipment.find(i => i.slot === 'accessory');
 
     const groupedInventory = useMemo(() => {
         const grouped: Record<EquipmentSlot, Equipment[]> = {
@@ -352,7 +356,8 @@ const Inventory: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <EquipmentSlotDisplay slot="weapon" item={equippedWeapon} onUnequip={handleUnequip} onUpgrade={handleUpgrade} character={activeCharacter} />
                     <EquipmentSlotDisplay slot="armor" item={equippedArmor} onUnequip={handleUnequip} onUpgrade={handleUpgrade} character={activeCharacter} />
-                    <EquipmentSlotDisplay slot="accessory" item={equippedAccessory} onUnequip={handleUnequip} onUpgrade={handleUpgrade} character={activeCharacter} />
+                    <EquipmentSlotDisplay slot="accessory" item={activeCharacter.accessorySlots[0] || undefined} onUnequip={handleUnequip} onUpgrade={handleUpgrade} character={activeCharacter} slotIndex={0} />
+                    <EquipmentSlotDisplay slot="accessory" item={activeCharacter.accessorySlots[1] || undefined} onUnequip={handleUnequip} onUpgrade={handleUpgrade} character={activeCharacter} slotIndex={1} />
                 </div>
             </div>
 

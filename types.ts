@@ -146,6 +146,7 @@ export interface Character {
   stats: GameStats;
   maxStats: GameStats;
   equipment: Equipment[];
+  accessorySlots: [Equipment | null, Equipment | null]; // Two accessory slots
   inventory: Equipment[];
   generation: number;
   parentIds: string[];
