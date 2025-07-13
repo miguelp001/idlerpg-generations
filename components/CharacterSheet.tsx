@@ -219,12 +219,12 @@ const CharacterSheet: React.FC = () => {
       {isResetModalOpen && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in">
               <Card className="w-full max-w-lg animate-slide-up">
-                  <h2 className="text-3xl font-bold mb-4 text-red-500">Destroy Legacy?</h2>
-                  <p className="text-on-background/80 mb-6">
+                  <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 text-red-500">Destroy Legacy?</h2>
+                  <p className="text-sm sm:text-base text-on-background/80 mb-4 sm:mb-6">
                       Are you absolutely sure? This action will permanently delete all of your progress, including all characters, items, achievements, and guild progress. 
                       <strong className="text-red-400"> This cannot be undone.</strong>
                   </p>
-                  <div className="mt-6 flex justify-end space-x-4">
+                  <div className="mt-4 sm:mt-6 flex justify-end space-x-2 sm:space-x-4">
                       <Button variant="ghost" onClick={() => setResetModalOpen(false)}>Cancel</Button>
                       <Button 
                           onClick={resetGame}
@@ -243,29 +243,29 @@ const CharacterSheet: React.FC = () => {
             onclose={() => setRetireModalOpen(false)}
         />
       )}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left Column: Character Info */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4 sm:space-y-6">
           <Card>
-              <div className="flex flex-col items-center text-center">
-                  <div className={`p-4 bg-surface-2 rounded-full mb-4 ${classInfo.color}`}>
+              <div className="flex flex-col items-center text-center p-3 sm:p-4">
+                  <div className={`p-3 sm:p-4 bg-surface-2 rounded-full mb-3 sm:mb-4 ${classInfo.color}`}>
                       {classInfo.icon}
                   </div>
-                  <h1 className="text-3xl font-bold">{character.name}</h1>
-                  {character.equippedTitle && <p className="text-2xl text-yellow-400 font-semibold mt-1">"{character.equippedTitle}"</p>}
-                  <p className={`text-xl font-semibold ${classInfo.color} mt-2`}>{classInfo.name} - Level {character.level}</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold">{character.name}</h1>
+                  {character.equippedTitle && <p className="text-xl sm:text-2xl text-yellow-400 font-semibold mt-0.5 sm:mt-1">"{character.equippedTitle}"</p>}
+                  <p className={`text-lg sm:text-xl font-semibold ${classInfo.color} mt-1 sm:mt-2`}>{classInfo.name} - Level {character.level}</p>
                   <p className="text-sm text-on-background/70">Generation {character.generation}</p>
-                   <p className="text-sm font-semibold text-secondary mt-1" title={personalityInfo.description}>{personalityInfo.name}</p>
+                   <p className="text-xs sm:text-sm font-semibold text-secondary mt-0.5 sm:mt-1" title={personalityInfo.description}>{personalityInfo.name}</p>
                     {partner && (
-                        <p className="text-md text-pink-400 mt-2">
+                        <p className="text-sm sm:text-base text-pink-400 mt-1 sm:mt-2">
                             Married to {partner.name}
                         </p>
                     )}
               </div>
           </Card>
           <Card>
-              <h2 className="text-xl font-bold mb-4 text-primary">Progression</h2>
-              <div className="space-y-4">
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Progression</h2>
+              <div className="space-y-3 sm:space-y-4">
                   <ProgressBar label="XP" value={character.experience} max={calculateXpForLevel(character.level)} colorClass="bg-yellow-500" />
                   <ProgressBar label="Health" value={character.currentHealth ?? character.stats.health} max={character.maxStats.health} colorClass="bg-red-500" />
                   <ProgressBar label="Mana" value={character.currentMana ?? character.stats.mana} max={character.maxStats.mana} colorClass="bg-blue-500" />
@@ -274,16 +274,16 @@ const CharacterSheet: React.FC = () => {
            <SetBonusDisplay equipment={character.equipment} accessorySlots={character.accessorySlots} />
           {guild && (
               <Card>
-                  <h2 className="text-xl font-bold mb-4 text-primary">Guild</h2>
-                  <p className="text-2xl font-bold text-secondary">{guild.name}</p>
-                  <p className="text-lg font-semibold mb-3">Level {guild.level}</p>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Guild</h2>
+                  <p className="text-xl sm:text-2xl font-bold text-secondary">{guild.name}</p>
+                  <p className="text-md sm:text-lg font-semibold mb-2 sm:mb-3">Level {guild.level}</p>
                   <ProgressBar label="Guild XP" value={guild.xp} max={GUILD_XP_TABLE[guild.level] || guild.xp} colorClass="bg-purple-500" />
               </Card>
           )}
           {character.level >= RETIREMENT_LEVEL && (
               <Card>
-                  <h2 className="text-xl font-bold mb-2 text-primary">Legacy</h2>
-                  <p className="text-on-background/80 mb-4">Your hero is ready to retire and pass on their legacy.</p>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-2 text-primary">Legacy</h2>
+                  <p className="text-sm sm:text-base text-on-background/80 mb-3 sm:mb-4">Your hero is ready to retire and pass on their legacy.</p>
                   <Button variant="secondary" className="w-full" onClick={() => setRetireModalOpen(true)}>
                       Retire Hero
                   </Button>
@@ -292,26 +292,26 @@ const CharacterSheet: React.FC = () => {
         </div>
 
         {/* Right Column: Stats & Equipment */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           <Card>
-              <h2 className="text-xl font-bold mb-4 text-primary">Core Statistics</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="h-80">
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Core Statistics</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="h-64 sm:h-80">
                       <ResponsiveContainer width="100%" height="100%">
                           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={statsData}>
                               <PolarGrid stroke="#444" />
-                              <PolarAngleAxis dataKey="subject" tick={{ fill: '#e0e0e0', fontSize: 14 }} />
+                              <PolarAngleAxis dataKey="subject" tick={{ fill: '#e0e0e0', fontSize: 12 }} />
                               <PolarRadiusAxis angle={30} domain={[0, 'dataMax + 10']} tick={false} axisLine={false} />
                               <Radar name={character.name} dataKey="A" stroke="#bb86fc" fill="#bb86fc" fillOpacity={0.6} />
                               <Tooltip contentStyle={{ backgroundColor: '#2a2a2a', border: '1px solid #444' }}/>
                           </RadarChart>
                       </ResponsiveContainer>
                   </div>
-                  <div className="space-y-2 text-lg">
+                  <div className="space-y-1 sm:space-y-2 text-md sm:text-lg">
                       {Object.entries(character.stats).map(([stat, value]) => {
                           const displayValue = stat === 'health' ? character.currentHealth : stat === 'mana' ? character.currentMana : value;
                           return (
-                            <div key={stat} className="flex justify-between p-2 bg-surface-2 rounded">
+                            <div key={stat} className="flex justify-between p-1 sm:p-2 bg-surface-2 rounded">
                                 <span className="capitalize font-semibold text-on-surface">{stat}</span>
                                 <span className="text-secondary font-mono">{displayValue}</span>
                             </div>
@@ -321,52 +321,52 @@ const CharacterSheet: React.FC = () => {
               </div>
           </Card>
            <Card>
-              <h2 className="text-xl font-bold mb-4 text-primary">Abilities</h2>
-              <div className="space-y-4">
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Abilities</h2>
+              <div className="space-y-3 sm:space-y-4">
                   <div>
-                      <h3 className="text-lg font-semibold mb-2 text-secondary">Active Abilities</h3>
+                      <h3 className="text-lg sm:text-xl font-semibold mb-2 text-secondary">Active Abilities</h3>
                       <div className="space-y-2">
                         {activeAbilities.length > 0 ? activeAbilities.map(ability => (
                             <AbilityDisplay key={ability.id} ability={ability} characterId={character.id} isPassive={false} isActive={false} />
-                        )) : <p className="text-on-background/70">No active abilities learned.</p>}
+                        )) : <p className="text-on-background/70 text-sm sm:text-base">No active abilities learned.</p>}
                       </div>
                   </div>
                   <div>
-                      <h3 className="text-lg font-semibold mb-2 text-secondary">Passive Abilities</h3>
+                      <h3 className="text-lg sm:text-xl font-semibold mb-2 text-secondary">Passive Abilities</h3>
                        <div className="space-y-2">
                         {passiveAbilities.length > 0 ? passiveAbilities.map(ability => (
                             <AbilityDisplay key={ability.id} ability={ability} characterId={character.id} isPassive={true} isActive={character.activePassives.includes(ability.id)} />
-                        )) : <p className="text-on-background/70">No passive abilities learned.</p>}
+                        )) : <p className="text-on-background/70 text-sm sm:text-base">No passive abilities learned.</p>}
                       </div>
                   </div>
               </div>
           </Card>
           <Card>
-              <h2 className="text-xl font-bold mb-4 text-primary">Party</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Party</h2>
               {character.party.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {character.party.map((member: Adventurer) => (
                         <div key={member.id} className="bg-surface-2 p-3 rounded-lg">
-                            <p className="font-bold text-on-surface">{member.name}</p>
+                            <p className="font-bold text-on-surface text-base sm:text-lg">{member.name}</p>
                             <p className={`text-sm ${CLASSES[member.class].color}`}>Lvl {member.level} {CLASSES[member.class].name}</p>
                             <AdventurerEquipmentDisplay adventurer={member} />
                         </div>
                     ))}
                 </div>
               ) : (
-                <p className="text-on-background/70 text-center py-4">Your party is empty. Visit the Tavern to recruit members.</p>
+                <p className="text-on-background/70 text-center py-4 text-sm sm:text-base">Your party is empty. Visit the Tavern to recruit members.</p>
               )}
           </Card>
           <Card>
-              <h2 className="text-xl font-bold mb-4 text-primary">Equipment</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Equipment</h2>
               <EquipmentDisplay items={character.equipment} />
           </Card>
         </div>
       </div>
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <Card>
-            <h2 className="text-xl font-bold mb-2 text-red-500">Danger Zone</h2>
-            <p className="text-on-background/80 mb-4">Start over from the very beginning. This will wipe all saved data.</p>
+            <h2 className="text-xl sm:text-2xl font-bold mb-2 text-red-500">Danger Zone</h2>
+            <p className="text-on-background/80 mb-3 sm:mb-4">Start over from the very beginning. This will wipe all saved data.</p>
             <Button
                 className="w-full bg-red-600 hover:bg-red-700 text-on-primary focus:ring-red-500"
                 onClick={() => setResetModalOpen(true)}

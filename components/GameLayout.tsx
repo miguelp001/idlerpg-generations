@@ -24,14 +24,14 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ label, tabName, activeTab,
     <button
         title={label}
         onClick={() => onClick(tabName)}
-        className={`flex-1 md:w-full flex flex-col items-center justify-center md:flex-row md:justify-start p-1 md:px-4 md:py-3 text-center md:text-left text-xs md:text-base font-semibold transition-colors duration-200 h-full md:h-auto ${
+        className={`flex-1 md:w-full flex flex-col items-center justify-center p-1 md:px-4 md:py-3 text-center md:text-left text-xs md:text-base font-semibold transition-colors duration-200 h-full md:h-auto ${
             activeTab === tabName 
             ? 'text-primary bg-primary/10 border-t-2 md:border-t-0 md:border-r-4 border-primary' 
             : 'text-on-background/70 hover:bg-surface-2 hover:text-on-surface border-t-2 md:border-t-0 md:border-r-4 border-transparent'
         }`}
     >
         {icon}
-        <span className="mt-1 md:mt-0 md:ml-3">{label}</span>
+        <span className="mt-1 md:mt-0 md:ml-3 hidden lg:inline">{label}</span>
     </button>
 ));
 

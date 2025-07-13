@@ -119,16 +119,16 @@ const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, onAction, actionLa
     const affinityTitle = hasLowAffinity ? `Ineffective for your class (${Math.round((1 - affinity) * 100)}% penalty)` : undefined;
 
     return (
-        <div className="bg-surface-2 p-3 rounded-lg flex flex-col justify-between h-full">
+        <div className="bg-surface-2 p-2 rounded-lg flex flex-col justify-between h-full text-xs sm:text-sm">
             <div>
                 <p className={`font-bold ${RARITY_COLORS[item.rarity]} ${item.isHeirloom ? 'underline decoration-secondary' : ''} ${hasLowAffinity ? 'text-on-background/60' : ''}`} title={affinityTitle}>
                     {item.name} {hasLowAffinity && <ExclamationTriangleIcon />}
                 </p>
-                {item.setId && <p className="text-sm text-purple-400">{SETS[item.setId].name}</p>}
-                <p className="text-sm capitalize text-on-background/70">
+                {item.setId && <p className="text-xs text-purple-400">{SETS[item.setId].name}</p>}
+                <p className="text-xs capitalize text-on-background/70">
                     {item.slot} {item.upgradeLevel > 0 && <span className="text-secondary">(+{item.upgradeLevel})</span>}
                 </p>
-                <div className="text-sm mt-2 space-y-1">
+                <div className="text-xs mt-1 space-y-0.5">
                     {Object.entries(item.stats).map(([stat, value]) => (
                         <p key={stat} className="text-green-400">
                             +{Math.round(value * affinity)} <span className="capitalize text-on-background/70">{stat}</span>
@@ -136,20 +136,20 @@ const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, onAction, actionLa
                     ))}
                 </div>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-1">
-                <Button onClick={onUpgrade} variant="secondary" className="col-span-2 text-xs py-1" disabled={!canAffordUpgrade || !!item.isHeirloom} title={item.isHeirloom ? "Heirlooms cannot be upgraded" : ""}>
+            <div className="mt-2 flex flex-wrap gap-1">
+                <Button onClick={onUpgrade} variant="secondary" className="flex-1 text-xs py-1 min-w-[48%]" disabled={!canAffordUpgrade || !!item.isHeirloom} title={item.isHeirloom ? "Heirlooms cannot be upgraded" : ""}>
                     {item.isHeirloom ? "Heirloom" : `Upgrade (${upgradeCost}G)`}
                 </Button>
-                 <Button onClick={onAction} variant="ghost" className="text-xs py-1">
+                 <Button onClick={onAction} variant="ghost" className="flex-1 text-xs py-1 min-w-[48%] ">
                     {actionLabel}
                 </Button>
                 {onGive && (
-                    <Button onClick={onGive} variant="ghost" className="text-xs py-1 text-green-400 hover:bg-green-900/50">
+                    <Button onClick={onGive} variant="ghost" className="flex-1 text-xs py-1 text-green-400 hover:bg-green-900/50 min-w-full">
                         Give
                     </Button>
                 )}
                 {onSell && sellPrice !== undefined && (
-                    <Button onClick={onSell} variant="ghost" className="text-xs py-1 text-red-400 hover:bg-red-900/50 col-span-2" disabled={!!item.isHeirloom} title={item.isHeirloom ? "Priceless heirlooms cannot be sold" : `Sell for ${sellPrice}G`}>
+                    <Button onClick={onSell} variant="ghost" className="flex-1 text-xs py-1 text-red-400 hover:bg-red-900/50 min-w-full" disabled={!!item.isHeirloom} title={item.isHeirloom ? "Priceless heirlooms cannot be sold" : `Sell for ${sellPrice}G`}>
                         {item.isHeirloom ? "Priceless" : `Sell (${sellPrice}G)`}
                     </Button>
                 )}
@@ -168,11 +168,11 @@ interface EquipmentSlotDisplayProps {
 }
 
 const EquipmentSlotDisplay: React.FC<EquipmentSlotDisplayProps> = React.memo(({ slot, item, onUnequip, onUpgrade, character, slotIndex }) => (
-    <Card className="h-56 flex flex-col justify-between">
-        <h3 className="text-lg font-semibold capitalize text-primary text-center border-b border-surface-2 pb-2">
+    <Card className="h-48 sm:h-56 flex flex-col justify-between p-2">
+        <h3 className="text-md sm:text-lg font-semibold capitalize text-primary text-center border-b border-surface-2 pb-1 sm:pb-2">
             {slot === 'accessory' && slotIndex !== undefined ? `Accessory ${slotIndex + 1}` : slot}
         </h3>
-        <div className="flex-grow flex items-center justify-center p-2">
+        <div className="flex-grow flex items-center justify-center p-1 sm:p-2">
             {item ? (
                 <ItemCard
                     item={item}
@@ -184,7 +184,7 @@ const EquipmentSlotDisplay: React.FC<EquipmentSlotDisplayProps> = React.memo(({ 
                     characterClass={character.class}
                 />
             ) : (
-                <p className="text-on-background/50">Empty</p>
+                <p className="text-on-background/50 text-sm sm:text-base">Empty</p>
             )}
         </div>
     </Card>
@@ -352,8 +352,8 @@ const Inventory: React.FC = () => {
             )}
 
             <div>
-                <h1 className="text-4xl font-bold mb-6 text-primary" style={{ fontFamily: "'Orbitron', sans-serif" }}>Equipment</h1>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <h1 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-6 text-primary" style={{ fontFamily: "'Orbitron', sans-serif" }}>Equipment</h1>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
                     <EquipmentSlotDisplay slot="weapon" item={equippedWeapon} onUnequip={handleUnequip} onUpgrade={handleUpgrade} character={activeCharacter} />
                     <EquipmentSlotDisplay slot="armor" item={equippedArmor} onUnequip={handleUnequip} onUpgrade={handleUpgrade} character={activeCharacter} />
                     <EquipmentSlotDisplay slot="accessory" item={activeCharacter.accessorySlots[0] || undefined} onUnequip={handleUnequip} onUpgrade={handleUpgrade} character={activeCharacter} slotIndex={0} />
@@ -362,17 +362,17 @@ const Inventory: React.FC = () => {
             </div>
 
             <div>
-                <h1 className="text-4xl font-bold mb-6 text-primary" style={{ fontFamily: "'Orbitron', sans-serif" }}>Inventory ({activeCharacter.gold.toLocaleString()} G)</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-6 text-primary" style={{ fontFamily: "'Orbitron', sans-serif" }}>Inventory ({activeCharacter.gold.toLocaleString()} G)</h1>
                 <Card>
                     {activeCharacter.inventory.length === 0 ? (
                         <p className="text-center p-8 text-on-background/70">Your bags are empty. Go find some loot!</p>
                     ) : (
-                        <div className="space-y-6">
+                        <div className="space-y-4 sm:space-y-6">
                             {Object.entries(groupedInventory).map(([slot, items]) => (
                                 items.length > 0 && (
                                     <div key={slot}>
-                                        <h2 className="text-2xl font-bold mb-3 capitalize text-secondary">{slot}s</h2>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 capitalize text-secondary">{slot}s</h2>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                             {items.sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity)).map(item => {
                                                 const upgradeCost = UPGRADE_COST(item);
                                                 const sellPrice = SELL_PRICE(item);
@@ -403,7 +403,7 @@ const Inventory: React.FC = () => {
             
             <div>
                 <Card>
-                    <h2 className="text-2xl font-bold mb-4 text-primary">Bulk Sell</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Bulk Sell</h2>
                     <p className="text-on-background/80 mb-4">Quickly sell all non-heirloom items up to a chosen rarity.</p>
                     <div className="flex flex-wrap items-center gap-4 p-2 bg-surface-2 rounded-lg">
                         <label htmlFor="rarity-select" className="font-semibold text-on-surface">Sell items of rarity:</label>
