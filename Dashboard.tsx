@@ -10,6 +10,7 @@ import SocialView from './components/SocialView';
 import GuildView from './components/GuildView';
 import QuestView from './components/QuestView';
 import AchievementsView from './components/AchievementsView';
+import { EndlessDungeonView } from './components/EndlessDungeonView';
 import TutorialModal from './components/TutorialModal'; // Import the new TutorialModal
 import { useGame } from './context/GameContext';
 
@@ -46,6 +47,8 @@ const Dashboard: React.FC = () => {
         return state.dungeonState.status === 'idle' 
             ? <DungeonList /> 
             : <DungeonView />;
+      case 'endless':
+        return <EndlessDungeonView />;
       case 'social':
         return <SocialView />;
       case 'guild':

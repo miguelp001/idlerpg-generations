@@ -166,6 +166,7 @@ export interface Character {
   partnerId?: string;
   unlockedAchievements: string[];
   equippedTitle: string | null;
+  endlessDungeonProgress: number; // Highest floor reached in endless dungeons
   // Transient combat state
   currentHealth?: number;
   currentMana?: number;
@@ -296,6 +297,7 @@ export type Action =
   | { type: 'SET_ACTIVE_CHARACTER'; payload: string }
   | { type: 'UPDATE_CHARACTER'; payload: Partial<Character> & { id: string } }
   | { type: 'START_DUNGEON'; payload: { dungeonId: string } }
+  | { type: 'START_ENDLESS_DUNGEON'; payload: { characterId: string; floor: number } }
   | { type: 'DO_COMBAT_TURN' }
   | { type: 'LEAVE_DUNGEON' }
   | { type: 'EQUIP_ITEM'; payload: { characterId: string; itemId: string; } }

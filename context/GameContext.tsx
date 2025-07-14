@@ -172,6 +172,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             unlockedAchievements: c.unlockedAchievements || [],
             equippedTitle: c.equippedTitle || null,
             accessorySlots: c.accessorySlots || [null, null], // Initialize accessory slots
+            endlessDungeonProgress: c.endlessDungeonProgress || 1, // Initialize endless dungeon progress
         }));
         
         const activeChar = loadedState.characters.find(c => c.id === loadedState.activeCharacterId);
@@ -344,6 +345,52 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 currentMonsterHealth: firstMonster.stats.health,
                 currentMonsterIndex: 0,
                 combatLog: [{ id: uuidv4(), type: 'info', message: `You have entered the ${dungeon.name}.`, actor: 'system' }],
+            },
+        };
+    }
+    case 'START_ENDLESS_DUNGEON': {
+        const { characterId, floor } = action.payload;
+        const activeCharacter = state.characters.find(c => c.id === characterId);
+        if (!activeCharacter) return state;
+
+        // For now, we'll create a placeholder endless dungeon that uses the existing dungeon system
+        // In a full implementation, you'd want to extend the dungeon system to handle procedural dungeons
+        const placeholderDungeon = {
+            id: `endless_floor_${floor}`,
+            name: `Endless Dungeon - Floor ${floor}`,
+            description: `A procedurally generated floor ${floor}`,
+            levelRequirement: Math.max(1, floor),
+            monsters: ['giant_rat'], // Placeholder - would be generated procedurally
+            boss: 'giant_rat', // Placeholder - would be generated procedurally
+            lootTable: ['worn_sword'] // Placeholder - would be generated procedurally
+        };
+
+        const firstMonsterId = placeholderDungeon.monsters[0];
+        const firstMonster = ALL_MONSTERS[firstMonsterId];
+
+        const refreshedParty = activeCharacter.party.map(p => ({
+            ...p,
+            currentHealth: p.stats.health,
+            currentMana: p.stats.mana,
+        }));
+        const updatedCharacter = {
+            ...activeCharacter,
+            currentHealth: activeCharacter.maxStats.health,
+            currentMana: activeCharacter.maxStats.mana,
+            party: refreshedParty
+        };
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+            dungeonState: {
+                ...initialDungeonState,
+                status: 'fighting',
+                dungeonId: placeholderDungeon.id,
+                monsterId: firstMonster.id,
+                currentMonsterHealth: firstMonster.stats.health,
+                currentMonsterIndex: 0,
+                combatLog: [{ id: uuidv4(), type: 'info', message: `You have entered ${placeholderDungeon.name}.`, actor: 'system' }],
             },
         };
     }
