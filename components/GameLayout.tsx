@@ -64,7 +64,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChang
       { label: 'Inventory', tabName: 'inventory', icon: <BackpackIcon/>, condition: (char?: Character | null) => true },
       { label: 'Quests', tabName: 'quests', icon: <BookOpenIcon/>, condition: (char?: Character | null) => true },
       { label: 'Dungeon', tabName: 'dungeon', icon: <MapIcon/>, condition: (char?: Character | null) => true },
-      { label: 'Endless', tabName: 'endless', icon: <MapIcon/>, condition: (char?: Character | null) => !!char && char.level >= 10 },
+      { label: 'Endless', tabName: 'endless', icon: <MapIcon/>, condition: (char?: Character | null) => !!char && char.level >= 1 },
       { label: 'Social', tabName: 'social', icon: <UserGroupIcon/>, condition: (char?: Character | null) => !!char && char.level >= 1 },
       { label: 'Guild', tabName: 'guild', icon: <ShieldCheckIcon />, condition: (char?: Character | null) => !!char && char.level >= 20 },
       { label: 'Achievements', tabName: 'achievements', icon: <TrophyIcon />, condition: (char?: Character | null) => true },

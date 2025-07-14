@@ -217,17 +217,18 @@ export type DungeonStatus = 'idle' | 'fighting' | 'victory' | 'defeat';
 export type RaidStatus = 'idle' | 'fighting' | 'victory' | 'defeat';
 
 export interface DungeonState {
-  status: DungeonStatus;
-  dungeonId: string | null;
-  monsterId: string | null;
-  currentMonsterHealth: number | null;
-  currentMonsterIndex: number;
-  combatLog: CombatLogEntry[];
-  xpGained: number;
-  goldGained: number;
-  lootFound: Equipment[];
-  turnCount: number;
-  cooldowns: Record<string, number>; // key: charId-abilityId, value: turn available
+    status: DungeonStatus;
+    dungeonId: string | null;
+    monsterId: string | null;
+    currentMonsterHealth: number | null;
+    currentMonsterIndex: number;
+    combatLog: CombatLogEntry[];
+    xpGained: number;
+    goldGained: number;
+    lootFound: Equipment[];
+    turnCount: number;
+    cooldowns: Record<string, number>;
+    proceduralDungeonData?: any; // Store the generated procedural dungeon data
 }
 
 export interface RaidState {

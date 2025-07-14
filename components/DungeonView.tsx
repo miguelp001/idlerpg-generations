@@ -1,9 +1,9 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { CLASSES, RARITY_COLORS } from '../constants';
 import { ALL_MONSTERS } from '../data/monsters';
 import { DUNGEONS } from '../data/dungeons';
+import { generateProceduralDungeon } from '../services/proceduralDungeonService';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import ProgressBar from './ui/ProgressBar';
@@ -64,7 +64,7 @@ const CombatLog: React.FC = () => {
                 break;
             default:
                 info.color = 'text-on-background/70';
-                info.icon = null;
+                info.icon = <SwordIcon />;
                 break;
         }
         return info;
@@ -96,7 +96,7 @@ const FleeConfirmationModal: React.FC<{
                 Are you sure you want to flee? You will forfeit all experience, gold, and loot gathered during this run.
             </p>
             <div className="mt-6 flex justify-end space-x-4">
-                <Button variant="ghost" onClick={onCancel}>Stay and Fight</Button>
+                <Button variant="void" onClick={onCancel}>Stay and Fight</Button>
                 <Button 
                     onClick={onConfirm}
                     className="bg-red-600 hover:bg-red-700 text-on-primary focus:ring-red-500"
@@ -115,7 +115,29 @@ const DungeonView: React.FC = () => {
     const combatIntervalRef = useRef<number | null>(null);
     const [isFleeing, setIsFleeing] = useState(false);
 
-    const dungeon = dungeonState.dungeonId ? DUNGEONS.find(d => d.id === dungeonState.dungeonId) : null;
+    // Try to find dungeon in regular dungeons first, then generate procedural if not found
+    let dungeon = dungeonState.dungeonId ? DUNGEONS.find(d => d.id === dungeonState.dungeonId) : null;
+    console.log('DungeonView - dungeonId:', dungeonState.dungeonId, 'found in DUNGEONS:', !!dungeon);
+    
+    // If not found in regular dungeons, it might be a procedural dungeon
+    if (!dungeon && dungeonState.dungeonId && activeCharacter) {
+        console.log('Attempting to generate procedural dungeon for ID:', dungeonState.dungeonId);
+        try {
+            // Extract floor number from dungeon ID (format: procedural_1_forest_1752528762253)
+            const floorMatch = dungeonState.dungeonId.match(/procedural_(\d+)_/);
+            if (floorMatch) {
+                const floor = parseInt(floorMatch[1]);
+                console.log('Generating procedural dungeon for floor:', floor);
+                dungeon = generateProceduralDungeon(floor, activeCharacter.level);
+                console.log('Generated dungeon:', dungeon);
+            } else {
+                console.log('No floor match found for dungeon ID:', dungeonState.dungeonId);
+            }
+        } catch (error) {
+            console.error('Failed to generate procedural dungeon for view:', error);
+        }
+    }
+    
     const monster = dungeonState.monsterId ? ALL_MONSTERS[dungeonState.monsterId] : null;
     
     useEffect(() => {
@@ -160,7 +182,10 @@ const DungeonView: React.FC = () => {
         setIsFleeing(false);
     };
 
-    if (!dungeon || !activeCharacter) return <div>Error: Dungeon or character not found.</div>;
+    if (!dungeon || !activeCharacter) {
+        console.log('DungeonView error - dungeon:', !!dungeon, 'activeCharacter:', !!activeCharacter);
+        return <div>Error: Dungeon or character not found.</div>;
+    }
 
     const renderFightingView = () => {
         const partyWithPlayer = [activeCharacter, ...activeCharacter.party];
@@ -250,7 +275,7 @@ const DungeonView: React.FC = () => {
             {dungeonState.status === 'fighting' && (
                 <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
                     <Button 
-                        variant="ghost" 
+                        variant="void" 
                         className="border-yellow-500 text-yellow-400 hover:bg-yellow-900/50" 
                         onClick={() => setIsFleeing(true)}
                     >

@@ -1,7 +1,5 @@
 import { Dungeon, Monster, Equipment } from '../types';
 import { MONSTERS, RAID_BOSSES } from '../data/monsters';
-import { generateScaledMonster } from './monsterScalingService';
-import { generateProceduralLoot } from './lootGenerationService';
 
 export interface ProceduralDungeon extends Omit<Dungeon, 'id' | 'name' | 'description'> {
     id: string;
@@ -45,7 +43,7 @@ const BIOME_CONFIGS: Record<DungeonBiome, BiomeConfig> = {
         name: 'Subterranean',
         description: 'Dark tunnels echoing with the sounds of lurking creatures',
         monsterTypes: ['giant_rat', 'cave_bat', 'kobold_miner', 'giant_scorpion', 'basilisk'],
-        bossTypes: ['basilisk', 'giant_scorpion', 'owlbear'],
+        bossTypes: ['basilisk', 'giant_scorpion', 'minotaur'],
         themes: ['Cavern', 'Depths', 'Tunnel', 'Grotto', 'Chasm']
     },
     undead: {
@@ -72,15 +70,15 @@ const BIOME_CONFIGS: Record<DungeonBiome, BiomeConfig> = {
     celestial: {
         name: 'Divine',
         description: 'Sacred halls where celestial beings test mortal worth',
-        monsterTypes: ['harpy', 'centaur_archer'], // Limited celestial monsters in current set
+        monsterTypes: ['harpy', 'centaur_archer'],
         bossTypes: ['harpy', 'centaur_archer'],
         themes: ['Sanctum', 'Temple', 'Shrine', 'Cathedral', 'Ascension']
     },
     void: {
         name: 'Void-touched',
         description: 'Reality warps and bends in this space between worlds',
-        monsterTypes: ['spectre', 'wraith', 'lich_acolyte'],
-        bossTypes: ['wraith', 'lich_acolyte'],
+        monsterTypes: ['spectre', 'wraith', 'lich_acolyte', 'vampire_spawn'],
+        bossTypes: ['wraith', 'lich_acolyte', 'vampire_spawn'],
         themes: ['Rift', 'Nexus', 'Anomaly', 'Distortion', 'Breach']
     },
     draconic: {
@@ -112,15 +110,14 @@ export function generateProceduralDungeon(floor: number, targetLevel: number): P
     const difficulty = calculateDifficulty(floor, targetLevel);
     
     // Generate monster composition
-    const monsterCount = 4 + Math.floor(floor / 10); // More monsters on deeper floors
+    const monsterCount = Math.min(6, 3 + Math.floor(floor / 10)); // More monsters on deeper floors, max 6
     const monsters = generateMonsterList(biomeConfig.monsterTypes, monsterCount, targetLevel, difficulty);
     
-    // Select and scale boss
+    // Select boss
     const bossId = biomeConfig.bossTypes[Math.floor(Math.random() * biomeConfig.bossTypes.length)];
-    const scaledBoss = generateScaledMonster(bossId, targetLevel, difficulty * 1.5); // Bosses are stronger
     
-    // Generate loot table
-    const lootTable = generateProceduralLoot(targetLevel, difficulty, floor);
+    // Generate basic loot table using existing item IDs
+    const lootTable = generateBasicLootTable(targetLevel, floor);
     
     // Generate dungeon name and description
     const theme = biomeConfig.themes[Math.floor(Math.random() * biomeConfig.themes.length)];
@@ -133,7 +130,7 @@ export function generateProceduralDungeon(floor: number, targetLevel: number): P
         description,
         levelRequirement: targetLevel,
         monsters,
-        boss: scaledBoss.id,
+        boss: bossId,
         lootTable,
         floor,
         biome,
@@ -142,15 +139,75 @@ export function generateProceduralDungeon(floor: number, targetLevel: number): P
     };
 }
 
+export function generateConsistentProceduralDungeon(floor: number, biome: DungeonBiome, targetLevel: number, dungeonId: string): ProceduralDungeon {
+    const biomeConfig = BIOME_CONFIGS[biome];
+    const difficulty = calculateDifficulty(floor, targetLevel);
+    
+    // Use a simple hash of the dungeon ID to create deterministic randomness
+    const seed = hashString(dungeonId);
+    
+    // Generate monster composition deterministically
+    const monsterCount = Math.min(6, 3 + Math.floor(floor / 10)); // More monsters on deeper floors, max 6
+    const monsters = generateDeterministicMonsterList(biomeConfig.monsterTypes, monsterCount, seed);
+    
+    // Select boss deterministically
+    const bossIndex = seed % biomeConfig.bossTypes.length;
+    const bossId = biomeConfig.bossTypes[bossIndex];
+    
+    // Generate deterministic loot table using existing item IDs
+    const lootTable = generateDeterministicLootTable(targetLevel, floor, seed);
+    
+    // Generate dungeon name and description deterministically
+    const themeIndex = Math.floor(seed / 100) % biomeConfig.themes.length;
+    const theme = biomeConfig.themes[themeIndex];
+    const name = `${biomeConfig.name} ${theme} - Floor ${floor}`;
+    const description = `${biomeConfig.description}. Danger level: ${Math.round(difficulty * 100)}%`;
+    
+    return {
+        id: dungeonId,
+        name,
+        description,
+        levelRequirement: targetLevel,
+        monsters,
+        boss: bossId,
+        lootTable,
+        floor,
+        biome,
+        difficulty,
+        isEndless: true
+    };
+}
+
+// Simple hash function to create deterministic randomness from a string
+function hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+}
+
+// Generate monster list deterministically based on seed
+function generateDeterministicMonsterList(monsterTypes: string[], count: number, seed: number): string[] {
+    const monsters: string[] = [];
+    
+    for (let i = 0; i < count; i++) {
+        const index = (seed + i * 17) % monsterTypes.length; // Use different multiplier for each position
+        monsters.push(monsterTypes[index]);
+    }
+    
+    return monsters;
+}
+
 function selectBiome(floor: number): DungeonBiome {
     const biomes: DungeonBiome[] = ['forest', 'cave', 'undead', 'elemental', 'demonic', 'celestial', 'void', 'draconic', 'giant', 'construct'];
     
-    // Cycle through biomes with some randomness
-    const baseIndex = Math.floor(floor / 5) % biomes.length;
-    const randomOffset = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-    const finalIndex = Math.max(0, Math.min(biomes.length - 1, baseIndex + randomOffset));
+    // Cycle through biomes consistently every 5 floors
+    const index = Math.floor(floor / 5) % biomes.length;
     
-    return biomes[finalIndex];
+    return biomes[index];
 }
 
 function calculateDifficulty(floor: number, targetLevel: number): number {
@@ -168,8 +225,8 @@ function generateMonsterList(monsterTypes: string[], count: number, targetLevel:
     
     for (let i = 0; i < count; i++) {
         const randomMonster = monsterTypes[Math.floor(Math.random() * monsterTypes.length)];
-        const scaledMonster = generateScaledMonster(randomMonster, targetLevel, difficulty);
-        monsters.push(scaledMonster.id);
+        // For now, just use the base monster ID - scaling will be handled during combat
+        monsters.push(randomMonster);
     }
     
     return monsters;
@@ -184,4 +241,42 @@ export function getEndlessDungeonProgress(characterId: string): number {
 export function setEndlessDungeonProgress(characterId: string, floor: number): void {
     // This would update the character's endless dungeon progress
     // Implementation would depend on how we want to store this data
+}
+
+function generateBasicLootTable(targetLevel: number, floor: number): string[] {
+    // Basic loot table using existing item IDs from the game
+    const basicItems = [
+        'worn_sword', 'iron_sword', 'steel_sword', 'enchanted_blade',
+        'tattered_tunic', 'leather_armor', 'chain_mail', 'plate_armor',
+        'simple_pendant', 'silver_ring', 'magic_amulet', 'plain_ring'
+    ];
+    
+    const lootCount = Math.min(4, 2 + Math.floor(floor / 15)); // More loot on deeper floors
+    const lootTable: string[] = [];
+    
+    for (let i = 0; i < lootCount; i++) {
+        const randomItem = basicItems[Math.floor(Math.random() * basicItems.length)];
+        lootTable.push(randomItem);
+    }
+    
+    return lootTable;
+}
+
+function generateDeterministicLootTable(targetLevel: number, floor: number, seed: number): string[] {
+    // Basic loot table using existing item IDs from the game
+    const basicItems = [
+        'worn_sword', 'iron_sword', 'steel_sword', 'enchanted_blade',
+        'tattered_tunic', 'leather_armor', 'chain_mail', 'plate_armor',
+        'simple_pendant', 'silver_ring', 'magic_amulet', 'plain_ring'
+    ];
+    
+    const lootCount = Math.min(4, 2 + Math.floor(floor / 15)); // More loot on deeper floors
+    const lootTable: string[] = [];
+    
+    for (let i = 0; i < lootCount; i++) {
+        const index = (seed + i * 23) % basicItems.length; // Use different multiplier for each position
+        lootTable.push(basicItems[index]);
+    }
+    
+    return lootTable;
 }

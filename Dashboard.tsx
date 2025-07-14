@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import CharacterSheet from './components/CharacterSheet';
 import GameLayout from './components/GameLayout';
 import DungeonList from './components/DungeonList';
@@ -15,8 +15,19 @@ import TutorialModal from './components/TutorialModal'; // Import the new Tutori
 import { useGame } from './context/GameContext';
 
 const Dashboard: React.FC = () => {
+  console.log('Dashboard component rendering...');
   const [activeTab, setActiveTab] = useState('character');
+  console.log('Dashboard initial activeTab:', activeTab);
   const { state, dispatch } = useGame(); // Destructure dispatch from useGame
+  
+  const handleTabChange = useCallback((tab: string) => {
+    console.log('Dashboard handleTabChange called with:', tab);
+    setActiveTab(tab);
+  }, []);
+
+  useEffect(() => {
+    console.log('Dashboard activeTab changed to:', activeTab);
+  }, [activeTab]);
 
   const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId);
 
@@ -36,34 +47,49 @@ const Dashboard: React.FC = () => {
   }
 
   const renderContent = () => {
+    console.log('Dashboard renderContent - activeTab:', activeTab);
+    console.log('About to switch on activeTab:', activeTab, typeof activeTab);
+    
     switch (activeTab) {
       case 'character':
+        console.log('Rendering CharacterSheet');
         return <CharacterSheet />;
       case 'inventory':
+        console.log('Rendering Inventory');
         return <Inventory />;
       case 'quests':
+        console.log('Rendering QuestView');
         return <QuestView />;
       case 'dungeon':
+        console.log('Rendering Dungeon');
         return state.dungeonState.status === 'idle' 
             ? <DungeonList /> 
             : <DungeonView />;
       case 'endless':
+        console.log('Rendering EndlessDungeonView');
         return <EndlessDungeonView />;
       case 'social':
+        console.log('Rendering SocialView');
         return <SocialView />;
       case 'guild':
+        console.log('Rendering GuildView');
         return <GuildView />;
       case 'achievements':
+        console.log('Rendering AchievementsView');
         return <AchievementsView />;
       case 'family':
+        console.log('Rendering FamilyTree');
         return <FamilyTree />;
       default:
+        console.log('Rendering default CharacterSheet');
         return <CharacterSheet />;
     }
   };
   
+  console.log('Dashboard render - handleTabChange:', typeof handleTabChange, handleTabChange);
+  
   return (
-    <GameLayout onTabChange={setActiveTab} activeTab={activeTab}>
+    <GameLayout onTabChange={handleTabChange} activeTab={activeTab}>
       <div className="animate-fade-in">
         {renderContent()}
       </div>

@@ -17,6 +17,7 @@ import { checkAllAchievements, checkKillAchievements } from '../services/achieve
 import { ACHIEVEMENTS } from '../data/achievements';
 import { OFFLINE_SOCIAL_EVENTS } from '../data/socialEvents';
 import { generateShopItems } from '../services/shopService'; // Import the new service
+import { generateProceduralDungeon, generateConsistentProceduralDungeon } from '../services/proceduralDungeonService';
 
 const SAVE_KEY = 'idleRpgSaveData';
 
@@ -32,6 +33,7 @@ const initialDungeonState: DungeonState = {
     lootFound: [],
     turnCount: 0,
     cooldowns: {},
+    proceduralDungeonData: undefined,
 };
 
 const initialRaidState: RaidState = {
@@ -154,7 +156,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case 'LOAD_STATE': {
         let loadedState = action.payload;
-        loadedState.dungeonState = initialDungeonState;
+        // Only reset dungeon state if not currently in a dungeon
+        if (!loadedState.dungeonState || loadedState.dungeonState.status === 'idle') {
+            loadedState.dungeonState = initialDungeonState;
+        }
         loadedState.raidState = initialRaidState;
         loadedState.pendingGeneration = null; 
         loadedState.isGrinding = false;
@@ -203,6 +208,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         equippedTitle: null,
         equipment: [], // Initialize equipment as empty
         accessorySlots: [null, null], // Initialize accessory slots as empty
+        endlessDungeonProgress: 1, // Initialize endless dungeon progress
       };
 
       // Equip starting gear
@@ -353,52 +359,72 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         const activeCharacter = state.characters.find(c => c.id === characterId);
         if (!activeCharacter) return state;
 
-        // For now, we'll create a placeholder endless dungeon that uses the existing dungeon system
-        // In a full implementation, you'd want to extend the dungeon system to handle procedural dungeons
-        const placeholderDungeon = {
-            id: `endless_floor_${floor}`,
-            name: `Endless Dungeon - Floor ${floor}`,
-            description: `A procedurally generated floor ${floor}`,
-            levelRequirement: Math.max(1, floor),
-            monsters: ['giant_rat'], // Placeholder - would be generated procedurally
-            boss: 'giant_rat', // Placeholder - would be generated procedurally
-            lootTable: ['worn_sword'] // Placeholder - would be generated procedurally
-        };
+        try {
+            const proceduralDungeon = generateProceduralDungeon(floor, activeCharacter.level);
+            
+            const firstMonsterId = proceduralDungeon.monsters[0];
+            const firstMonster = ALL_MONSTERS[firstMonsterId];
+            
+            if (!firstMonster) {
+                console.error(`Monster ${firstMonsterId} not found in ALL_MONSTERS`);
+                return state;
+            }
 
-        const firstMonsterId = placeholderDungeon.monsters[0];
-        const firstMonster = ALL_MONSTERS[firstMonsterId];
+            const refreshedParty = activeCharacter.party.map(p => ({
+                ...p,
+                currentHealth: p.stats.health,
+                currentMana: p.stats.mana,
+            }));
+            const updatedCharacter = {
+                ...activeCharacter,
+                currentHealth: activeCharacter.maxStats.health,
+                currentMana: activeCharacter.maxStats.mana,
+                party: refreshedParty
+            };
 
-        const refreshedParty = activeCharacter.party.map(p => ({
-            ...p,
-            currentHealth: p.stats.health,
-            currentMana: p.stats.mana,
-        }));
-        const updatedCharacter = {
-            ...activeCharacter,
-            currentHealth: activeCharacter.maxStats.health,
-            currentMana: activeCharacter.maxStats.mana,
-            party: refreshedParty
-        };
-
-        return {
-            ...state,
-            characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
-            dungeonState: {
-                ...initialDungeonState,
-                status: 'fighting',
-                dungeonId: placeholderDungeon.id,
-                monsterId: firstMonster.id,
-                currentMonsterHealth: firstMonster.stats.health,
-                currentMonsterIndex: 0,
-                combatLog: [{ id: uuidv4(), type: 'info', message: `You have entered ${placeholderDungeon.name}.`, actor: 'system' }],
-            },
-        };
+            return {
+                ...state,
+                characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+                dungeonState: {
+                    ...initialDungeonState,
+                    status: 'fighting',
+                    dungeonId: proceduralDungeon.id,
+                    monsterId: firstMonster.id,
+                    currentMonsterHealth: firstMonster.stats.health,
+                    currentMonsterIndex: 0,
+                    combatLog: [{ id: uuidv4(), type: 'info', message: `You have entered ${proceduralDungeon.name}.`, actor: 'system' }],
+                    proceduralDungeonData: proceduralDungeon,
+                },
+            };
+        } catch (error) {
+            console.error('Failed to generate procedural dungeon:', error);
+            return state;
+        }
     }
     case 'DO_COMBAT_TURN': {
         if (state.dungeonState.status !== 'fighting' || !state.activeCharacterId) return state;
         
         let activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
-        const dungeon = DUNGEONS.find(d => d.id === state.dungeonState.dungeonId)!;
+        
+        // Handle both regular dungeons and procedural dungeons
+        let dungeon;
+        const dungeonId = state.dungeonState.dungeonId;
+        if (dungeonId?.startsWith('procedural_')) {
+            // For procedural dungeons, we should have stored the dungeon data when we started
+            // If we don't have it stored, something went wrong, but we'll regenerate it consistently
+            if (state.dungeonState.proceduralDungeonData) {
+                dungeon = state.dungeonState.proceduralDungeonData;
+            } else {
+                // Fallback: Extract floor and biome from procedural dungeon ID format: "procedural_[floor]_[biome]_[timestamp]"
+                const parts = dungeonId.split('_');
+                const floor = parseInt(parts[1]);
+                const biome = parts[2] as import('../services/proceduralDungeonService').DungeonBiome;
+                dungeon = generateConsistentProceduralDungeon(floor, biome, activeCharacter.level, dungeonId);
+            }
+        } else {
+            dungeon = DUNGEONS.find(d => d.id === dungeonId);
+        }
+        
         const monster = state.dungeonState.monsterId ? ALL_MONSTERS[state.dungeonState.monsterId] : null;
 
         if (!activeCharacter || !dungeon || !monster) return state;
