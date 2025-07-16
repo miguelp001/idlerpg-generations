@@ -1,10 +1,9 @@
-import { Equipment, EquipmentRarity, CharacterClassType, GameStats } from '../types';
+import { Equipment } from '../types';
 import { ITEMS, ItemDefinition } from '../data/items'; // Import ItemDefinition
 import { v4 as uuidv4 } from 'uuid';
 import { RARITY_MULTIPLIER, SHOP_ITEM_BASE_PRICE, SHOP_ITEM_PRICE_MULTIPLIER } from '../constants';
 import { generateProceduralItem } from './lootGenerationService';
 
-const RARITY_POOL: EquipmentRarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
 const calculateItemPrice = (item: ItemDefinition): number => {
     const rarityMultiplier = RARITY_MULTIPLIER[item.rarity];

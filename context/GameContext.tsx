@@ -1,7 +1,7 @@
 
 
 import React, { createContext, useReducer, useEffect, useContext, ReactNode, useCallback, useMemo } from 'react';
-import { GameState, Action, Character, CombatLogEntry, Equipment, GameStats, Adventurer, Guild, PlayerQuest, PotentialHeir, Relationship, RelationshipStatus, SocialLogEntry, PersonalityTrait, CharacterClassType, DungeonState, RaidState, ParentInfo, DungeonStatus, RaidStatus, EquipmentRarity } from '../types';
+import { GameState, Action, Character, Equipment, GameStats, Adventurer, PlayerQuest, PotentialHeir, RelationshipStatus, DungeonState, RaidState, ParentInfo, DungeonStatus, RaidStatus } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateXpForLevel, CLASSES, UPGRADE_COST, RETIREMENT_LEVEL, REFRESH_TAVERN_COST, SHOP_REFRESH_COST, GUILD_CREATE_COST, GUILD_DONATION_GOLD, GUILD_DONATION_XP, GUILD_XP_TABLE, SELL_PRICE, PERSONALITY_TRAITS, RELATIONSHIP_THRESHOLDS, RARITY_ORDER } from '../constants';
 import { ITEMS } from '../data/items';
@@ -17,7 +17,7 @@ import { checkAllAchievements, checkKillAchievements } from '../services/achieve
 import { ACHIEVEMENTS } from '../data/achievements';
 import { OFFLINE_SOCIAL_EVENTS } from '../data/socialEvents';
 import { generateShopItems } from '../services/shopService'; // Import the new service
-import { generateProceduralDungeon, generateConsistentProceduralDungeon } from '../services/proceduralDungeonService';
+import { generateProceduralDungeon } from '../services/proceduralDungeonService';
 import { generateScaledMonster } from '../services/monsterScalingService';
 
 const SAVE_KEY = 'idleRpgSaveData';
@@ -59,6 +59,7 @@ const initialState: GameState = {
   settings: {
     volume: 0.5,
     autoSave: true,
+    endlessAutoProgress: true,
   },
   dungeonState: initialDungeonState,
   raidState: initialRaidState,
@@ -427,11 +428,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             if (state.dungeonState.proceduralDungeonData) {
                 dungeon = state.dungeonState.proceduralDungeonData;
             } else {
-                // Fallback: Extract floor and biome from procedural dungeon ID format: "procedural_[floor]_[biome]_[timestamp]"
+                // Fallback: Extract floor from procedural dungeon ID format: "procedural_[floor]_[biome]_[timestamp]"
                 const parts = dungeonId.split('_');
                 const floor = parseInt(parts[1]);
-                const biome = parts[2] as import('../services/proceduralDungeonService').DungeonBiome;
-                dungeon = generateConsistentProceduralDungeon(floor, biome, activeCharacter.level, dungeonId);
+                dungeon = generateProceduralDungeon(floor, activeCharacter.level);
             }
         } else {
             dungeon = DUNGEONS.find(d => d.id === dungeonId);
@@ -619,6 +619,100 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             message: `New floor unlocked! You can now access Floor ${currentFloor + 1}.`, 
                             actor: 'system' 
                         });
+                    }
+
+                    // Auto-progression logic for endless dungeons
+                    if (state.settings.endlessAutoProgress) {
+                        const nextFloor = currentFloor + 1;
+                        combatLogs.push({ 
+                            id: uuidv4(), 
+                            type: 'info', 
+                            message: `Auto-progressing to Floor ${nextFloor}...`, 
+                            actor: 'system' 
+                        });
+
+                        try {
+                            const nextProceduralDungeon = generateProceduralDungeon(nextFloor, updatedCharacter.level);
+                            const firstMonsterId = nextProceduralDungeon.monsters[0];
+                            let firstMonster = ALL_MONSTERS[firstMonsterId];
+                            
+                            if (!firstMonster) {
+                                console.error(`Monster ${firstMonsterId} not found in ALL_MONSTERS`);
+                                // Fall back to victory state if monster generation fails
+                                let newState = {
+                                    ...state,
+                                    characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+                                    dungeonState: {
+                                        ...state.dungeonState,
+                                        status: 'victory' as DungeonStatus,
+                                        xpGained: totalXp,
+                                        goldGained: newGoldGained,
+                                        lootFound,
+                                        combatLog: combatLogs,
+                                    }
+                                };
+                                return newState;
+                            }
+
+                            // Scale the first monster for the new floor
+                            const scaledFirstMonster = generateScaledMonster(
+                                firstMonsterId, 
+                                updatedCharacter.level, 
+                                nextProceduralDungeon.difficulty,
+                                nextProceduralDungeon.floor
+                            );
+                            ALL_MONSTERS[scaledFirstMonster.id] = scaledFirstMonster;
+                            firstMonster = scaledFirstMonster;
+
+                            combatLogs.push({ 
+                                id: uuidv4(), 
+                                type: 'info', 
+                                message: `You have entered ${nextProceduralDungeon.name}.`, 
+                                actor: 'system' 
+                            });
+                            combatLogs.push({ 
+                                id: uuidv4(), 
+                                type: 'info', 
+                                message: `A ${firstMonster.name} appears!`, 
+                                actor: 'system' 
+                            });
+
+                            // Continue fighting on the next floor instead of ending
+                            let newState = {
+                                ...state,
+                                characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+                                dungeonState: {
+                                    ...state.dungeonState,
+                                    status: 'fighting' as DungeonStatus,
+                                    dungeonId: nextProceduralDungeon.id,
+                                    monsterId: firstMonster.id,
+                                    currentMonsterHealth: firstMonster.stats.health,
+                                    currentMonsterIndex: 0,
+                                    xpGained: totalXp,
+                                    goldGained: newGoldGained,
+                                    lootFound,
+                                    combatLog: combatLogs,
+                                    proceduralDungeonData: nextProceduralDungeon,
+                                    cooldowns: {}, // Reset cooldowns for new floor
+                                    turnCount: 0, // Reset turn count for new floor
+                                }
+                            };
+
+                            const allNewlyUnlocked = checkAllAchievements(updatedCharacter, newState);
+                            if (allNewlyUnlocked.length > 0) {
+                                return gameReducer(newState, { type: 'ADD_ACHIEVEMENTS', payload: { characterId: updatedCharacter.id, achievementIds: allNewlyUnlocked } });
+                            }
+                            return newState;
+                        } catch (error) {
+                            console.error('Failed to generate next procedural dungeon for auto-progression:', error);
+                            combatLogs.push({ 
+                                id: uuidv4(), 
+                                type: 'info', 
+                                message: `Auto-progression failed. Dungeon completed.`, 
+                                actor: 'system' 
+                            });
+                            // Fall back to victory state
+                        }
                     }
                 }
 
@@ -1504,6 +1598,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             raidState: {
                 ...state.raidState,
                 status: 'fighting' as RaidStatus,
+            },
+        };
+    }
+    case 'UPDATE_SETTINGS': {
+        return {
+            ...state,
+            settings: {
+                ...state.settings,
+                ...action.payload,
             },
         };
     }

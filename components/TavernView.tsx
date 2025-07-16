@@ -30,7 +30,7 @@ const AdventurerCard: React.FC<{
             </div>
             <Button
                 onClick={() => onAction(adventurer.id)}
-                variant={action === 'recruit' ? 'primary' : 'ghost'}
+                variant={action === 'recruit' ? 'shadow' : 'void'}
                 className="w-full mt-4"
                 disabled={disabled}
             >

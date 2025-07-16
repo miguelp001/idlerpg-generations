@@ -68,7 +68,7 @@ const QuestCard: React.FC<{
                     </Button>
                 )}
                 {isCompleted && (
-                    <Button onClick={() => onTurnIn(quest.id)} variant="secondary" className="w-full">
+                    <Button onClick={() => onTurnIn(quest.id)} variant="bone" className="w-full">
                         Complete Quest
                     </Button>
                 )}

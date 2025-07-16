@@ -259,6 +259,7 @@ export interface WorldState {
 export interface GameSettings {
   volume: number;
   autoSave: boolean;
+  endlessAutoProgress: boolean;
 }
 
 export interface GameState {
@@ -333,4 +334,5 @@ export type Action =
   | { type: 'PAUSE_COMBAT' }
   | { type: 'RESUME_COMBAT' }
   | { type: 'PAUSE_RAID_COMBAT' }
-  | { type: 'RESUME_RAID_COMBAT' };
+  | { type: 'RESUME_RAID_COMBAT' }
+  | { type: 'UPDATE_SETTINGS'; payload: Partial<GameSettings> };

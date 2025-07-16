@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
-import { CLASSES, RARITY_COLORS } from '../constants';
+import { RARITY_COLORS } from '../constants';
 import { ALL_MONSTERS } from '../data/monsters';
 import { DUNGEONS } from '../data/dungeons';
 import { generateProceduralDungeon } from '../services/proceduralDungeonService';

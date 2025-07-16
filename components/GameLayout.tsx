@@ -46,7 +46,7 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ label, tabName, activeTab,
 
 
 const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChange }) => {
-  const { saveGame, activeCharacter, dispatch, state } = useGame(); // Destructure dispatch and state
+   const { saveGame, activeCharacter, dispatch } = useGame(); // Destructure dispatch and state
   const [showTutorial, setShowTutorial] = React.useState(false); // State for tutorial modal visibility
 
   const handleShowTutorial = () => {
@@ -60,14 +60,14 @@ const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChang
   
   const navItems = useMemo(() => {
     const allNavItems = [
-      { label: 'Character', tabName: 'character', icon: <UserIcon/>, condition: (char?: Character | null) => true },
-      { label: 'Inventory', tabName: 'inventory', icon: <BackpackIcon/>, condition: (char?: Character | null) => true },
-      { label: 'Quests', tabName: 'quests', icon: <BookOpenIcon/>, condition: (char?: Character | null) => true },
-      { label: 'Dungeon', tabName: 'dungeon', icon: <MapIcon/>, condition: (char?: Character | null) => true },
+      { label: 'Character', tabName: 'character', icon: <UserIcon/>, condition: () => true },
+      { label: 'Inventory', tabName: 'inventory', icon: <BackpackIcon/>, condition: () => true },
+      { label: 'Quests', tabName: 'quests', icon: <BookOpenIcon/>, condition: () => true },
+      { label: 'Dungeon', tabName: 'dungeon', icon: <MapIcon/>, condition: () => true },
       { label: 'Endless', tabName: 'endless', icon: <MapIcon/>, condition: (char?: Character | null) => !!char && char.level >= 1 },
       { label: 'Social', tabName: 'social', icon: <UserGroupIcon/>, condition: (char?: Character | null) => !!char && char.level >= 1 },
       { label: 'Guild', tabName: 'guild', icon: <ShieldCheckIcon />, condition: (char?: Character | null) => !!char && char.level >= 20 },
-      { label: 'Achievements', tabName: 'achievements', icon: <TrophyIcon />, condition: (char?: Character | null) => true },
+      { label: 'Achievements', tabName: 'achievements', icon: <TrophyIcon />, condition: () => true },
       { label: 'Family Tree', tabName: 'family', icon: <UsersIcon/>, condition: (char?: Character | null) => !!char && char.generation >= 2 },
     ];
     return allNavItems.filter(item => item.condition(activeCharacter));

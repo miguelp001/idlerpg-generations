@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Equipment, Adventurer, Ability, EquipmentSlot, GameStats, Character } from '../types';
+import { Equipment, Adventurer, Ability, EquipmentSlot, GameStats } from '../types';
 import { calculateXpForLevel, CLASSES, RARITY_COLORS, RETIREMENT_LEVEL, GUILD_XP_TABLE, PERSONALITY_TRAITS } from '../constants';
 import { SETS } from '../data/sets';
 import Card from './ui/Card';
@@ -63,8 +63,8 @@ const RetirementModal: React.FC<{ characterId: string, equipment: Equipment[], o
                 <EquipmentDisplay items={equipment} onSelect={setSelectedHeirloomId} selectedId={selectedHeirloomId} isSelectionMode={true}/>
                 
                 <div className="mt-6 flex justify-end space-x-4">
-                    <Button variant="ghost" onClick={onclose}>Cancel</Button>
-                    <Button variant="primary" onClick={handleConfirmRetirement} disabled={!selectedHeirloomId}>
+                    <Button variant="void" onClick={onclose}>Cancel</Button>
+                    <Button variant="shadow" onClick={handleConfirmRetirement} disabled={!selectedHeirloomId}>
                         Confirm Retirement
                     </Button>
                 </div>
@@ -225,7 +225,7 @@ const CharacterSheet: React.FC = () => {
                       <strong className="text-red-400"> This cannot be undone.</strong>
                   </p>
                   <div className="mt-4 sm:mt-6 flex justify-end space-x-2 sm:space-x-4">
-                      <Button variant="ghost" onClick={() => setResetModalOpen(false)}>Cancel</Button>
+                      <Button variant="void" onClick={() => setResetModalOpen(false)}>Cancel</Button>
                       <Button 
                           onClick={resetGame}
                           className="bg-red-600 hover:bg-red-700 text-on-primary focus:ring-red-500"
@@ -284,7 +284,7 @@ const CharacterSheet: React.FC = () => {
               <Card>
                   <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-2 text-primary">Legacy</h2>
                   <p className="text-sm sm:text-base text-on-background/80 mb-3 sm:mb-4">Your hero is ready to retire and pass on their legacy.</p>
-                  <Button variant="secondary" className="w-full" onClick={() => setRetireModalOpen(true)}>
+                  <Button variant="bone" className="w-full" onClick={() => setRetireModalOpen(true)}>
                       Retire Hero
                   </Button>
               </Card>

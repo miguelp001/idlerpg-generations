@@ -56,7 +56,7 @@ const AchievementsView: React.FC = () => {
                                 {isUnlocked ? (
                                     <Button
                                         className="w-full"
-                                        variant={isEquipped ? "secondary" : "primary"}
+                                        variant={isEquipped ? "bone" : "shadow"}
                                         onClick={() => handleEquipTitle(ach.title)}
                                     >
                                         {isEquipped ? "Title Equipped" : "Equip Title"}

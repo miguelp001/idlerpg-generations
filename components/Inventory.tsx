@@ -84,7 +84,7 @@ const GiftModal: React.FC<{
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                     {activeCharacter && activeCharacter.party.length > 0 ? (
                         activeCharacter.party.map(adventurer => (
-                            <Button key={adventurer.id} variant="ghost" className="w-full text-left justify-start" onClick={() => handleGiveItem(adventurer.id)}>
+                            <Button key={adventurer.id} variant="void" className="w-full text-left justify-start" onClick={() => handleGiveItem(adventurer.id)}>
                                 {adventurer.name}
                             </Button>
                         ))
@@ -93,7 +93,7 @@ const GiftModal: React.FC<{
                     )}
                 </div>
                 <div className="mt-6 flex justify-end">
-                    <Button variant="secondary" onClick={onClose}>Cancel</Button>
+                    <Button variant="bone" onClick={onClose}>Cancel</Button>
                 </div>
             </Card>
         </div>
@@ -137,19 +137,19 @@ const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, onAction, actionLa
                 </div>
             </div>
             <div className="mt-2 flex flex-wrap gap-1">
-                <Button onClick={onUpgrade} variant="secondary" className="flex-1 text-xs py-1 min-w-[48%]" disabled={!canAffordUpgrade || !!item.isHeirloom} title={item.isHeirloom ? "Heirlooms cannot be upgraded" : ""}>
+                <Button onClick={onUpgrade} variant="bone" className="flex-1 text-xs py-1 min-w-[48%]" disabled={!canAffordUpgrade || !!item.isHeirloom} title={item.isHeirloom ? "Heirlooms cannot be upgraded" : ""}>
                     {item.isHeirloom ? "Heirloom" : `Upgrade (${upgradeCost}G)`}
                 </Button>
-                 <Button onClick={onAction} variant="ghost" className="flex-1 text-xs py-1 min-w-[48%] ">
+                 <Button onClick={onAction} variant="void" className="flex-1 text-xs py-1 min-w-[48%] ">
                     {actionLabel}
                 </Button>
                 {onGive && (
-                    <Button onClick={onGive} variant="ghost" className="flex-1 text-xs py-1 text-green-400 hover:bg-green-900/50 min-w-full">
+                    <Button onClick={onGive} variant="void" className="flex-1 text-xs py-1 text-green-400 hover:bg-green-900/50 min-w-full">
                         Give
                     </Button>
                 )}
                 {onSell && sellPrice !== undefined && (
-                    <Button onClick={onSell} variant="ghost" className="flex-1 text-xs py-1 text-red-400 hover:bg-red-900/50 min-w-full" disabled={!!item.isHeirloom} title={item.isHeirloom ? "Priceless heirlooms cannot be sold" : `Sell for ${sellPrice}G`}>
+                    <Button onClick={onSell} variant="void" className="flex-1 text-xs py-1 text-red-400 hover:bg-red-900/50 min-w-full" disabled={!!item.isHeirloom} title={item.isHeirloom ? "Priceless heirlooms cannot be sold" : `Sell for ${sellPrice}G`}>
                         {item.isHeirloom ? "Priceless" : `Sell (${sellPrice}G)`}
                     </Button>
                 )}
@@ -204,7 +204,7 @@ const SellConfirmationModal: React.FC<{
                 <span className="text-yellow-400 font-bold">{SELL_PRICE(item)}G</span>?
             </p>
             <div className="mt-6 flex justify-end space-x-4">
-                <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+                <Button variant="void" onClick={onCancel}>Cancel</Button>
                 <Button 
                     onClick={onConfirm}
                     className="bg-red-600 hover:bg-red-700 text-on-primary focus:ring-red-500"
@@ -233,7 +233,7 @@ const SellAllConfirmationModal: React.FC<{
                 <strong className="text-yellow-400 font-bold">{goldValue.toLocaleString()}G</strong>?
             </p>
             <div className="mt-6 flex justify-end space-x-4">
-                <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+                <Button variant="void" onClick={onCancel}>Cancel</Button>
                 <Button 
                     onClick={onConfirm}
                     className="bg-red-600 hover:bg-red-700 text-on-primary focus:ring-red-500"

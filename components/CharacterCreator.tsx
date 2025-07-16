@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
-import { Character, CharacterClassType, Equipment, PotentialHeir, PersonalityTrait } from '../types';
+import { Character, CharacterClassType, PotentialHeir, PersonalityTrait } from '../types';
 import { CLASSES, RARITY_COLORS, PERSONALITY_TRAITS } from '../constants';
 import Card from './ui/Card';
 import Button from './ui/Button';
@@ -134,6 +134,7 @@ const CharacterCreator: React.FC = () => {
             stats: selectedHeir.baseStats,
             maxStats: selectedHeir.baseStats,
             equipment: [],
+            accessorySlots: [null, null],
             inventory: [],
             generation: (state.characters.find(c => c.id === state.pendingGeneration?.parentId)?.generation || 0) + 1,
             parentIds: [state.pendingGeneration.parentId],
@@ -149,6 +150,7 @@ const CharacterCreator: React.FC = () => {
             activePassives: [],
             unlockedAchievements: [],
             equippedTitle: null,
+            endlessDungeonProgress: 0,
             heir: selectedHeir,
         }
     } else {
@@ -162,6 +164,7 @@ const CharacterCreator: React.FC = () => {
           stats: classData.baseStats,
           maxStats: classData.baseStats,
           equipment: [],
+          accessorySlots: [null, null],
           inventory: [],
           generation: 1,
           parentIds: [],
@@ -177,6 +180,7 @@ const CharacterCreator: React.FC = () => {
           activePassives: [],
           unlockedAchievements: [],
           equippedTitle: null,
+          endlessDungeonProgress: 0,
         };
     }
 

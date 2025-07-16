@@ -29,7 +29,7 @@ const useAbility = (
     caster: Combatant,
     ability: Ability,
     target: Combatant | Monster,
-    allies: Combatant[],
+    _allies: Combatant[],
     logs: CombatLogEntry[]
 ): { damage: number; healing: number, selfHeal: number } => {
     let damage = 0;

@@ -1,5 +1,4 @@
-import { Equipment, EquipmentSlot, EquipmentRarity } from '../types';
-import { SELL_PRICE, RARITY_MULTIPLIER } from '../constants'; // Import SELL_PRICE and RARITY_MULTIPLIER
+import { Equipment } from '../types';
 
 export type ItemDefinition = Omit<Equipment, 'id' | 'baseId' | 'upgradeLevel' | 'baseName' | 'price'> & { levelRequirement?: number };
 

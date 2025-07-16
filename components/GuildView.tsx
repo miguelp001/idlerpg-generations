@@ -134,7 +134,7 @@ const ManageGuildView: React.FC = () => {
                                         Required Guild Level: 
                                         <span className={guild.level >= raid.guildLevelRequirement ? 'text-green-400' : 'text-red-400'}> {raid.guildLevelRequirement}</span>
                                     </p>
-                                    <Button onClick={() => handleStartRaid(raid.id)} disabled={isLocked} className="w-full">
+                                    <Button onClick={() => handleStartRaid(raid.id)} disabled={!!isLocked} className="w-full">
                                         {onCooldown ? 'Completed this week' : (canEnter ? 'Enter Raid' : 'Guild Level Too Low')}
                                     </Button>
                                 </Card>

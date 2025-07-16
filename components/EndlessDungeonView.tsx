@@ -4,7 +4,7 @@ import { Character } from '../types';
 import { useGame } from '../context/GameContext';
 import Card from './ui/Card';
 import Button from './ui/Button';
-import ProgressBar from './ui/ProgressBar';
+import Toggle from './ui/Toggle';
 
 export const EndlessDungeonView: React.FC = () => {
     const { state, dispatch } = useGame();
@@ -33,7 +33,7 @@ export const EndlessDungeonView: React.FC = () => {
         if (isInDungeon) return;
         
         try {
-            const proceduralDungeon = generateProceduralDungeon(selectedFloor, activeCharacter.level);
+            generateProceduralDungeon(selectedFloor, activeCharacter.level);
             
             // For now, we'll use the existing dungeon system by creating a temporary dungeon
             // In a full implementation, you'd want to extend the dungeon system to handle procedural dungeons
@@ -135,6 +135,24 @@ export const EndlessDungeonView: React.FC = () => {
                 <div className="max-h-40 overflow-y-auto border border-gray-600 rounded p-4 mb-4">
                     <div className="flex flex-wrap">
                         {renderFloorSelector()}
+                    </div>
+                </div>
+                
+                <div className="mb-4 p-4 bg-gray-800/50 rounded-lg border border-gray-600">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className="text-lg font-semibold text-blue-400 mb-1">Auto-Progression</h4>
+                            <p className="text-sm text-gray-400">
+                                Automatically advance to the next floor upon victory
+                            </p>
+                        </div>
+                        <Toggle
+                            checked={state.settings.endlessAutoProgress}
+                            onChange={(checked) => dispatch({ 
+                                type: 'UPDATE_SETTINGS', 
+                                payload: { endlessAutoProgress: checked } 
+                            })}
+                        />
                     </div>
                 </div>
                 

@@ -1,5 +1,5 @@
 import { Equipment, EquipmentRarity, EquipmentSlot, CharacterClassType, GameStats } from '../types';
-import { RARITY_ORDER, RARITY_MULTIPLIER, RARITY_COLORS } from '../constants';
+import { RARITY_MULTIPLIER } from '../constants';
 
 export function generateProceduralLoot(targetLevel: number, difficulty: number, floor: number): string[] {
     const lootTable: string[] = [];
@@ -229,15 +229,5 @@ function weightedRandomSelect<T extends string>(weights: Record<T, number>): T {
         }
     }
     
-    // Fallback to first item if something goes wrong
     return Object.keys(weights)[0] as T;
-}
-
-// Utility function to generate milestone rewards
-export function generateMilestoneReward(floor: number): Equipment {
-    const guaranteedRarity: EquipmentRarity = floor % 100 === 0 ? 'legendary' : 
-                                            floor % 50 === 0 ? 'epic' : 
-                                            floor % 25 === 0 ? 'rare' : 'uncommon';
-    
-    return generateProceduralItem(Math.floor(floor / 5) + 10, 2.0, floor);
 }

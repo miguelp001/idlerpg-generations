@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
-import { Adventurer, Relationship, Equipment, Character, CharacterClassType } from '../types';
+import { Adventurer, Relationship, Equipment, CharacterClassType } from '../types';
 import { CLASSES, REFRESH_TAVERN_COST, PERSONALITY_TRAITS, SHOP_REFRESH_COST, RARITY_COLORS } from '../constants'; // Added SHOP_REFRESH_COST and RARITY_COLORS
 import Card from './ui/Card';
 import Button from './ui/Button';
@@ -38,7 +38,7 @@ const AdventurerCard: React.FC<AdventurerCardProps> = React.memo(({ adventurer, 
             </div>
             <Button
                 onClick={() => onAction(adventurer.id)}
-                variant={action === 'recruit' ? 'primary' : 'ghost'}
+                variant={action === 'recruit' ? 'shadow' : 'void'}
                 className="w-full mt-4"
                 disabled={disabled}
             >
@@ -168,20 +168,20 @@ const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, onAction, actionLa
             </div>
             <div className="mt-3 grid grid-cols-2 gap-1">
                 {onUpgrade && upgradeCost !== undefined && canAffordUpgrade !== undefined && (
-                    <Button onClick={onUpgrade} variant="secondary" className="col-span-2 text-xs py-1" disabled={!canAffordUpgrade || !!item.isHeirloom} title={item.isHeirloom ? "Heirlooms cannot be upgraded" : ""}>
+                    <Button onClick={onUpgrade} variant="bone" className="col-span-2 text-xs py-1" disabled={!canAffordUpgrade || !!item.isHeirloom} title={item.isHeirloom ? "Heirlooms cannot be upgraded" : ""}>
                         {item.isHeirloom ? "Heirloom" : `Upgrade (${upgradeCost}G)`}
                     </Button>
                 )}
-                 <Button onClick={onAction} variant="ghost" className="text-xs py-1">
+                 <Button onClick={onAction} variant="void" className="text-xs py-1">
                     {actionLabel}
                 </Button>
                 {onGive && (
-                    <Button onClick={onGive} variant="ghost" className="text-xs py-1 text-green-400 hover:bg-green-900/50">
+                    <Button onClick={onGive} variant="void" className="text-xs py-1 text-green-400 hover:bg-green-900/50">
                         Give
                     </Button>
                 )}
                 {onSell && sellPrice !== undefined && (
-                    <Button onClick={onSell} variant="ghost" className="text-xs py-1 text-red-400 hover:bg-red-900/50 col-span-2" disabled={!!item.isHeirloom} title={item.isHeirloom ? "Priceless heirlooms cannot be sold" : `Sell for ${sellPrice}G`}>
+                    <Button onClick={onSell} variant="void" className="text-xs py-1 text-red-400 hover:bg-red-900/50 col-span-2" disabled={!!item.isHeirloom} title={item.isHeirloom ? "Priceless heirlooms cannot be sold" : `Sell for ${sellPrice}G`}>
                         {item.isHeirloom ? "Priceless" : `Sell (${sellPrice}G)`}
                     </Button>
                 )}

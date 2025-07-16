@@ -1,8 +1,7 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
+export default defineConfig(() => {
     return {
       define: {
         // 'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
@@ -39,7 +38,7 @@ export default defineConfig(({ mode }) => {
         // Set to true to enable CSS code splitting, which can also help with dead code removal
         cssCodeSplit: true,
         // Minify the output bundle. Terser is used by default in production mode.
-        minify: 'terser',
+        minify: 'terser' as const,
         terserOptions: {
           compress: {
             drop_console: true, // Remove console.log in production

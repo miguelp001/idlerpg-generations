@@ -17,7 +17,7 @@ const ConfirmationModal: React.FC<{
                 This dungeon is significantly higher level than you and poses a great risk. The monsters will be extremely tough. Are you sure you wish to proceed?
             </p>
             <div className="mt-6 flex justify-end space-x-4">
-                <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+                <Button variant="void" onClick={onCancel}>Cancel</Button>
                 <Button 
                     onClick={onConfirm}
                     className="bg-yellow-600 hover:bg-yellow-700 text-on-primary focus:ring-yellow-500"
