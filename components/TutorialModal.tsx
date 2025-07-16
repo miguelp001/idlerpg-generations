@@ -38,7 +38,7 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ onClose }) => {
                             <li><strong>Tavern:</strong> Visit the tavern to recruit new adventurers to join your party. A larger party means more combat power! You can refresh the available adventurers for a small gold cost.</li>
                             <li><strong>Relationships:</strong> Your character and their party members will develop relationships over time, which can influence various aspects of the game.</li>
                             <li><strong>Guilds:</strong> Create or join a guild to team up with other players (NPCs in this single-player version) for shared goals and raid progression. Donate gold to your guild to level it up.</li>
-                            <li><strong>Shop:</strong> The shop offers a rotating selection of equipment. Items around your current level will be available, along with one rare, high-level item. You can refresh the shop's inventory for 200 gold.</li>
+                            <li><strong>Shop:</strong> The shop offers a rotating selection of equipment, including both traditional items and unique procedurally generated gear. Items around your current level will be available, along with rare, high-level items. You can refresh the shop's inventory for 200 gold.</li>
                         </ul>
                     </section>
 
@@ -52,11 +52,11 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ onClose }) => {
                 </div>
 
                 <div className="mt-8 flex justify-center">
-                    <Button onClick={onClose} variant="primary">Got It!</Button>
+                    <Button onClick={onClose} variant="shadow">Got It!</Button>
                 </div>
             </Card>
         </div>
     );
 };
 
-export default TutorialModal; 
+export default TutorialModal;
