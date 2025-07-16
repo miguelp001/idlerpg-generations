@@ -1,7 +1,17 @@
-import { Dungeon, Monster, Equipment } from '../types';
+import { Dungeon, Monster, Equipment, EquipmentRarity, EquipmentSlot, CharacterClassType, GameStats } from '../types';
 import { MONSTERS, RAID_BOSSES, ALL_MONSTERS } from '../data/monsters';
+import { RARITY_MULTIPLIER } from '../constants';
 import { generateScaledMonster } from './monsterScalingService';
-import { generateProceduralLoot, generateMilestoneReward } from './lootGenerationService';
+import { 
+    generateProceduralLoot, 
+    generateMilestoneReward, 
+    generateProceduralItem,
+    calculateItemPrice,
+    getSlotStatPreferences,
+    getItemPrefixes,
+    getItemBases,
+    getItemSuffixes
+} from './lootGenerationService';
 
 export interface ProceduralDungeon extends Omit<Dungeon, 'id' | 'name' | 'description'> {
     id: string;
@@ -156,8 +166,8 @@ export function generateConsistentProceduralDungeon(floor: number, biome: Dungeo
     const bossIndex = seed % biomeConfig.bossTypes.length;
     const bossId = biomeConfig.bossTypes[bossIndex];
     
-    // Generate deterministic loot table using existing item IDs
-    const lootTable = generateDeterministicLootTable(targetLevel, floor, seed);
+    // Generate deterministic procedural loot table
+    const lootTable = generateDeterministicProceduralLoot(targetLevel, difficulty, floor, seed);
     
     // Generate dungeon name and description deterministically
     const themeIndex = Math.floor(seed / 100) % biomeConfig.themes.length;
@@ -245,40 +255,166 @@ export function setEndlessDungeonProgress(characterId: string, floor: number): v
     // Implementation would depend on how we want to store this data
 }
 
-function generateBasicLootTable(targetLevel: number, floor: number): string[] {
-    // Basic loot table using existing item IDs from the game
-    const basicItems = [
-        'worn_sword', 'iron_sword', 'steel_sword', 'enchanted_blade',
-        'tattered_tunic', 'leather_armor', 'chain_mail', 'plate_armor',
-        'simple_pendant', 'silver_ring', 'magic_amulet', 'plain_ring'
-    ];
-    
-    const lootCount = Math.min(4, 2 + Math.floor(floor / 15)); // More loot on deeper floors
+// Generate deterministic procedural loot using seed for consistency
+function generateDeterministicProceduralLoot(targetLevel: number, difficulty: number, floor: number, seed: number): string[] {
     const lootTable: string[] = [];
+    const lootCount = Math.min(8, 3 + Math.floor(floor / 20)); // More loot on deeper floors, max 8
+    
+    // Use seed to create deterministic randomness
+    let currentSeed = seed;
     
     for (let i = 0; i < lootCount; i++) {
-        const randomItem = basicItems[Math.floor(Math.random() * basicItems.length)];
-        lootTable.push(randomItem);
+        // Create a deterministic "random" value for this item
+        currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
+        const normalizedSeed = currentSeed / 0x7fffffff;
+        
+        const item = generateDeterministicProceduralItem(targetLevel, difficulty, floor, normalizedSeed, i);
+        lootTable.push(item.baseId);
     }
     
     return lootTable;
 }
 
-function generateDeterministicLootTable(targetLevel: number, floor: number, seed: number): string[] {
-    // Basic loot table using existing item IDs from the game
-    const basicItems = [
-        'worn_sword', 'iron_sword', 'steel_sword', 'enchanted_blade',
-        'tattered_tunic', 'leather_armor', 'chain_mail', 'plate_armor',
-        'simple_pendant', 'silver_ring', 'magic_amulet', 'plain_ring'
-    ];
+// Generate a single procedural item deterministically
+function generateDeterministicProceduralItem(targetLevel: number, difficulty: number, floor: number, seedValue: number, itemIndex: number): Equipment {
+    // Use seedValue and itemIndex to create deterministic choices
+    const rarity = selectDeterministicRarity(difficulty, floor, seedValue);
+    const slot = selectDeterministicSlot(seedValue + itemIndex * 0.1);
+    const classAffinity = selectDeterministicClassAffinity(seedValue + itemIndex * 0.2);
     
-    const lootCount = Math.min(4, 2 + Math.floor(floor / 15)); // More loot on deeper floors
-    const lootTable: string[] = [];
+    const baseStats = generateDeterministicBaseStats(targetLevel, rarity, slot, seedValue + itemIndex * 0.3);
+    const name = generateDeterministicItemName(slot, rarity, floor, seedValue + itemIndex * 0.4);
+    const price = calculateItemPrice(targetLevel, rarity);
     
-    for (let i = 0; i < lootCount; i++) {
-        const index = (seed + i * 23) % basicItems.length; // Use different multiplier for each position
-        lootTable.push(basicItems[index]);
+    const item: Equipment = {
+        id: `proc_det_${floor}_${itemIndex}_${Math.floor(seedValue * 1000000)}`,
+        baseId: `proc_${slot}_${rarity}_${targetLevel}_${floor}`,
+        name,
+        baseName: name,
+        slot,
+        rarity,
+        stats: baseStats,
+        upgradeLevel: 0,
+        classAffinity,
+        price
+    };
+    
+    return item;
+}
+
+function selectDeterministicRarity(difficulty: number, floor: number, seedValue: number): EquipmentRarity {
+    // Base rarity chances
+    let rarityWeights = {
+        common: 50,
+        uncommon: 30,
+        rare: 15,
+        epic: 4,
+        legendary: 1
+    };
+    
+    // Apply same bonuses as regular rarity selection
+    const difficultyBonus = Math.max(0, difficulty - 1);
+    rarityWeights.rare += difficultyBonus * 5;
+    rarityWeights.epic += difficultyBonus * 2;
+    rarityWeights.legendary += difficultyBonus * 0.5;
+    
+    // Floor milestones guarantee better loot
+    if (floor % 25 === 0) {
+        rarityWeights.legendary += 10;
+        rarityWeights.epic += 15;
+    } else if (floor % 10 === 0) {
+        rarityWeights.epic += 8;
+        rarityWeights.rare += 12;
+    } else if (floor % 5 === 0) {
+        rarityWeights.rare += 10;
+        rarityWeights.uncommon += 15;
     }
     
-    return lootTable;
+    // Deep floor bonuses
+    if (floor >= 100) {
+        rarityWeights.legendary += 5;
+        rarityWeights.epic += 10;
+    } else if (floor >= 50) {
+        rarityWeights.epic += 5;
+        rarityWeights.rare += 10;
+    }
+    
+    return weightedDeterministicSelect(rarityWeights, seedValue);
+}
+
+function selectDeterministicSlot(seedValue: number): EquipmentSlot {
+    const slots: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
+    const index = Math.floor(seedValue * slots.length);
+    return slots[index];
+}
+
+function selectDeterministicClassAffinity(seedValue: number): { [key in CharacterClassType]?: number } | undefined {
+    // 60% chance of having class affinity
+    if (seedValue > 0.6) return undefined;
+    
+    const classes: CharacterClassType[] = ['warrior', 'mage', 'rogue', 'cleric'];
+    const selectedClass = classes[Math.floor(seedValue * classes.length)];
+    const affinityBonus = 5 + Math.floor((seedValue * 4) * 15); // 5-20 bonus
+    
+    return { [selectedClass]: affinityBonus };
+}
+
+function generateDeterministicBaseStats(targetLevel: number, rarity: EquipmentRarity, slot: EquipmentSlot, seedValue: number): Partial<GameStats> {
+    const rarityMultiplier = RARITY_MULTIPLIER[rarity];
+    const levelMultiplier = Math.max(1, targetLevel / 5);
+    const baseMultiplier = rarityMultiplier * levelMultiplier;
+    
+    const stats: Partial<GameStats> = {};
+    
+    // Slot-based stat preferences (same as original)
+    const slotPreferences = getSlotStatPreferences(slot);
+    
+    // Generate 2-4 stats per item deterministically
+    const statCount = 2 + Math.floor(seedValue * 3);
+    const availableStats: (keyof GameStats)[] = ['health', 'mana', 'attack', 'defense', 'agility', 'intelligence'];
+    
+    // Use seedValue to deterministically select stats
+    let currentSeed = seedValue;
+    for (let i = 0; i < statCount && availableStats.length > 0; i++) {
+        currentSeed = (currentSeed * 7 + 0.1) % 1; // Simple deterministic "random"
+        const statIndex = Math.floor(currentSeed * availableStats.length);
+        const stat = availableStats[statIndex];
+        availableStats.splice(statIndex, 1); // Remove to avoid duplicates
+        
+        const preference = slotPreferences[stat] || 1;
+        const baseValue = Math.floor((5 + (currentSeed * 15)) * baseMultiplier * preference);
+        
+        if (baseValue > 0) {
+            stats[stat] = baseValue;
+        }
+    }
+    
+    return stats;
+}
+
+function generateDeterministicItemName(slot: EquipmentSlot, rarity: EquipmentRarity, floor: number, seedValue: number): string {
+    const prefixes = getItemPrefixes(rarity, floor);
+    const bases = getItemBases(slot);
+    const suffixes = getItemSuffixes(rarity);
+    
+    const prefix = prefixes[Math.floor(seedValue * prefixes.length)];
+    const base = bases[Math.floor((seedValue * 2) % 1 * bases.length)];
+    const suffix = (seedValue * 3) % 1 > 0.7 ? ` ${suffixes[Math.floor((seedValue * 4) % 1 * suffixes.length)]}` : '';
+    
+    return `${prefix} ${base}${suffix}`;
+}
+
+function weightedDeterministicSelect<T extends string>(weights: Record<T, number>, seedValue: number): T {
+    const totalWeight = Object.values(weights).reduce((sum: number, weight) => sum + (weight as number), 0);
+    let target = seedValue * totalWeight;
+    
+    for (const [item, weight] of Object.entries(weights) as [T, number][]) {
+        target -= weight;
+        if (target <= 0) {
+            return item;
+        }
+    }
+    
+    // Fallback to first item if something goes wrong
+    return Object.keys(weights)[0] as T;
 }

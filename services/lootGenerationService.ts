@@ -124,7 +124,7 @@ function generateBaseStats(targetLevel: number, rarity: EquipmentRarity, slot: E
     return stats;
 }
 
-function getSlotStatPreferences(slot: EquipmentSlot): Partial<Record<keyof GameStats, number>> {
+export function getSlotStatPreferences(slot: EquipmentSlot): Partial<Record<keyof GameStats, number>> {
     switch (slot) {
         case 'weapon':
             return {
@@ -168,7 +168,7 @@ function generateItemName(slot: EquipmentSlot, rarity: EquipmentRarity, floor: n
     return `${prefix} ${base}${suffix}`;
 }
 
-function getItemPrefixes(rarity: EquipmentRarity, floor: number): string[] {
+export function getItemPrefixes(rarity: EquipmentRarity, floor: number): string[] {
     const basePrefixes = {
         common: ['Worn', 'Simple', 'Basic', 'Plain', 'Crude'],
         uncommon: ['Sturdy', 'Fine', 'Quality', 'Improved', 'Enhanced'],
@@ -185,7 +185,7 @@ function getItemPrefixes(rarity: EquipmentRarity, floor: number): string[] {
     return [...basePrefixes[rarity], ...floorPrefixes];
 }
 
-function getItemBases(slot: EquipmentSlot): string[] {
+export function getItemBases(slot: EquipmentSlot): string[] {
     switch (slot) {
         case 'weapon':
             return ['Blade', 'Sword', 'Axe', 'Mace', 'Staff', 'Bow', 'Dagger', 'Hammer', 'Spear', 'Wand'];
@@ -198,7 +198,7 @@ function getItemBases(slot: EquipmentSlot): string[] {
     }
 }
 
-function getItemSuffixes(rarity: EquipmentRarity): string[] {
+export function getItemSuffixes(rarity: EquipmentRarity): string[] {
     const suffixes = {
         common: ['of Durability', 'of Stability', 'of Endurance'],
         uncommon: ['of Power', 'of Skill', 'of Fortune', 'of Vigor'],
@@ -210,7 +210,7 @@ function getItemSuffixes(rarity: EquipmentRarity): string[] {
     return suffixes[rarity];
 }
 
-function calculateItemPrice(targetLevel: number, rarity: EquipmentRarity): number {
+export function calculateItemPrice(targetLevel: number, rarity: EquipmentRarity): number {
     const basePrice = 20;
     const levelMultiplier = Math.max(1, targetLevel / 2);
     const rarityMultiplier = RARITY_MULTIPLIER[rarity];
