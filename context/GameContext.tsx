@@ -18,6 +18,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { OFFLINE_SOCIAL_EVENTS } from '../data/socialEvents';
 import { generateShopItems } from '../services/shopService'; // Import the new service
 import { generateProceduralDungeon, generateConsistentProceduralDungeon } from '../services/proceduralDungeonService';
+import { generateScaledMonster } from '../services/monsterScalingService';
 
 const SAVE_KEY = 'idleRpgSaveData';
 
@@ -363,12 +364,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             const proceduralDungeon = generateProceduralDungeon(floor, activeCharacter.level);
             
             const firstMonsterId = proceduralDungeon.monsters[0];
-            const firstMonster = ALL_MONSTERS[firstMonsterId];
+            let firstMonster = ALL_MONSTERS[firstMonsterId];
             
             if (!firstMonster) {
                 console.error(`Monster ${firstMonsterId} not found in ALL_MONSTERS`);
                 return state;
             }
+
+            // Scale the first monster for procedural dungeons
+            const scaledFirstMonster = generateScaledMonster(
+                firstMonsterId, 
+                activeCharacter.level, 
+                proceduralDungeon.difficulty,
+                proceduralDungeon.floor
+            );
+            // Register the scaled monster in ALL_MONSTERS for combat
+            ALL_MONSTERS[scaledFirstMonster.id] = scaledFirstMonster;
+            firstMonster = scaledFirstMonster;
 
             const refreshedParty = activeCharacter.party.map(p => ({
                 ...p,
@@ -483,14 +495,28 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 combatLogs.push({ id: uuidv4(), type: 'gold', message: `You looted ${goldDropped}G.`, actor: 'system' });
             }
 
-            const allMonstersInDungeon = [...dungeon.monsters, dungeon.boss];
-            const nextMonsterIndex = state.dungeonState.currentMonsterIndex + 1;
-            const newGoldGained = state.dungeonState.goldGained + goldDropped;
+                const allMonstersInDungeon = [...dungeon.monsters, dungeon.boss];
+                const nextMonsterIndex = state.dungeonState.currentMonsterIndex + 1;
+                const newGoldGained = state.dungeonState.goldGained + goldDropped;
 
-            if (nextMonsterIndex < allMonstersInDungeon.length) {
-                const nextMonsterId = allMonstersInDungeon[nextMonsterIndex];
-                const nextMonster = ALL_MONSTERS[nextMonsterId];
-                combatLogs.push({ id: uuidv4(), type: 'info', message: `A ${nextMonster.name} appears!`, actor: 'system' });
+                if (nextMonsterIndex < allMonstersInDungeon.length) {
+                    const nextMonsterId = allMonstersInDungeon[nextMonsterIndex];
+                    let nextMonster = ALL_MONSTERS[nextMonsterId];
+                    
+                    // For procedural dungeons, scale the monster
+                    if (state.dungeonState.proceduralDungeonData) {
+                        const scaledMonster = generateScaledMonster(
+                            nextMonsterId, 
+                            activeCharacter.level, 
+                            state.dungeonState.proceduralDungeonData.difficulty,
+                            state.dungeonState.proceduralDungeonData.floor
+                        );
+                        // Register the scaled monster in ALL_MONSTERS for combat
+                        ALL_MONSTERS[scaledMonster.id] = scaledMonster;
+                        nextMonster = scaledMonster;
+                    }
+                    
+                    combatLogs.push({ id: uuidv4(), type: 'info', message: `A ${nextMonster.name} appears!`, actor: 'system' });
                 
                 if (newlyUnlocked.length > 0) {
                     updatedCharacter.unlockedAchievements.push(...newlyUnlocked);
@@ -512,7 +538,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     },
                 };
             } else { // Dungeon cleared
-                const totalXp = allMonstersInDungeon.reduce((acc, mId) => acc + ALL_MONSTERS[mId].xpReward, 0);
+                // For procedural dungeons, scale the boss for XP calculation
+                let bossForXp = ALL_MONSTERS[dungeon.boss];
+                if (state.dungeonState.proceduralDungeonData) {
+                    const scaledBoss = generateScaledMonster(
+                        dungeon.boss, 
+                        activeCharacter.level, 
+                        state.dungeonState.proceduralDungeonData.difficulty,
+                        state.dungeonState.proceduralDungeonData.floor
+                    );
+                    bossForXp = scaledBoss;
+                }
+                
+                const totalXp = allMonstersInDungeon.slice(0, -1).reduce((acc, mId) => {
+                    const monster = ALL_MONSTERS[mId];
+                    return acc + (monster ? monster.xpReward : 0);
+                }, 0) + bossForXp.xpReward;
+                
                 combatLogs.push({ id: uuidv4(), type: 'victory', message: `You have cleared the ${dungeon.name}!`, actor: 'system' });
                 combatLogs.push({ id: uuidv4(), type: 'special', message: `You and your party gained ${totalXp} XP!`, actor: 'system' });
 
@@ -565,6 +607,20 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const { stats, maxStats } = recalculateStats(updatedCharacter);
                 updatedCharacter.stats = { ...stats, health: updatedCharacter.currentHealth ?? stats.health, mana: updatedCharacter.currentMana ?? stats.mana };
                 updatedCharacter.maxStats = maxStats;
+
+                // Update endless dungeon progress if this was a procedural dungeon
+                if (state.dungeonState.proceduralDungeonData) {
+                    const currentFloor = state.dungeonState.proceduralDungeonData.floor;
+                    if (currentFloor >= updatedCharacter.endlessDungeonProgress) {
+                        updatedCharacter.endlessDungeonProgress = currentFloor + 1;
+                        combatLogs.push({ 
+                            id: uuidv4(), 
+                            type: 'special', 
+                            message: `New floor unlocked! You can now access Floor ${currentFloor + 1}.`, 
+                            actor: 'system' 
+                        });
+                    }
+                }
 
                 let newState = {
                     ...state,

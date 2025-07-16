@@ -1,5 +1,7 @@
 import { Dungeon, Monster, Equipment } from '../types';
-import { MONSTERS, RAID_BOSSES } from '../data/monsters';
+import { MONSTERS, RAID_BOSSES, ALL_MONSTERS } from '../data/monsters';
+import { generateScaledMonster } from './monsterScalingService';
+import { generateProceduralLoot, generateMilestoneReward } from './lootGenerationService';
 
 export interface ProceduralDungeon extends Omit<Dungeon, 'id' | 'name' | 'description'> {
     id: string;
@@ -116,8 +118,8 @@ export function generateProceduralDungeon(floor: number, targetLevel: number): P
     // Select boss
     const bossId = biomeConfig.bossTypes[Math.floor(Math.random() * biomeConfig.bossTypes.length)];
     
-    // Generate basic loot table using existing item IDs
-    const lootTable = generateBasicLootTable(targetLevel, floor);
+    // Generate procedural loot table
+    const lootTable = generateProceduralLoot(targetLevel, difficulty, floor);
     
     // Generate dungeon name and description
     const theme = biomeConfig.themes[Math.floor(Math.random() * biomeConfig.themes.length)];
