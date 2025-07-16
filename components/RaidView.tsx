@@ -63,7 +63,7 @@ const RaidCombatLog: React.FC = () => {
                 break;
             default:
                 info.color = 'text-gray-200';
-                info.icon = null;
+                info.icon = <SwordIcon />;
                 break;
         }
         return info;
@@ -106,6 +106,8 @@ const RaidView: React.FC = () => {
             combatIntervalRef.current = window.setInterval(() => {
                 dispatch({ type: 'DO_RAID_COMBAT_TURN' });
             }, 1800);
+        } else {
+            stopCombat();
         }
         
         return () => stopCombat();
@@ -140,7 +142,15 @@ const RaidView: React.FC = () => {
                     </div>
                 </Card>
                 <Card className="lg:col-span-3 bg-black/30 border border-red-500/50">
-                    <h2 className="text-3xl font-bold mb-2 text-red-400">{boss?.name}</h2>
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-3xl font-bold text-red-400">{boss?.name}</h2>
+                        {raidState.status === 'paused' && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-900/50 border border-blue-500/50 rounded-lg">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                                <span className="text-blue-400 font-semibold text-sm">PAUSED</span>
+                            </div>
+                        )}
+                    </div>
                     <div className="mt-4 space-y-3">
                         <ProgressBar label="Health" value={raidState.currentBossHealth!} max={boss?.stats.health!} colorClass="bg-red-600" />
                     </div>
@@ -168,7 +178,7 @@ const RaidView: React.FC = () => {
                     )}
                 </div>
             )}
-            <Button onClick={() => dispatch({ type: 'END_RAID' })} className="w-full md:w-1/2 text-xl py-3" variant="secondary">
+            <Button onClick={() => dispatch({ type: 'END_RAID' })} className="w-full md:w-1/2 text-xl py-3" variant="shadow">
                 Leave Raid
             </Button>
         </Card>
@@ -184,6 +194,17 @@ const RaidView: React.FC = () => {
                     : (
                         <>
                             {renderFightingView()}
+                            {(raidState.status === 'fighting' || raidState.status === 'paused') && (
+                                <div className="flex justify-center">
+                                    <Button 
+                                        variant="void"
+                                        className={`border-blue-500 text-blue-400 hover:bg-blue-900/50 ${raidState.status === 'paused' ? 'bg-blue-900/30' : ''}`}
+                                        onClick={() => dispatch({ type: raidState.status === 'fighting' ? 'PAUSE_RAID_COMBAT' : 'RESUME_RAID_COMBAT' })}
+                                    >
+                                        {raidState.status === 'fighting' ? 'Pause Combat' : 'Resume Combat'}
+                                    </Button>
+                                </div>
+                            )}
                             <Card className="bg-black/30 border border-gray-700">
                                 <h2 className="text-xl font-bold mb-4 text-primary">Combat Log</h2>
                                 <RaidCombatLog />

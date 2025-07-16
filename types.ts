@@ -213,8 +213,8 @@ export interface SocialLogEntry {
     participantIds?: [string, string];
 }
 
-export type DungeonStatus = 'idle' | 'fighting' | 'victory' | 'defeat';
-export type RaidStatus = 'idle' | 'fighting' | 'victory' | 'defeat';
+export type DungeonStatus = 'idle' | 'fighting' | 'paused' | 'victory' | 'defeat';
+export type RaidStatus = 'idle' | 'fighting' | 'paused' | 'victory' | 'defeat';
 
 export interface DungeonState {
     status: DungeonStatus;
@@ -329,4 +329,8 @@ export type Action =
   | { type: 'SET_SHOP_ITEMS'; payload: Equipment[]; }
   | { type: 'REFRESH_SHOP'; payload: { characterId: string; } }
   | { type: 'BUY_ITEM'; payload: { characterId: string; itemId: string; } }
-  | { type: 'SET_TUTORIAL_SHOWN'; payload: boolean };
+  | { type: 'SET_TUTORIAL_SHOWN'; payload: boolean }
+  | { type: 'PAUSE_COMBAT' }
+  | { type: 'RESUME_COMBAT' }
+  | { type: 'PAUSE_RAID_COMBAT' }
+  | { type: 'RESUME_RAID_COMBAT' };

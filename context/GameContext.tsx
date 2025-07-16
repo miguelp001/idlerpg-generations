@@ -1415,6 +1415,42 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             tutorialShown: action.payload,
         };
     }
+    case 'PAUSE_COMBAT': {
+        return {
+            ...state,
+            dungeonState: {
+                ...state.dungeonState,
+                status: 'paused' as DungeonStatus,
+            },
+        };
+    }
+    case 'RESUME_COMBAT': {
+        return {
+            ...state,
+            dungeonState: {
+                ...state.dungeonState,
+                status: 'fighting' as DungeonStatus,
+            },
+        };
+    }
+    case 'PAUSE_RAID_COMBAT': {
+        return {
+            ...state,
+            raidState: {
+                ...state.raidState,
+                status: 'paused' as RaidStatus,
+            },
+        };
+    }
+    case 'RESUME_RAID_COMBAT': {
+        return {
+            ...state,
+            raidState: {
+                ...state.raidState,
+                status: 'fighting' as RaidStatus,
+            },
+        };
+    }
     default:
         return state;
   }

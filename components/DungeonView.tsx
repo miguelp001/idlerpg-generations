@@ -152,6 +152,8 @@ const DungeonView: React.FC = () => {
             combatIntervalRef.current = window.setInterval(() => {
                 dispatch({ type: 'DO_COMBAT_TURN' });
             }, 1500);
+        } else {
+            stopCombat();
         }
         
         return () => stopCombat();
@@ -192,7 +194,15 @@ const DungeonView: React.FC = () => {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <Card className="bg-red-900/20 border border-red-500/50">
-                    <h2 className="text-2xl font-bold mb-2">{monster?.name}</h2>
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-2xl font-bold">{monster?.name}</h2>
+                        {dungeonState.status === 'paused' && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-900/50 border border-blue-500/50 rounded-lg">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                                <span className="text-blue-400 font-semibold text-sm">PAUSED</span>
+                            </div>
+                        )}
+                    </div>
                     <div className="mt-4 space-y-3">
                          <ProgressBar label="Health" value={dungeonState.currentMonsterHealth!} max={monster?.stats.health!} colorClass="bg-red-500" />
                     </div>
@@ -272,7 +282,7 @@ const DungeonView: React.FC = () => {
             {dungeonState.status === 'fighting' && renderFightingView()}
             {(dungeonState.status === 'victory' || dungeonState.status === 'defeat') && renderResultView(dungeonState.status === 'victory')}
 
-            {dungeonState.status === 'fighting' && (
+            {(dungeonState.status === 'fighting' || dungeonState.status === 'paused') && (
                 <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
                     <Button 
                         variant="void" 
@@ -280,6 +290,13 @@ const DungeonView: React.FC = () => {
                         onClick={() => setIsFleeing(true)}
                     >
                         Flee Dungeon
+                    </Button>
+                    <Button 
+                        variant="void"
+                        className={`border-blue-500 text-blue-400 hover:bg-blue-900/50 ${dungeonState.status === 'paused' ? 'bg-blue-900/30' : ''}`}
+                        onClick={() => dispatch({ type: dungeonState.status === 'fighting' ? 'PAUSE_COMBAT' : 'RESUME_COMBAT' })}
+                    >
+                        {dungeonState.status === 'fighting' ? 'Pause Combat' : 'Resume Combat'}
                     </Button>
                     <div className="flex items-center gap-x-3">
                         <label htmlFor="grind-toggle" className="font-semibold text-on-surface select-none cursor-pointer">
