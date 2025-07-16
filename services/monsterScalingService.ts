@@ -43,14 +43,14 @@ export function generateScaledMonster(baseId: string, targetLevel: number, diffi
 }
 
 function calculateScalingFactor(targetLevel: number, difficulty: number): number {
-    // Base scaling increases with target level
-    const levelScaling = Math.pow(targetLevel / 10, 1.2);
+    // Base scaling increases with target level - reduced exponent from 1.2 to 1.0 for linear scaling
+    const levelScaling = Math.pow(targetLevel / 10, 1.0);
     
-    // Difficulty multiplier
-    const difficultyScaling = Math.pow(difficulty, 0.8);
+    // Difficulty multiplier - reduced exponent from 0.8 to 0.6 for gentler scaling
+    const difficultyScaling = Math.pow(difficulty, 0.6);
     
-    // Minimum scaling to ensure monsters are always somewhat challenging
-    return Math.max(0.5, levelScaling * difficultyScaling);
+    // Minimum scaling to ensure monsters are always somewhat challenging - increased from 0.5 to 0.8
+    return Math.max(0.8, levelScaling * difficultyScaling);
 }
 
 function scaleStats(baseStats: GameStats, scalingFactor: number): GameStats {

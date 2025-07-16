@@ -111,8 +111,8 @@ export function generateProceduralDungeon(floor: number, targetLevel: number): P
     const biomeConfig = BIOME_CONFIGS[biome];
     const difficulty = calculateDifficulty(floor, targetLevel);
     
-    // Generate monster composition
-    const monsterCount = Math.min(6, 3 + Math.floor(floor / 10)); // More monsters on deeper floors, max 6
+    // Generate monster composition - reduced scaling and max count
+    const monsterCount = Math.min(5, 3 + Math.floor(floor / 15)); // More monsters on deeper floors, max 5
     const monsters = generateMonsterList(biomeConfig.monsterTypes, monsterCount, targetLevel, difficulty);
     
     // Select boss
@@ -148,8 +148,8 @@ export function generateConsistentProceduralDungeon(floor: number, biome: Dungeo
     // Use a simple hash of the dungeon ID to create deterministic randomness
     const seed = hashString(dungeonId);
     
-    // Generate monster composition deterministically
-    const monsterCount = Math.min(6, 3 + Math.floor(floor / 10)); // More monsters on deeper floors, max 6
+    // Generate monster composition deterministically - reduced scaling and max count
+    const monsterCount = Math.min(5, 3 + Math.floor(floor / 15)); // More monsters on deeper floors, max 5
     const monsters = generateDeterministicMonsterList(biomeConfig.monsterTypes, monsterCount, seed);
     
     // Select boss deterministically
@@ -213,11 +213,11 @@ function selectBiome(floor: number): DungeonBiome {
 }
 
 function calculateDifficulty(floor: number, targetLevel: number): number {
-    // Base difficulty increases with floor
-    const baseDifficulty = 1 + (floor * 0.1);
+    // Base difficulty increases with floor - reduced from 0.1 to 0.05 per floor
+    const baseDifficulty = 1 + (floor * 0.05);
     
-    // Adjust for target level vs floor relationship
-    const levelAdjustment = Math.max(0.5, targetLevel / (floor + 10));
+    // Adjust for target level vs floor relationship - made more forgiving
+    const levelAdjustment = Math.max(0.7, targetLevel / (floor + 5));
     
     return baseDifficulty * levelAdjustment;
 }
