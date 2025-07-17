@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import Button from './ui/Button';
 import { Character } from '../types';
-import { UserIcon, BackpackIcon, MapIcon, UsersIcon, UserGroupIcon, ShieldCheckIcon, BookOpenIcon, TrophyIcon, GoldIcon, SaveIcon, QuestionMarkCircleIcon } from './ui/Icons';
+import { UserIcon, BackpackIcon, MapIcon, UsersIcon, UserGroupIcon, ShieldCheckIcon, BookOpenIcon, TrophyIcon, GoldIcon, SaveIcon, QuestionMarkCircleIcon, HourglassIcon } from './ui/Icons';
 import TutorialModal from './TutorialModal';
 
 interface GameLayoutProps {
@@ -64,7 +64,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChang
       { label: 'Inventory', tabName: 'inventory', icon: <BackpackIcon/>, condition: () => true },
       { label: 'Quests', tabName: 'quests', icon: <BookOpenIcon/>, condition: () => true },
       { label: 'Dungeon', tabName: 'dungeon', icon: <MapIcon/>, condition: () => true },
-      { label: 'Endless', tabName: 'endless', icon: <MapIcon/>, condition: (char?: Character | null) => !!char && char.level >= 1 },
+      { label: 'Endless', tabName: 'endless', icon: <HourglassIcon/>, condition: (char?: Character | null) => !!char && char.level >= 1 },
       { label: 'Social', tabName: 'social', icon: <UserGroupIcon/>, condition: (char?: Character | null) => !!char && char.level >= 1 },
       { label: 'Guild', tabName: 'guild', icon: <ShieldCheckIcon />, condition: (char?: Character | null) => !!char && char.level >= 20 },
       { label: 'Achievements', tabName: 'achievements', icon: <TrophyIcon />, condition: () => true },
