@@ -19,6 +19,7 @@ import { OFFLINE_SOCIAL_EVENTS } from '../data/socialEvents';
 import { generateShopItems } from '../services/shopService'; // Import the new service
 import { generateProceduralDungeon } from '../services/proceduralDungeonService';
 import { generateScaledMonster } from '../services/monsterScalingService';
+import { generateProceduralItem } from '../services/lootGenerationService';
 
 const SAVE_KEY = 'idleRpgSaveData';
 
@@ -560,19 +561,54 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
                 const lootFound: Equipment[] = [];
                 if (dungeon.lootTable.length > 0) {
-                    const droppedItemBaseId = dungeon.lootTable[Math.floor(Math.random() * dungeon.lootTable.length)];
-                    const itemTemplate = ITEMS[droppedItemBaseId];
-                    if (itemTemplate) {
-                        const newItem: Equipment = {
-                            ...itemTemplate,
-                            id: uuidv4(),
-                            baseId: droppedItemBaseId,
-                            baseName: itemTemplate.name,
-                            upgradeLevel: 0,
-                            price: 0, // Initialize price for newly found loot
-                        };
-                        lootFound.push(newItem);
-                        combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
+                    // Handle procedural dungeons differently
+                    if (state.dungeonState.proceduralDungeonData) {
+                        // For procedural dungeons, generate actual loot items
+                        for (const itemBaseId of dungeon.lootTable) {
+                            // Check if it's a procedural item ID or a regular item ID
+                            if (itemBaseId.startsWith('proc_')) {
+                                // This is a procedural item - we need to regenerate it
+                                // Extract the target level and difficulty from the procedural dungeon
+                                const proceduralItem = generateProceduralItem(
+                                    activeCharacter.level, 
+                                    state.dungeonState.proceduralDungeonData.difficulty, 
+                                    state.dungeonState.proceduralDungeonData.floor
+                                );
+                                lootFound.push(proceduralItem);
+                                combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${proceduralItem.name}!`, actor: 'system' });
+                            } else {
+                                // Regular item from ITEMS collection
+                                const itemTemplate = ITEMS[itemBaseId];
+                                if (itemTemplate) {
+                                    const newItem: Equipment = {
+                                        ...itemTemplate,
+                                        id: uuidv4(),
+                                        baseId: itemBaseId,
+                                        baseName: itemTemplate.name,
+                                        upgradeLevel: 0,
+                                        price: 0,
+                                    };
+                                    lootFound.push(newItem);
+                                    combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
+                                }
+                            }
+                        }
+                    } else {
+                        // Regular dungeon - pick one random item
+                        const droppedItemBaseId = dungeon.lootTable[Math.floor(Math.random() * dungeon.lootTable.length)];
+                        const itemTemplate = ITEMS[droppedItemBaseId];
+                        if (itemTemplate) {
+                            const newItem: Equipment = {
+                                ...itemTemplate,
+                                id: uuidv4(),
+                                baseId: droppedItemBaseId,
+                                baseName: itemTemplate.name,
+                                upgradeLevel: 0,
+                                price: 0, // Initialize price for newly found loot
+                            };
+                            lootFound.push(newItem);
+                            combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
+                        }
                     }
                 }
                 updatedCharacter.inventory = [...updatedCharacter.inventory, ...lootFound];
