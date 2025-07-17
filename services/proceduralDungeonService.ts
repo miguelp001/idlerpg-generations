@@ -150,8 +150,8 @@ function selectBiome(floor: number): DungeonBiome {
 }
 
 function calculateDifficulty(floor: number, targetLevel: number): number {
-    // Base difficulty increases with floor - further reduced from 0.05 to 0.03 per floor
-    const baseDifficulty = 1 + (floor * 0.03);
+    // Base difficulty increases with floor - it's at .05
+    const baseDifficulty = 1 + (floor * 0.05);
     
     // Adjust for target level vs floor relationship - made even more forgiving
     const levelAdjustment = Math.max(0.8, targetLevel / (floor + 3));
