@@ -1,40 +1,183 @@
 # Idle RPG Generations
 
-This is an idle RPG where you manage a lineage of heroes, explore dungeons, recruit adventurers, and build a guild across generations!
+An immersive idle RPG where you manage a lineage of heroes across generations, exploring vast dungeons, building guilds, and forging legendary equipment. Experience deep character progression, social mechanics, and epic quests in a dark fantasy world.
 
-## Run Locally
+## 🚀 Quick Start
 
-**Prerequisites:** Node.js
+**Prerequisites:** Node.js (v16 or higher)
 
-1.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-2.  **Run the app:**
-    ```bash
-    npm run dev
-    ```
-    The application should open in your browser at `http://localhost:5173/` (or a similar address).
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-## How to Play
+2. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
 
-### Character Creation and Progression
-*   **Create Your Character:** Start by creating your first character. Choose a class (Warrior, Mage, Rogue, Cleric) and customize their appearance.
-*   **Level Up:** Your character will automatically gain experience and levels by engaging in activities.
-*   **Stats and Equipment:** As your character levels up, their stats will increase. Equip new items from your inventory or the shop to further boost your power. Pay attention to class affinities for bonus stats!
-*   **Retirement:** Once your character reaches a certain level, they can retire. Retiring a character allows them to pass on a powerful heirloom and a legacy bonus to their heir, making future generations stronger.
+3. **Open your browser:**
+   Navigate to `http://localhost:5173/` to start your adventure.
 
-### Adventures and Combat
-*   **Dungeons:** Send your character into dungeons to fight monsters, gain experience, and find loot. Dungeons have a recommended level and a boss at the end.
-*   **Raids:** For higher-level characters and guilds, raids offer greater challenges and rewards. You'll need to join or create a guild to participate in raids.
-*   **Combat:** Combat is automated. Your character and their party will fight enemies based on their stats and abilities.
+## 🎮 Game Features
 
-### Social Features
-*   **Tavern:** Visit the tavern to recruit new adventurers to join your party. A larger party means more combat power! You can refresh the available adventurers for a small gold cost.
-*   **Relationships:** Your character and their party members will develop relationships over time, which can influence various aspects of the game.
-*   **Guilds:** Create or join a guild to team up with other players (NPCs in this single-player version) for shared goals and raid progression. Donate gold to your guild to level it up.
-*   **Shop:** The shop offers a rotating selection of equipment. Items around your current level will be available, along with one rare, high-level item. You can refresh the shop's inventory for 200 gold.
+### 🏛️ Core Gameplay Systems
 
-### Generations
-*   **Heirs and Legacy:** When a character retires, you can choose an heir from their potential offspring. The heir will inherit a powerful heirloom and a permanent legacy bonus based on the retired character's achievements.
-*   **Building a Dynasty:** Each new generation starts with advantages from their predecessors, allowing you to tackle increasingly difficult content and build a powerful family lineage.
+#### **Character Creation & Classes**
+- **Four Classes:** Warrior, Mage, Rogue, and Cleric, each with distinct abilities and playstyles
+- **Deep Customization:** Choose appearance, personality traits, and starting stats
+- **Class Affinities:** Equipment provides bonus stats when matched to your character's class
+
+#### **Progressive Leveling System**
+- **Experience-Based Growth:** Gain XP through combat, quests, and exploration
+- **Stat Progression:** Health, Mana, Attack, Defense, Agility, and Intelligence
+- **Ability Unlocks:** Learn powerful active and passive abilities as you level up
+- **Retirement System:** Retire high-level characters to pass on legacy bonuses and heirlooms
+
+### ⚔️ Combat & Exploration
+
+#### **Dungeon Crawling**
+- **128+ Dungeons:** From Goblin Caves to the Celestial Nexus
+- **Progressive Difficulty:** Dungeons scale from level 1 to 128+ for endgame content
+- **Epic Boss Battles:** Face legendary creatures like Dragons, Liches, and the Fallen Goddess Olphia
+- **Automated Combat:** Strategic turn-based combat with abilities, cooldowns, and tactical decisions
+
+#### **Endless Dungeons**
+- **Procedurally Generated Content:** Infinite floors with scaling difficulty and rewards
+- **Milestone Rewards:** Special loot guaranteed every 5th, 10th, and 25th floor
+- **Auto-Progression:** Optional setting to automatically advance to the next floor
+- **Biome Variety:** Different environments with unique monsters and challenges
+
+#### **Raid System**
+- **Guild-Based Content:** Team up with your guild to tackle massive raid bosses
+- **Multiple Difficulties:** Normal, Heroic, and Mythic raid tiers
+- **Epic Loot:** Exclusive raid-only equipment and materials
+- **Coordinated Strategy:** Complex encounters requiring teamwork and planning
+
+### 🎒 Equipment & Progression
+
+#### **Comprehensive Loot System**
+- **Five Rarity Tiers:** Common, Uncommon, Rare, Epic, and Legendary equipment
+- **Equipment Slots:** Weapons, Armor, and dual Accessory slots for maximum customization
+- **Item Sets:** Collect matching equipment pieces for powerful set bonuses
+- **Upgrade System:** Enhance equipment up to +10 for massive stat improvements
+
+#### **Heirloom System**
+- **Generational Power:** Retired characters pass down enhanced equipment to their heirs
+- **Legacy Bonuses:** Permanent stat increases that carry across generations
+- **Family Progression:** Each new generation starts stronger than the last
+
+### 👥 Social & Guild Features
+
+#### **Party Management**
+- **Tavern Recruitment:** Hire adventurers with unique personalities and classes
+- **Relationship System:** Build friendships, rivalries, and romantic relationships
+- **Gift Giving:** Improve relationships by sharing equipment and treasures
+- **Marriage System:** Characters can marry party members for special bonuses
+
+#### **Guild Mechanics**
+- **Create or Join Guilds:** Build communities with other players (NPCs in single-player)
+- **Guild Progression:** Level up your guild through donations and achievements
+- **Raid Access:** Higher guild levels unlock more challenging raid content
+- **Social Events:** Dynamic interactions between guild members
+
+### 📜 Quest & Achievement Systems
+
+#### **Epic Quest Lines**
+- **Multi-Part Storylines:** Follow engaging narratives across multiple quest chains
+- **Goblin Menace:** Your first adventure dealing with goblin raiders
+- **Beast Hunter:** Track down dangerous creatures threatening the realm
+- **Undead Scourge:** Cleanse the land of undead corruption
+- **Crimson Corruption:** Uncover and stop a dark cult's sinister plans
+- **The Final Confrontation:** Face the Fallen Goddess Olphia in an epic conclusion
+
+#### **Achievement System**
+- **50+ Achievements:** Recognition for combat prowess, social milestones, and progression
+- **Titles & Recognition:** Earn prestigious titles like "Dragon Slayer" and "Godslayer"
+- **Hidden Achievements:** Secret accomplishments for dedicated players to discover
+
+### 🏪 Economy & Trading
+
+#### **Dynamic Shop System**
+- **Level-Appropriate Gear:** Equipment scaled to your character's current level
+- **Rare Finds:** Occasional high-level items for ambitious players
+- **Shop Refresh:** Spend gold to refresh inventory for new options
+- **Smart Pricing:** Equipment costs scale with power and rarity
+
+#### **Inventory Management**
+- **Bulk Operations:** Sell all items below a certain rarity threshold
+- **Equipment Comparison:** Easy stat comparisons when equipping new gear
+- **Storage Solutions:** Manage large inventories across multiple characters
+
+### 🌟 Generational Gameplay
+
+#### **Family Tree System**
+- **Lineage Tracking:** Visual family tree showing your character's ancestry
+- **Heir Selection:** Choose from multiple potential heirs with different traits
+- **Genetic Inheritance:** Children inherit traits from both parents
+- **Dynasty Building:** Create a powerful family legacy spanning generations
+
+#### **Legacy Mechanics**
+- **Permanent Progression:** Each generation becomes stronger than the last
+- **Heirloom Inheritance:** Pass down upgraded equipment to future generations
+- **Cumulative Bonuses:** Legacy bonuses stack across multiple retirements
+
+## 🎯 How to Play
+
+### Getting Started
+1. **Create Your Hero:** Choose a class and customize your first character
+2. **Learn the Basics:** Complete the interactive tutorial to understand core mechanics
+3. **Start Small:** Begin with the Goblin Cave dungeon to gain experience and loot
+4. **Build Your Party:** Visit the tavern to recruit adventurers and expand your team
+
+### Early Game Strategy
+- **Focus on Quests:** Complete quest chains for guaranteed rewards and story progression
+- **Upgrade Equipment:** Enhance your gear at every opportunity for significant power gains
+- **Explore Dungeons:** Clear dungeons appropriate to your level for steady progression
+- **Manage Relationships:** Build positive relationships with party members for combat bonuses
+
+### Mid Game Progression
+- **Join a Guild:** Create or join a guild to access raid content and social features
+- **Tackle Raids:** Challenge raid bosses for exclusive equipment and materials
+- **Endless Dungeons:** Test your limits in procedurally generated infinite content
+- **Achievement Hunting:** Pursue achievements for titles and recognition
+
+### Late Game & Endgame
+- **Character Retirement:** Retire powerful characters to boost future generations
+- **Mythic Raids:** Conquer the most challenging content for legendary rewards
+- **Perfect Builds:** Optimize equipment sets and ability combinations
+- **Final Quest:** Face the ultimate challenge against the Fallen Goddess Olphia
+
+### Advanced Tips
+- **Class Synergy:** Build parties with complementary classes for maximum effectiveness
+- **Set Bonuses:** Prioritize complete equipment sets for powerful bonus effects
+- **Milestone Floors:** Target milestone floors in endless dungeons for guaranteed rare loot
+- **Legacy Planning:** Strategically retire characters to maximize generational bonuses
+
+## 🛠️ Technical Features
+
+- **React + TypeScript:** Modern, type-safe frontend development
+- **Persistent Save System:** Your progress is automatically saved and restored
+- **Responsive Design:** Optimized for both desktop and mobile play
+- **Performance Optimized:** Smooth gameplay even with complex calculations
+- **Modular Architecture:** Clean, maintainable codebase for future expansion
+
+## 🎨 Game Atmosphere
+
+Experience a rich dark fantasy world with:
+- **Immersive UI:** Gothic-inspired interface with atmospheric effects
+- **Rich Lore:** Deep backstory and world-building throughout the game
+- **Progressive Difficulty:** Carefully balanced challenge curve from novice to godslayer
+- **Meaningful Choices:** Decisions that impact your character's story and relationships
+
+## 🔮 Future Development
+
+The game continues to evolve with potential features including:
+- **Multiplayer Guilds:** Real player cooperation and competition
+- **Expanded Classes:** Additional character classes and specializations
+- **World Events:** Time-limited challenges and seasonal content
+- **PvP Arena:** Test your builds against other players
+
+---
+
+**Ready to begin your legendary journey?** Create your first hero and start building a dynasty that will be remembered for generations!
