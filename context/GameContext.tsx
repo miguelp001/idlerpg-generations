@@ -20,6 +20,7 @@ import { generateShopItems } from '../services/shopService'; // Import the new s
 import { generateProceduralDungeon } from '../services/proceduralDungeonService';
 import { generateScaledMonster } from '../services/monsterScalingService';
 import { generateProceduralItem } from '../services/lootGenerationService';
+import { distributeEquipment } from '../services/lootDistributionService';
 
 const SAVE_KEY = 'idleRpgSaveData';
 
@@ -611,7 +612,43 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         }
                     }
                 }
-                updatedCharacter.inventory = [...updatedCharacter.inventory, ...lootFound];
+                
+                // Distribute loot intelligently to party members
+                const { playerItems, distributions } = distributeEquipment(lootFound, updatedCharacter, updatedCharacter.party);
+                
+                // Add player items to inventory
+                updatedCharacter.inventory = [...updatedCharacter.inventory, ...playerItems];
+                
+                // Update party members with their new equipment
+                updatedCharacter.party = updatedCharacter.party.map(member => {
+                    const distribution = distributions.find(d => d.recipient.id === member.id);
+                    if (distribution) {
+                        let newEquipment = [...member.equipment];
+                        
+                        // Replace or add the new item
+                        const existingIndex = newEquipment.findIndex(e => e.slot === distribution.item.slot);
+                        if (existingIndex > -1) {
+                            newEquipment[existingIndex] = distribution.item;
+                            // Add replaced item to player inventory
+                            if (distribution.replacedItem) {
+                                updatedCharacter.inventory.push(distribution.replacedItem);
+                            }
+                        } else {
+                            newEquipment.push(distribution.item);
+                        }
+                        
+                        // Add distribution message to combat log
+                        combatLogs.push({ 
+                            id: uuidv4(), 
+                            type: 'special', 
+                            message: `${member.name} equipped: ${distribution.item.name}!`, 
+                            actor: 'system' 
+                        });
+                        
+                        return { ...member, equipment: newEquipment };
+                    }
+                    return member;
+                });
 
                 let currentExperience = updatedCharacter.experience + totalXp;
                 let currentLevel = updatedCharacter.level;
@@ -1238,7 +1275,43 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                      combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
                 }
             }
-            updatedCharacter.inventory = [...updatedCharacter.inventory, ...lootFound];
+            
+            // Distribute raid loot intelligently to party members
+            const { playerItems, distributions } = distributeEquipment(lootFound, updatedCharacter, updatedCharacter.party);
+            
+            // Add player items to inventory
+            updatedCharacter.inventory = [...updatedCharacter.inventory, ...playerItems];
+            
+            // Update party members with their new equipment
+            updatedCharacter.party = updatedCharacter.party.map(member => {
+                const distribution = distributions.find(d => d.recipient.id === member.id);
+                if (distribution) {
+                    let newEquipment = [...member.equipment];
+                    
+                    // Replace or add the new item
+                    const existingIndex = newEquipment.findIndex(e => e.slot === distribution.item.slot);
+                    if (existingIndex > -1) {
+                        newEquipment[existingIndex] = distribution.item;
+                        // Add replaced item to player inventory
+                        if (distribution.replacedItem) {
+                            updatedCharacter.inventory.push(distribution.replacedItem);
+                        }
+                    } else {
+                        newEquipment.push(distribution.item);
+                    }
+                    
+                    // Add distribution message to combat log
+                    combatLogs.push({ 
+                        id: uuidv4(), 
+                        type: 'special', 
+                        message: `${member.name} equipped: ${distribution.item.name}!`, 
+                        actor: 'system' 
+                    });
+                    
+                    return { ...member, equipment: newEquipment };
+                }
+                return member;
+            });
             
             if (raid) {
                 updatedCharacter.completedRaids = { ...updatedCharacter.completedRaids, [raid.id]: new Date().toISOString() };

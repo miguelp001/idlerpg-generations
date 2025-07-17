@@ -101,17 +101,26 @@ const AbilityDisplay: React.FC<{ ability: Ability, characterId: string, isActive
 });
 
 const AdventurerEquipmentDisplay: React.FC<{ adventurer: Adventurer }> = React.memo(({ adventurer }) => {
-    const slots: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
+    const weaponItem = adventurer.equipment.find(e => e.slot === 'weapon');
+    const armorItem = adventurer.equipment.find(e => e.slot === 'armor');
+    const accessoryItems = adventurer.equipment.filter(e => e.slot === 'accessory');
+    
+    const slots = [
+        { type: 'weapon', item: weaponItem, label: 'weapon' },
+        { type: 'armor', item: armorItem, label: 'armor' },
+        { type: 'accessory1', item: accessoryItems[0], label: 'accessory' },
+        { type: 'accessory2', item: accessoryItems[1], label: 'accessory' }
+    ];
+    
     return (
-        <div className="mt-2 grid grid-cols-3 gap-1">
-            {slots.map(slot => {
-                const item = adventurer.equipment.find(e => e.slot === slot);
+        <div className="mt-2 grid grid-cols-2 gap-1">
+            {slots.map((slot, index) => {
                 return (
-                    <div key={slot} className="bg-black/20 p-1 rounded text-center h-16 flex items-center justify-center" title={item ? `${item.name} (+${Object.values(item.stats)[0]} ${Object.keys(item.stats)[0]})` : `No ${slot} equipped`}>
-                        {item ? (
-                            <span className={`text-xs ${RARITY_COLORS[item.rarity]}`}>{item.name}</span>
+                    <div key={`${slot.type}-${index}`} className="bg-black/20 p-1 rounded text-center h-16 flex items-center justify-center" title={slot.item ? `${slot.item.name} (+${Object.values(slot.item.stats)[0]} ${Object.keys(slot.item.stats)[0]})` : `No ${slot.label} equipped`}>
+                        {slot.item ? (
+                            <span className={`text-xs ${RARITY_COLORS[slot.item.rarity]}`}>{slot.item.name}</span>
                         ) : (
-                            <span className="text-xs text-on-background/40">{slot}</span>
+                            <span className="text-xs text-on-background/40">{slot.label}</span>
                         )}
                     </div>
                 )
