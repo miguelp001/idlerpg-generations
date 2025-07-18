@@ -153,8 +153,8 @@ function calculateDifficulty(floor: number, targetLevel: number): number {
     // Base difficulty increases with floor - it was at .05
     const baseDifficulty = 1 + (floor * 0.5);
     
-    // Adjust for target level vs floor relationship - made even more forgiving
-    const levelAdjustment = Math.max(0.8, targetLevel / (floor + 3));
+    // Adjust for target level vs floor relationship - made even more forgiving (was 2.8)
+    const levelAdjustment = Math.max(2.8, targetLevel / (floor + 3));
     
     return baseDifficulty * levelAdjustment;
 }
