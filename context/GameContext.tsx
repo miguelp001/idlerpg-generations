@@ -660,6 +660,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 updatedCharacter = { ...updatedCharacter, level: currentLevel, experience: currentExperience };
 
                 const updatedPartyWithXP = updatedCharacter.party.map(member => {
+                    // Only give experience to living party members
+                    if ((member.currentHealth ?? member.stats.health) <= 0) {
+                        return member; // Return member unchanged if they are defeated
+                    }
+                    
                     let memberXP = (member.experience ?? 0) + totalXp;
                     let memberLevel = member.level;
                     let memberLeveledUp = false;
