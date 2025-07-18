@@ -317,6 +317,11 @@ const Inventory: React.FC = () => {
     const equippedWeapon = activeCharacter.equipment.find(i => i.slot === 'weapon');
     const equippedArmor = activeCharacter.equipment.find(i => i.slot === 'armor');
 
+    const calculateTotalBonus = (item: Equipment, characterClass: CharacterClassType): number => {
+        const affinity = item.classAffinity?.[characterClass] ?? 1.0;
+        return Object.values(item.stats).reduce((total, value) => total + (value * affinity), 0);
+    };
+
     const groupedInventory = useMemo(() => {
         const grouped: Record<EquipmentSlot, Equipment[]> = {
             weapon: [],
@@ -326,8 +331,16 @@ const Inventory: React.FC = () => {
         activeCharacter.inventory.forEach(item => {
             grouped[item.slot]?.push(item);
         });
+        
+        // Sort each group by total bonus (greatest first)
+        Object.keys(grouped).forEach(slot => {
+            grouped[slot as EquipmentSlot].sort((a, b) => 
+                calculateTotalBonus(b, activeCharacter.class) - calculateTotalBonus(a, activeCharacter.class)
+            );
+        });
+        
         return grouped;
-    }, [activeCharacter.inventory]);
+    }, [activeCharacter.inventory, activeCharacter.class]);
 
     return (
         <div className="space-y-8">
@@ -373,7 +386,7 @@ const Inventory: React.FC = () => {
                                     <div key={slot}>
                                         <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 capitalize text-secondary">{slot}s</h2>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                            {items.sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity)).map(item => {
+                                            {items.map(item => {
                                                 const upgradeCost = UPGRADE_COST(item);
                                                 const sellPrice = SELL_PRICE(item);
                                                 return (

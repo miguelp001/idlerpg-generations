@@ -248,7 +248,7 @@ const CharacterSheet: React.FC = () => {
       {isRetireModalOpen && (
         <RetirementModal 
             characterId={character.id}
-            equipment={character.equipment}
+            equipment={[...character.equipment, ...character.accessorySlots.filter(item => item !== null)]}
             onclose={() => setRetireModalOpen(false)}
         />
       )}
@@ -368,7 +368,7 @@ const CharacterSheet: React.FC = () => {
           </Card>
           <Card>
               <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Equipment</h2>
-              <EquipmentDisplay items={character.equipment} />
+              <EquipmentDisplay items={[...character.equipment, ...character.accessorySlots.filter(item => item !== null)]} />
           </Card>
         </div>
       </div>
