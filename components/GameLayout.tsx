@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import Button from './ui/Button';
 import { Character } from '../types';
-import { UserIcon, BackpackIcon, MapIcon, UsersIcon, UserGroupIcon, ShieldCheckIcon, BookOpenIcon, TrophyIcon, GoldIcon, SaveIcon, QuestionMarkCircleIcon, HourglassIcon } from './ui/Icons';
+import { UserIcon, BackpackIcon, MapIcon, UsersIcon, UserGroupIcon, ShieldCheckIcon, BookOpenIcon, TrophyIcon, GoldIcon, QuestionMarkCircleIcon, HourglassIcon } from './ui/Icons';
 import TutorialModal from './TutorialModal';
 
 interface GameLayoutProps {
@@ -46,7 +46,7 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ label, tabName, activeTab,
 
 
 const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChange }) => {
-   const { saveGame, activeCharacter, dispatch } = useGame(); // Destructure dispatch and state
+   const { activeCharacter, dispatch } = useGame(); // Destructure dispatch and state
   const [showTutorial, setShowTutorial] = React.useState(false); // State for tutorial modal visibility
 
   const handleShowTutorial = () => {
@@ -101,26 +101,13 @@ const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChang
           {navItems.map(item => (
             <NavItem key={item.tabName} {...item} activeTab={activeTab} onClick={onTabChange} />
           ))}
-          {/* Mobile-only Save Button */}
-           <button
-                title="Save Game"
-                onClick={saveGame}
-                className={`md:hidden flex-1 flex flex-col items-center justify-center p-1 text-center text-xs font-bold transition-colors duration-200 h-full text-gray-300 hover:bg-gray-800/30 hover:text-gray-100 border-t-2 border-transparent hover:border-red-600/50`}
-            >
-                <SaveIcon />
-                <span className="mt-1 font-serif">Save</span>
-            </button>
         </div>
 
-        {/* Desktop-only Save Button */}
+        {/* Desktop-only Help Button */}
         <div className="hidden md:block p-4 mt-auto absolute bottom-0 w-full md:w-20 lg:w-64 space-y-2">
             <Button variant="void" onClick={handleShowTutorial} className="w-full flex items-center justify-center lg:justify-start">
                 <QuestionMarkCircleIcon />
                 <span className="hidden lg:inline ml-2">Help</span>
-            </Button>
-            <Button variant="void" onClick={saveGame} className="w-full flex items-center justify-center lg:justify-start">
-                <SaveIcon />
-                <span className="hidden lg:inline ml-2">Save Game</span>
             </Button>
         </div>
       </nav>
