@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
-import { getSortedDungeonsByLevel } from '../services/dungeonService';
+import { getSortedDungeonsByLevel, getBestAvailableDungeon } from '../services/dungeonService';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { DANGEROUS_DUNGEON_LEVEL_OFFSET } from '../constants';
@@ -31,7 +31,7 @@ const ConfirmationModal: React.FC<{
 
 
 const DungeonList: React.FC = () => {
-    const { dispatch, activeCharacter } = useGame();
+    const { dispatch, activeCharacter, state } = useGame();
     const [confirmingDungeonId, setConfirmingDungeonId] = useState<string | null>(null);
 
     if (!activeCharacter) return <div>Loading character...</div>;
@@ -39,6 +39,9 @@ const DungeonList: React.FC = () => {
     const availableDungeons = getSortedDungeonsByLevel().filter(dungeon => 
         dungeon.levelRequirement <= activeCharacter.level + DANGEROUS_DUNGEON_LEVEL_OFFSET
     );
+
+    // Get the best dungeon for autogrinding (no current dungeon context)
+    const bestAutogrindDungeon = getBestAvailableDungeon(activeCharacter.level);
 
     const handleEnterClick = (dungeonId: string, isDangerous: boolean) => {
         if (isDangerous) {
@@ -70,18 +73,37 @@ const DungeonList: React.FC = () => {
 
             <h1 className="text-4xl font-bold mb-6 text-primary" style={{ fontFamily: "'Orbitron', sans-serif" }}>Dungeon Entrance</h1>
             <p className="text-lg text-on-background/80 mb-8">Select your challenge. Dungeons above your level are marked with a warning and offer greater risk for potentially greater reward.</p>
+            
+            {state.isGrinding && bestAutogrindDungeon && (
+                <Card className="mb-6 bg-blue-900/20 border border-blue-500/50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                        <p className="text-blue-300">
+                            <span className="font-semibold">Auto-grinding active:</span> Will automatically switch to higher level dungeons when available. 
+                            Currently targeting: <span className="font-bold text-blue-200">{bestAutogrindDungeon.name}</span>
+                        </p>
+                    </div>
+                </Card>
+            )}
+            
             {availableDungeons.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {availableDungeons.map(dungeon => {
                         const isDangerous = activeCharacter.level < dungeon.levelRequirement;
+                        const isBestAutogrind = bestAutogrindDungeon?.id === dungeon.id;
                         
                         const levelColor = isDangerous ? 'text-yellow-400' : 'text-green-400';
                         const buttonText = isDangerous ? 'Enter (Dangerous)' : 'Enter Dungeon';
                         
                         return (
-                            <Card key={dungeon.id} className="flex flex-col justify-between">
+                            <Card key={dungeon.id} className={`flex flex-col justify-between ${isBestAutogrind && state.isGrinding ? 'ring-2 ring-blue-500/50 bg-blue-900/10' : ''}`}>
                                 <div>
-                                    <h2 className="text-2xl font-bold text-secondary mb-2">{dungeon.name}</h2>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <h2 className="text-2xl font-bold text-secondary">{dungeon.name}</h2>
+                                        {isBestAutogrind && state.isGrinding && (
+                                            <span className="text-xs font-bold bg-blue-500/20 text-blue-300 px-2 py-1 rounded">AUTO</span>
+                                        )}
+                                    </div>
                                     <p className="text-on-background/80 mb-4">{dungeon.description}</p>
                                 </div>
                                 <div className="mt-4">

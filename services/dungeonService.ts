@@ -8,6 +8,38 @@ export const getSortedDungeonsByLevel = (): Dungeon[] => {
     return sortedDungeons;
 };
 
+export const getBestAvailableDungeon = (characterLevel: number, currentDungeonId?: string, characterHealthPercent?: number): Dungeon | null => {
+    const availableDungeons = getSortedDungeonsByLevel().filter(dungeon => 
+        dungeon.levelRequirement <= characterLevel + 5 // Allow dungeons up to 5 levels above character
+    );
+    
+    if (availableDungeons.length === 0) return null;
+    
+    // If we have a current dungeon, find the next higher level dungeon
+    if (currentDungeonId) {
+        const currentDungeon = availableDungeons.find(d => d.id === currentDungeonId);
+        if (currentDungeon) {
+            const higherDungeons = availableDungeons.filter(d => d.levelRequirement > currentDungeon.levelRequirement);
+            if (higherDungeons.length > 0) {
+                // Be more conservative when switching to higher level dungeons
+                // Only switch if character health is above 80% or if the level difference is small
+                const nextDungeon = higherDungeons.sort((a, b) => a.levelRequirement - b.levelRequirement)[0];
+                const levelDifference = nextDungeon.levelRequirement - currentDungeon.levelRequirement;
+                
+                // If character health is low or level difference is large, stick with current dungeon
+                if (characterHealthPercent !== undefined && characterHealthPercent < 0.8 && levelDifference > 2) {
+                    return currentDungeon;
+                }
+                
+                return nextDungeon;
+            }
+        }
+    }
+    
+    // If no current dungeon or no higher dungeons available, return the highest level dungeon the character can access
+    return availableDungeons[availableDungeons.length - 1];
+};
+
 export function validateAllDungeons() {
     let errors: string[] = [];
     for (const dungeon of DUNGEONS) {

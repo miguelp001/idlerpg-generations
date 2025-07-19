@@ -4,6 +4,7 @@ import { RARITY_COLORS } from '../constants';
 import { ALL_MONSTERS } from '../data/monsters';
 import { DUNGEONS } from '../data/dungeons';
 import { generateProceduralDungeon } from '../services/proceduralDungeonService';
+import { getBestAvailableDungeon } from '../services/dungeonService';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import ProgressBar from './ui/ProgressBar';
@@ -162,12 +163,25 @@ const DungeonView: React.FC = () => {
     useEffect(() => {
         if (dungeonState.status === 'victory' && isGrinding && dungeonState.dungeonId) {
             const timer = setTimeout(() => {
-                dispatch({ type: 'START_DUNGEON', payload: { dungeonId: dungeonState.dungeonId! } });
+                // Calculate character health percentage
+                const healthPercent = activeCharacter.currentHealth ? 
+                    activeCharacter.currentHealth / activeCharacter.maxStats.health : 1;
+                
+                // Check if there's a better dungeon available
+                const bestDungeon = getBestAvailableDungeon(activeCharacter.level, dungeonState.dungeonId, healthPercent);
+                
+                if (bestDungeon && bestDungeon.id !== dungeonState.dungeonId) {
+                    // Switch to the better dungeon
+                    dispatch({ type: 'START_DUNGEON', payload: { dungeonId: bestDungeon.id } });
+                } else {
+                    // Continue with the same dungeon if no better option
+                    dispatch({ type: 'START_DUNGEON', payload: { dungeonId: dungeonState.dungeonId! } });
+                }
             }, 2000); // 2 second delay to show results
 
             return () => clearTimeout(timer);
         }
-    }, [dungeonState.status, isGrinding, dungeonState.dungeonId, dispatch]);
+    }, [dungeonState.status, isGrinding, dungeonState.dungeonId, dispatch, activeCharacter.level, activeCharacter.currentHealth, activeCharacter.maxStats.health]);
     
     useEffect(() => {
         // This cleanup function will run when the component unmounts.
