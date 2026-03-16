@@ -83,26 +83,29 @@ const AdventurerCard: React.FC<{
 });
 
 const MercenaryCard: React.FC<{ mercenary: MercenaryHeir; onHire: (id: string) => void; disabled?: boolean }> = React.memo(({ mercenary, onHire, disabled = false }) => {
-    const classInfo = CLASSES[mercenary.characterData.class];
-    const personality = PERSONALITY_TRAITS[mercenary.characterData.personality];
+    if (!mercenary || !mercenary.characterData) return null;
+    const classInfo = CLASSES[mercenary.characterData.class] || CLASSES.warrior;
+    const personality = PERSONALITY_TRAITS[mercenary.characterData.personality] || PERSONALITY_TRAITS.brave;
+    const equipment = mercenary.characterData.equipment || [];
+
     return (
         <Card className="flex flex-col justify-between border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all">
             <div>
                 <div className="flex justify-between items-start">
                     <div>
-                        <h3 className="text-xl font-bold text-primary">{mercenary.characterData.name}</h3>
-                        <p className="text-xs text-on-background/40">Registered by {mercenary.ownerName}</p>
+                        <h3 className="text-xl font-bold text-primary">{mercenary.characterData.name || 'Anonymous'}</h3>
+                        <p className="text-xs text-on-background/40">Registered by {mercenary.ownerName || 'Unknown'}</p>
                         <p className={`font-semibold mt-1 ${classInfo.color}`}>{classInfo.name}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-lg font-bold">Lvl {mercenary.characterData.level}</p>
+                        <p className="text-lg font-bold">Lvl {mercenary.characterData.level || 1}</p>
                         <p className="text-sm font-semibold text-on-background/60">{personality.name}</p>
                     </div>
                 </div>
-                <p className="text-sm mt-3 italic text-on-background/80 bg-black/20 p-2 rounded">"{mercenary.description}"</p>
+                <p className="text-sm mt-3 italic text-on-background/80 bg-black/20 p-2 rounded">"{mercenary.description || 'No description provided.'}"</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                    {mercenary.characterData.equipment.slice(0, 3).map(e => (
-                        <span key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded bg-surface-3 ${RARITY_COLORS[e.rarity]}`}>
+                    {equipment.slice(0, 3).map(e => (
+                        <span key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded bg-surface-3 ${RARITY_COLORS[e.rarity] || ''}`}>
                             {e.name}
                         </span>
                     ))}
@@ -114,7 +117,7 @@ const MercenaryCard: React.FC<{ mercenary: MercenaryHeir; onHire: (id: string) =
                 className="w-full mt-4"
                 disabled={disabled}
             >
-                Hire ({mercenary.dailyRate}G)
+                Hire ({mercenary.dailyRate || 0}G)
             </Button>
         </Card>
     );
@@ -513,7 +516,7 @@ const SocialHallView: React.FC = () => {
                 <h2 className="text-2xl font-bold text-primary">Mercenary Market</h2>
                 <p className="text-on-background/70 mt-1">Hire legendary characters retired by players across the network.</p>
             </header>
-            {state.worldState.mercenaries.length === 0 ? (
+            {(state.worldState?.mercenaries || []).length === 0 ? (
                 <Card className="text-center py-12 text-on-background/40">The market is currently quiet.</Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

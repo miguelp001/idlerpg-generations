@@ -116,7 +116,7 @@ const WorldStatusView: React.FC = () => {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
-                        {worldState.activeEvents.length === 0 ? (
+                        {(worldState?.activeEvents || []).length === 0 ? (
                             <div className="text-center py-10 space-y-2">
                                 <p className="text-4xl">🕊️</p>
                                 <p className="text-slate-400 italic">The world is peaceful today.</p>
@@ -145,11 +145,11 @@ const WorldStatusView: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="flex flex-wrap gap-2 mt-3">
-                                            {event.modifiers.shopPrices    && <ModifierBadge label="Shop Prices" value={event.modifiers.shopPrices} invert />}
-                                            {event.modifiers.monsterStats  && <ModifierBadge label="Monster Power" value={event.modifiers.monsterStats} invert />}
-                                            {event.modifiers.xpGain        && <ModifierBadge label="XP Gain" value={event.modifiers.xpGain} />}
-                                            {event.modifiers.goldGain      && <ModifierBadge label="Gold Find" value={event.modifiers.goldGain} />}
-                                            {event.modifiers.relationshipGain && <ModifierBadge label="Social Bonds" value={event.modifiers.relationshipGain} />}
+                                            {event.modifiers?.shopPrices    && <ModifierBadge label="Shop Prices" value={event.modifiers.shopPrices} invert />}
+                                            {event.modifiers?.monsterStats  && <ModifierBadge label="Monster Power" value={event.modifiers.monsterStats} invert />}
+                                            {event.modifiers?.xpGain        && <ModifierBadge label="XP Gain" value={event.modifiers.xpGain} />}
+                                            {event.modifiers?.goldGain      && <ModifierBadge label="Gold Find" value={event.modifiers.goldGain} />}
+                                            {event.modifiers?.relationshipGain && <ModifierBadge label="Social Bonds" value={event.modifiers.relationshipGain} />}
                                         </div>
                                     </div>
                                 );
@@ -167,7 +167,7 @@ const WorldStatusView: React.FC = () => {
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         {Object.entries(FACTION_CONFIG).map(([factionId, cfg]) => {
-                            const rep = worldState.factionStandings[factionId] ?? 0;
+                            const rep = worldState?.factionStandings?.[factionId] ?? 0;
                             const maxRep = 1000;
                             const progressPct = Math.min(100, (rep / maxRep) * 100);
                             const nextMilestone = cfg.milestones.find(m => rep < m.threshold);

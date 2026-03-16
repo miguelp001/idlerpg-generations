@@ -77,10 +77,45 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     // Shared / Core Actions
     switch (action.type) {
         case 'LOAD_STATE': {
-            let loadedState = action.payload;
-            if (loadedState.dungeonState && loadedState.dungeonState.status !== 'idle' && loadedState.dungeonState.status !== 'paused') {
-                loadedState.dungeonState = { ...loadedState.dungeonState, status: 'paused' };
+            let loadedState = { ...initialState, ...action.payload };
+            
+            // Deep merge worldState
+            if (action.payload.worldState) {
+                loadedState.worldState = { 
+                    ...initialState.worldState, 
+                    ...action.payload.worldState,
+                    factionStandings: {
+                        ...initialState.worldState.factionStandings,
+                        ...(action.payload.worldState.factionStandings || {})
+                    }
+                };
             }
+
+            // Deep merge settings
+            if (action.payload.settings) {
+                loadedState.settings = { ...initialState.settings, ...action.payload.settings };
+            }
+
+            // Deep merge dungeonState
+            if (action.payload.dungeonState) {
+                loadedState.dungeonState = { ...initialState.dungeonState, ...action.payload.dungeonState };
+                if (loadedState.dungeonState.status !== 'idle' && loadedState.dungeonState.status !== 'paused') {
+                    loadedState.dungeonState.status = 'paused';
+                }
+            }
+
+            // Deep merge raidState
+            if (action.payload.raidState) {
+                loadedState.raidState = { ...initialState.raidState, ...action.payload.raidState };
+            }
+
+            // Ensure arrays exist
+            loadedState.characters = loadedState.characters || [];
+            loadedState.tavernAdventurers = loadedState.tavernAdventurers || [];
+            loadedState.shopItems = loadedState.shopItems || [];
+            loadedState.relationships = loadedState.relationships || [];
+            loadedState.socialLog = loadedState.socialLog || [];
+
             return { ...loadedState, isLoaded: true };
         }
         case 'UPDATE_SETTINGS': {

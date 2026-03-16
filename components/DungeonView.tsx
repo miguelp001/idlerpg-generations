@@ -18,10 +18,10 @@ const CombatLog: React.FC = () => {
     const logRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (logRef.current) {
+        if (logRef.current && state.dungeonState?.combatLog) {
             logRef.current.scrollTop = logRef.current.scrollHeight;
         }
-    }, [state.dungeonState.combatLog]);
+    }, [state.dungeonState?.combatLog]);
     
     const getLogInfo = (log: CombatLogEntry): { color: string, icon: React.ReactNode } => {
         const info = { color: 'text-on-background/90', icon: <SwordIcon /> };
