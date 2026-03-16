@@ -13,6 +13,7 @@ import AchievementsView from './components/AchievementsView';
 import { EndlessDungeonView } from './components/EndlessDungeonView';
 import TutorialModal from './components/TutorialModal';
 import HeirSelectionView from './components/HeirSelectionView';
+import WorldStatusView from './components/WorldStatusView';
 import { useGame } from './context/GameContext';
 
 const Dashboard: React.FC = () => {
@@ -81,6 +82,9 @@ const Dashboard: React.FC = () => {
       case 'family':
         console.log('Rendering FamilyTree');
         return <FamilyTree />;
+      case 'world':
+        console.log('Rendering WorldStatusView');
+        return <WorldStatusView />;
       default:
         console.log('Rendering default CharacterSheet');
         return <CharacterSheet />;

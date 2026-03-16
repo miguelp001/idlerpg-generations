@@ -301,40 +301,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       }
       return newState;
     }
-    case 'RETIRE_CHARACTER': {
-        const { characterId, heirloomId } = action.payload;
-        const characterToRetire = state.characters.find(c => c.id === characterId);
-        if (!characterToRetire || characterToRetire.level < RETIREMENT_LEVEL) return state;
-
-        const heirloom = characterToRetire.equipment.find(e => e.id === heirloomId);
-        if (!heirloom) return state;
-
-        const retiredCharacter = { ...characterToRetire, status: 'retired' as 'retired' };
-        
-        const legacyBonus = {
-            health: Math.floor(characterToRetire.level * 2),
-            mana: Math.floor(characterToRetire.level),
-            attack: Math.floor(characterToRetire.level / 2),
-            defense: Math.floor(characterToRetire.level / 2),
-            agility: Math.floor(characterToRetire.level / 4),
-            intelligence: Math.floor(characterToRetire.level / 4),
-        };
-
-        const heirloomToPass = { ...heirloom, isHeirloom: true };
-
-        return {
-            ...state,
-            characters: state.characters.map(c => c.id === characterId ? retiredCharacter : c),
-            activeCharacterId: null,
-            pendingGeneration: {
-                parentId: characterId,
-                legacyBonus,
-                heirloom: heirloomToPass,
-                availableHeirs: characterToRetire.potentialHeirs,
-                gold: characterToRetire.gold,
-            },
-        };
-    }
     case 'SET_ACTIVE_CHARACTER':
         return { ...state, activeCharacterId: action.payload };
     case 'UPDATE_CHARACTER':
@@ -1054,7 +1020,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             socialLog: [{ 
                 id: uuidv4(), 
                 timestamp: new Date().toISOString(),
-                type: 'social_interaction',
+                type: 'social_interaction' as const,
                 content: `The Blacksmith has started working on your ${action.payload.order.rarity} ${action.payload.order.slot}.`
             }, ...state.socialLog].slice(0, 50),
         };
@@ -1082,7 +1048,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             socialLog: [{ 
                 id: uuidv4(), 
                 timestamp: new Date().toISOString(),
-                type: 'social_interaction',
+                type: 'social_interaction' as const,
                 content: `Forge order cancelled. Some materials were salvaged.`
             }, ...state.socialLog].slice(0, 50),
         };
@@ -1106,7 +1072,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             socialLog: [{ 
                 id: uuidv4(), 
                 timestamp: new Date().toISOString(),
-                type: 'social_interaction',
+                type: 'social_interaction' as const,
                 content: `You claimed your forged item: ${forgedItem.name}!`
             }, ...state.socialLog].slice(0, 50),
         };
@@ -1570,6 +1536,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         return newState;
     }
      case 'SIMULATE_SOCIAL_TURN': {
+        console.log("Simulating social turn...");
         const charIndex = state.characters.findIndex(c => c.id === state.activeCharacterId);
         if (charIndex === -1) return state;
 
@@ -1822,7 +1789,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'RETIRE_CHARACTER': {
         const { characterId, heirloomId } = action.payload;
         const character = state.characters.find(c => c.id === characterId);
-        if (!character || character.level < 10) return state; // Min level to retire
+        if (!character || character.level < RETIREMENT_LEVEL) return state; // Min level to retire
 
         const heirloom = character.inventory.find(i => i.id === heirloomId) || character.equipment.find(i => i.id === heirloomId);
         if (!heirloom) return state;
@@ -1868,6 +1835,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 generation: (state.characters.find(c => c.id === state.pendingGeneration?.parentId)?.generation || 1) + 1,
                 parentIds: [state.pendingGeneration.parentId],
                 children: [],
+                materials: {},
                 lastActive: new Date().toISOString(),
                 gold: state.pendingGeneration.gold,
                 status: 'active',
@@ -1978,6 +1946,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
     }
         case 'ADVANCE_WORLD_STATE': {
+            console.log("Advancing world state...");
             const isNight = state.worldState.time === 'day';
             const newTime = isNight ? 'night' : 'day';
             let newDay = state.worldState.day;
@@ -2076,6 +2045,26 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem(SAVE_KEY);
         window.location.reload();
     }, []);
+
+    // Global Engine Loop for World and Social features
+    useEffect(() => {
+        if (!state.isLoaded) return;
+
+        console.log("Starting global world engine loop...");
+
+        const worldInterval = setInterval(() => {
+            dispatch({ type: 'ADVANCE_WORLD_STATE' });
+        }, 60000); // Advance world state every 60 seconds
+
+        const socialInterval = setInterval(() => {
+            dispatch({ type: 'SIMULATE_SOCIAL_TURN' });
+        }, 30000); // Simulate social turns every 30 seconds
+
+        return () => {
+            clearInterval(worldInterval);
+            clearInterval(socialInterval);
+        };
+    }, [state.isLoaded, dispatch]);
 
     const value = {
         state,
