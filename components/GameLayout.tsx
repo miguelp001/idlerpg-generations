@@ -4,6 +4,7 @@ import { useGame } from '../context/GameContext';
 import Button from './ui/Button';
 import { Character } from '../types';
 import { UserIcon, BackpackIcon, MapIcon, UsersIcon, UserGroupIcon, ShieldCheckIcon, BookOpenIcon, TrophyIcon, GoldIcon, QuestionMarkCircleIcon, HourglassIcon } from './ui/Icons';
+import { Globe } from 'lucide-react';
 import TutorialModal from './TutorialModal';
 
 interface GameLayoutProps {
@@ -69,6 +70,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ children, activeTab, onTabChang
       { label: 'Guild', tabName: 'guild', icon: <ShieldCheckIcon />, condition: (char?: Character | null) => !!char && char.level >= 20 },
       { label: 'Achievements', tabName: 'achievements', icon: <TrophyIcon />, condition: () => true },
       { label: 'Family Tree', tabName: 'family', icon: <UsersIcon/>, condition: (char?: Character | null) => !!char && char.generation >= 2 },
+      { label: 'World', tabName: 'world', icon: <Globe className="w-6 h-6" />, condition: () => true },
     ];
     return allNavItems.filter(item => item.condition(activeCharacter));
   }, [activeCharacter]);

@@ -48,6 +48,7 @@ export const GUILD_XP_TABLE: { [level: number]: number } = {
     29: 10600000,
     30: 12000000,
 };
+export const GUILD_LEVEL_BONUS = 0.01; // 1% stat bonus per guild level
 export const DANGEROUS_DUNGEON_LEVEL_OFFSET = 5;
 
 export const CLASSES: { [key in CharacterClassType]: { name: string; description: string; baseStats: GameStats; icon: React.ReactNode; color: string } } = {

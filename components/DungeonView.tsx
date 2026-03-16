@@ -204,6 +204,7 @@ const DungeonView: React.FC = () => {
     }
 
     const renderFightingView = () => {
+        if (!activeCharacter) return null;
         const partyWithPlayer = [activeCharacter, ...activeCharacter.party];
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -230,8 +231,8 @@ const DungeonView: React.FC = () => {
                                 return (
                                    <div key={player.id} className="p-2 bg-surface-2 rounded-lg">
                                        <p className="font-bold">{player.name} <span className="text-sm text-on-background/70">(Lvl {player.level})</span></p>
-                                       <ProgressBar value={player.currentHealth ?? player.stats.health} max={player.maxStats.health} colorClass="bg-green-500" />
-                                       <ProgressBar value={player.currentMana ?? player.stats.mana} max={player.maxStats.mana} colorClass="bg-blue-500" />
+                                       <ProgressBar label="HP" value={player.currentHealth ?? player.stats.health} max={player.maxStats.health} colorClass="bg-green-500" />
+                                       <ProgressBar label="MP" value={player.currentMana ?? player.stats.mana} max={player.maxStats.mana} colorClass="bg-blue-500" />
                                    </div>
                                 )
                             } else { // Adventurer
@@ -243,8 +244,8 @@ const DungeonView: React.FC = () => {
                                            {adventurer.name} <span className="text-sm text-on-background/70">(Lvl {adventurer.level})</span>
                                            {isDefeated && <span className="font-bold text-red-500 ml-2">(Defeated)</span>}
                                        </p>
-                                       <ProgressBar value={isDefeated ? 0 : (adventurer.currentHealth ?? adventurer.stats.health)} max={adventurer.stats.health} colorClass="bg-green-500" />
-                                       <ProgressBar value={isDefeated ? 0 : (adventurer.currentMana ?? adventurer.stats.mana)} max={adventurer.stats.mana} colorClass="bg-blue-500" />
+                                       <ProgressBar label="HP" value={isDefeated ? 0 : (adventurer.currentHealth ?? adventurer.stats.health)} max={adventurer.stats.health} colorClass="bg-green-500" />
+                                       <ProgressBar label="MP" value={isDefeated ? 0 : (adventurer.currentMana ?? adventurer.stats.mana)} max={adventurer.stats.mana} colorClass="bg-blue-500" />
                                    </div>
                                 )
                             }
@@ -283,6 +284,128 @@ const DungeonView: React.FC = () => {
         )
     };
 
+    const renderRoomClearedView = () => {
+        const nextRoomExists = dungeonState.currentRoomIndex < dungeonState.rooms.length - 1;
+        return (
+            <Card className="text-center animate-slide-up bg-green-900/10 border-green-500/30">
+                <h2 className="text-3xl font-bold mb-4 text-green-400 flex items-center justify-center gap-2">
+                    <SparklesIcon className="w-8 h-8" /> Room Cleared!
+                </h2>
+                <p className="text-lg mb-6">You have successfully navigated this part of the dungeon.</p>
+                <div className="flex justify-center gap-4">
+                    {nextRoomExists ? (
+                        <Button onClick={() => dispatch({ type: 'NEXT_ROOM' })} className="px-8 py-3 bg-primary hover:bg-primary-hover">
+                            Advance to Next Room
+                        </Button>
+                    ) : (
+                        <Button onClick={() => dispatch({ type: 'LEAVE_DUNGEON' })} className="px-8 py-3">
+                            Finish Dungeon
+                        </Button>
+                    )}
+                </div>
+            </Card>
+        );
+    };
+
+    const renderTreasureView = () => {
+        const currentRoom = dungeonState.rooms[dungeonState.currentRoomIndex];
+        return (
+            <Card className="text-center animate-slide-up bg-yellow-900/10 border-yellow-500/30">
+                <h2 className="text-3xl font-bold mb-4 text-yellow-400 flex items-center justify-center gap-2">
+                    <GoldIcon className="w-8 h-8" /> Treasure Found!
+                </h2>
+                <p className="text-lg mb-2">You discovered a hidden stash!</p>
+                {currentRoom.treasure && (
+                    <div className="mb-6 p-3 bg-black/20 rounded-lg inline-block">
+                        <p className="font-bold text-yellow-500">{currentRoom.treasure.gold} Gold</p>
+                        <p className="text-sm text-on-background/70">{currentRoom.treasure.items.length} Potential Items</p>
+                    </div>
+                )}
+                <div className="flex justify-center">
+                    <Button onClick={() => dispatch({ type: 'CLAIM_TREASURE' })} className="px-8 py-3 bg-yellow-600 hover:bg-yellow-700">
+                        Claim Loot
+                    </Button>
+                </div>
+            </Card>
+        );
+    };
+
+    const renderRestView = () => {
+        return (
+            <Card className="text-center animate-slide-up bg-blue-900/10 border-blue-500/30">
+                <h2 className="text-3xl font-bold mb-4 text-blue-400 flex items-center justify-center gap-2">
+                    <HeartPulseIcon className="w-8 h-8" /> Rest Point
+                </h2>
+                <p className="text-lg mb-6">A moment of peace. You can take a short rest here to recover some strength.</p>
+                <div className="flex justify-center gap-4">
+                    <Button onClick={() => dispatch({ type: 'REST' })} className="px-8 py-3 bg-blue-600 hover:bg-blue-700">
+                        Take a Rest
+                    </Button>
+                    <Button variant="void" onClick={() => dispatch({ type: 'NEXT_ROOM' })} className="px-8 py-3">
+                        Skip and Continue
+                    </Button>
+                </div>
+            </Card>
+        );
+    };
+
+    const renderEventView = () => {
+        const currentRoom = dungeonState.rooms[dungeonState.currentRoomIndex];
+        if (!currentRoom.event) return null;
+        
+        return (
+            <Card className="animate-slide-up bg-purple-900/10 border-purple-500/30">
+                <h2 className="text-3xl font-bold mb-4 text-purple-400 flex items-center justify-center gap-2 text-center">
+                    <BookOpenIcon className="w-8 h-8" /> Event Occurs
+                </h2>
+                <p className="text-lg mb-8 text-center px-4 leading-relaxed">{currentRoom.event.description}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                    {currentRoom.event.choices.map(choice => (
+                        <Button 
+                            key={choice.id}
+                            variant="void"
+                            className="p-4 h-auto flex flex-col items-center gap-2 border-purple-500/50 hover:bg-purple-900/20 text-center group"
+                            onClick={() => {
+                                // Events logic should be handled in a simplified way for now
+                                // Moving to next room as outcome
+                                dispatch({ type: 'NEXT_ROOM' });
+                            }}
+                        >
+                            <span className="font-bold text-purple-300 group-hover:text-purple-100">{choice.label}</span>
+                            <span className="text-xs text-on-background/60">{choice.description}</span>
+                        </Button>
+                    ))}
+                </div>
+            </Card>
+        );
+    };
+
+    const renderRoomProgress = () => {
+        const totalRooms = dungeonState.rooms.length;
+        if (totalRooms === 0) return null;
+        
+        return (
+            <div className="mb-4">
+                <div className="flex items-center justify-between text-sm mb-1 px-1">
+                    <span className="font-semibold text-on-background/60">DUNGEON PROGRESS</span>
+                    <span className="text-primary font-bold">Room {dungeonState.currentRoomIndex + 1} / {totalRooms}</span>
+                </div>
+                <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden flex gap-1 p-0.5">
+                    {dungeonState.rooms.map((room, i) => (
+                        <div 
+                            key={room.id} 
+                            className={`h-full flex-1 rounded-full transition-all duration-500 ${
+                                i < dungeonState.currentRoomIndex ? 'bg-green-500' : 
+                                i === dungeonState.currentRoomIndex ? 'bg-primary animate-pulse' : 
+                                'bg-white/10'
+                            }`}
+                            title={`Room ${i + 1}: ${room.type}`}
+                        />
+                    ))}
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="space-y-6">
@@ -292,12 +415,36 @@ const DungeonView: React.FC = () => {
                     onCancel={() => setIsFleeing(false)}
                 />
             )}
-             <h1 className="text-4xl font-bold text-primary" style={{ fontFamily: "'Orbitron', sans-serif" }}>{dungeon.name}</h1>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 className="text-4xl font-bold text-primary mb-1 uppercase tracking-wider" style={{ fontFamily: "'Orbitron', sans-serif" }}>{dungeon.name}</h1>
+                    <p className="text-on-background/60 italic">{dungeon.description}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-x-2 bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
+                        <label htmlFor="grind-toggle" className="text-xs font-bold text-on-surface/60 uppercase tracking-tighter cursor-pointer">
+                            Auto Grind
+                        </label>
+                        <Toggle
+                            id="grind-toggle"
+                            checked={isGrinding}
+                            onChange={(checked) => dispatch({ type: 'SET_GRINDING', payload: checked })}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {renderRoomProgress()}
+
             {dungeonState.status === 'fighting' && renderFightingView()}
+            {dungeonState.status === 'room_cleared' && renderRoomClearedView()}
+            {dungeonState.status === 'treasure_found' && renderTreasureView()}
+            {dungeonState.status === 'resting' && renderRestView()}
+            {dungeonState.status === 'event' && renderEventView()}
             {(dungeonState.status === 'victory' || dungeonState.status === 'defeat') && renderResultView(dungeonState.status === 'victory')}
 
             {(dungeonState.status === 'fighting' || dungeonState.status === 'paused') && (
-                <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
+                <div className="mt-2 flex flex-col sm:flex-row justify-center items-center gap-4">
                     <Button 
                         variant="void" 
                         className="border-yellow-500 text-yellow-400 hover:bg-yellow-900/50" 
@@ -312,20 +459,13 @@ const DungeonView: React.FC = () => {
                     >
                         {dungeonState.status === 'fighting' ? 'Pause Combat' : 'Resume Combat'}
                     </Button>
-                    <div className="flex items-center gap-x-3">
-                        <label htmlFor="grind-toggle" className="font-semibold text-on-surface select-none cursor-pointer">
-                            Auto Grind
-                        </label>
-                        <Toggle
-                            id="grind-toggle"
-                            checked={isGrinding}
-                            onChange={(checked) => dispatch({ type: 'SET_GRINDING', payload: checked })}
-                        />
-                    </div>
                 </div>
             )}
-            <Card>
-                <h2 className="text-xl font-bold mb-4 text-primary">Combat Log</h2>
+            
+            <Card className="border-t border-primary/20 shadow-lg shadow-black/40">
+                <h2 className="text-xl font-bold mb-4 text-primary flex items-center gap-2">
+                    <SwordIcon className="w-5 h-5" /> Combat Log
+                </h2>
                 <CombatLog />
             </Card>
         </div>

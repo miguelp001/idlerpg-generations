@@ -11,6 +11,7 @@ import GuildView from './GuildView';
 import QuestView from './QuestView';
 import AchievementsView from './AchievementsView';
 import { EndlessDungeonView } from './EndlessDungeonView';
+import WorldStatusView from './WorldStatusView';
 import { useGame } from '../context/GameContext';
 
 const Dashboard: React.FC = () => {
@@ -49,6 +50,8 @@ const Dashboard: React.FC = () => {
         return <AchievementsView />;
       case 'family':
         return <FamilyTree />;
+      case 'world':
+        return <WorldStatusView />;
       default:
         return <CharacterSheet />;
     }

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
-import { GUILD_CREATE_COST, GUILD_DONATION_GOLD, GUILD_DONATION_XP, GUILD_XP_TABLE, CLASSES } from '../constants';
+import { GUILD_CREATE_COST, GUILD_DONATION_GOLD, GUILD_DONATION_XP, GUILD_XP_TABLE, CLASSES, GUILD_LEVEL_BONUS } from '../constants';
 import { RAIDS } from '../data/raids';
 import Card from './ui/Card';
 import Button from './ui/Button';
@@ -87,6 +87,16 @@ const ManageGuildView: React.FC = () => {
                     )}
                 </Card>
                 <Card>
+                    <h3 className="text-xl font-bold text-secondary mb-4">Passive Bonuses</h3>
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center p-2 bg-surface-2 rounded">
+                            <span className="text-on-background/80">Stat Increase</span>
+                            <span className="text-green-400 font-bold">+{Math.round(guild.level * GUILD_LEVEL_BONUS * 100)}%</span>
+                        </div>
+                        <p className="text-xs text-on-background/60 italic">Applying to all guild members.</p>
+                    </div>
+                </Card>
+                <Card>
                     <h3 className="text-xl font-bold text-primary mb-4">Contribute</h3>
                     {xpForNextLevel ? (
                         <>
@@ -119,19 +129,47 @@ const ManageGuildView: React.FC = () => {
                     )}
                 </Card>
                  <Card>
-                    <h3 className="text-xl font-bold text-primary mb-4">Members</h3>
-                    <ul className="space-y-2">
-                        <li className="flex items-center p-2 bg-surface-2 rounded">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-bold text-primary">Guild Hall members</h3>
+                        <span className="text-sm text-on-background/60">{guild.members.length + 1} Members</span>
+                    </div>
+                    <ul className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        <li className="flex items-center p-2 bg-surface-2/50 border border-secondary/20 rounded">
                             <span className="font-bold text-on-surface flex-grow">{activeCharacter.name} (Leader)</span>
                             <span className={`text-sm font-semibold ${CLASSES[activeCharacter.class].color}`}>Lvl {activeCharacter.level} {CLASSES[activeCharacter.class].name}</span>
                         </li>
-                        {activeCharacter.party.map(member => (
+                        {guild.members.map(member => (
                             <li key={member.id} className="flex items-center p-2 bg-surface-2 rounded">
                                 <span className="font-bold text-on-surface flex-grow">{member.name}</span>
                                 <span className={`text-sm font-semibold ${CLASSES[member.class].color}`}>Lvl {member.level} {CLASSES[member.class].name}</span>
                             </li>
                         ))}
                     </ul>
+                </Card>
+                <Card>
+                    <h3 className="text-xl font-bold text-primary mb-4">Recruit to Guild</h3>
+                    <p className="text-on-background/70 text-sm mb-4">Add talented travelers to your guild's roster to increase your collective power.</p>
+                    <div className="space-y-3">
+                        {state.tavernAdventurers.length > 0 ? (
+                            state.tavernAdventurers.map(adventurer => (
+                                <div key={adventurer.id} className="flex items-center justify-between p-2 bg-surface-2 rounded">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold">{adventurer.name}</span>
+                                        <span className={`text-xs ${CLASSES[adventurer.class].color}`}>Lvl {adventurer.level} {CLASSES[adventurer.class].name}</span>
+                                    </div>
+                                    <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        onClick={() => dispatch({ type: 'RECRUIT_TO_GUILD', payload: { characterId: activeCharacter.id, adventurerId: adventurer.id } })}
+                                    >
+                                        Recruit
+                                    </Button>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-on-background/50 text-center py-2 italic text-sm">No travelers currently in the tavern.</p>
+                        )}
+                    </div>
                 </Card>
             </div>
             <div className="lg:col-span-2">

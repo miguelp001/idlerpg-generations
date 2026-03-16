@@ -1,9 +1,9 @@
 
 
 import React, { createContext, useReducer, useEffect, useContext, ReactNode, useCallback, useMemo } from 'react';
-import { GameState, Action, Character, Equipment, GameStats, Adventurer, PlayerQuest, PotentialHeir, RelationshipStatus, DungeonState, RaidState, ParentInfo, DungeonStatus, RaidStatus } from '../types';
+import { GameState, Action, Character, Equipment, GameStats, Adventurer, PlayerQuest, PotentialHeir, RelationshipStatus, DungeonState, RaidState, ParentInfo, DungeonStatus, RaidStatus, DungeonRoom, DungeonRoomType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { calculateXpForLevel, CLASSES, UPGRADE_COST, RETIREMENT_LEVEL, REFRESH_TAVERN_COST, SHOP_REFRESH_COST, GUILD_CREATE_COST, GUILD_DONATION_GOLD, GUILD_DONATION_XP, GUILD_XP_TABLE, SELL_PRICE, PERSONALITY_TRAITS, RELATIONSHIP_THRESHOLDS, RARITY_ORDER } from '../constants';
+import { calculateXpForLevel, CLASSES, UPGRADE_COST, RETIREMENT_LEVEL, REFRESH_TAVERN_COST, SHOP_REFRESH_COST, GUILD_CREATE_COST, GUILD_DONATION_GOLD, GUILD_DONATION_XP, GUILD_XP_TABLE, SELL_PRICE, PERSONALITY_TRAITS, RELATIONSHIP_THRESHOLDS, RARITY_ORDER, GUILD_LEVEL_BONUS } from '../constants';
 import { ITEMS } from '../data/items';
 import { ALL_MONSTERS } from '../data/monsters';
 import { DUNGEONS } from '../data/dungeons';
@@ -16,6 +16,7 @@ import { getActivePassiveBonuses } from '../services/abilityService';
 import { checkAllAchievements, checkKillAchievements } from '../services/achievementService';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { OFFLINE_SOCIAL_EVENTS } from '../data/socialEvents';
+import { rollForNewEvent, updateActiveEvents, getGlobalModifiers, getFactionModifiers } from '../services/worldEventService';
 import { generateShopItems } from '../services/shopService'; // Import the new service
 import { generateProceduralDungeon } from '../services/proceduralDungeonService';
 import { generateScaledMonster } from '../services/monsterScalingService';
@@ -37,6 +38,8 @@ const initialDungeonState: DungeonState = {
     turnCount: 0,
     cooldowns: {},
     proceduralDungeonData: undefined,
+    rooms: [],
+    currentRoomIndex: -1,
 };
 
 const initialRaidState: RaidState = {
@@ -57,6 +60,13 @@ const initialState: GameState = {
   worldState: {
     day: 1,
     time: 'day',
+    activeEvents: [],
+    factionStandings: {
+      'Trade_Consortium': 0,
+      'Warrior_Keep': 0,
+      'Explorer_League': 0
+    },
+    globalGoldMultiplier: 1,
   },
   settings: {
     volume: 0.5,
@@ -76,7 +86,7 @@ const initialState: GameState = {
   tutorialShown: false, // Initialize tutorialShown to false
 };
 
-const recalculateStats = (character: Character): { stats: GameStats, maxStats: GameStats } => {
+const recalculateStats = (character: Character, guildLevel: number = 0): { stats: GameStats, maxStats: GameStats } => {
     const baseStats = { ...CLASSES[character.class].baseStats };
     let newMaxStats: GameStats = { ...baseStats };
 
@@ -125,7 +135,7 @@ const recalculateStats = (character: Character): { stats: GameStats, maxStats: G
             equippedSets[item.setId] = (equippedSets[item.setId] || 0) + 1;
         }
     }
-
+    
     console.log("Equipped Sets Count:", equippedSets);
 
     for (const [setId, count] of Object.entries(equippedSets)) {
@@ -141,6 +151,13 @@ const recalculateStats = (character: Character): { stats: GameStats, maxStats: G
                     }
                 }
             }
+        }
+    }
+    // Apply Guild Level Bonus if character is in a guild
+    if (guildLevel > 0) {
+        const bonusMultiplier = 1 + (guildLevel * GUILD_LEVEL_BONUS);
+        for (const stat in newMaxStats) {
+            (newMaxStats as any)[stat] = Math.round((newMaxStats as any)[stat] * bonusMultiplier);
         }
     }
     
@@ -253,7 +270,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         newSocialLog = [];
       }
       
-      const { stats, maxStats } = recalculateStats(newCharacter);
+      const { stats, maxStats } = recalculateStats(newCharacter, state.guild?.level || 0);
       newCharacter.stats = stats;
       newCharacter.currentHealth = stats.health;
       newCharacter.currentMana = stats.mana;
@@ -329,8 +346,14 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         const dungeon = DUNGEONS.find(d => d.id === action.payload.dungeonId);
         if (!dungeon) return state;
 
-        const firstMonsterId = dungeon.monsters[0];
-        const firstMonster = ALL_MONSTERS[firstMonsterId];
+        // Initialize rooms for regular dungeons if they don't have them
+        const dungeonRooms: DungeonRoom[] = dungeon.rooms || [
+            ...dungeon.monsters.map((mId, i) => ({ id: `room_m_${i}`, type: 'combat' as DungeonRoomType, monsterId: mId, isCleared: false })),
+            { id: 'room_boss', type: 'boss' as DungeonRoomType, monsterId: dungeon.boss, isCleared: false }
+        ];
+
+        const firstRoom = dungeonRooms[0];
+        const firstMonster = firstRoom.type === 'combat' || firstRoom.type === 'boss' ? (firstRoom.monsterId ? ALL_MONSTERS[firstRoom.monsterId] : null) : null;
 
         const refreshedParty = activeCharacter.party.map(p => ({
             ...p,
@@ -349,12 +372,14 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
             dungeonState: {
                 ...initialDungeonState,
-                status: 'fighting',
+                status: firstRoom.type === 'combat' ? 'fighting' : (firstRoom.type === 'treasure' ? 'treasure_found' : (firstRoom.type === 'rest' ? 'resting' : 'event')),
                 dungeonId: dungeon.id,
-                monsterId: firstMonster.id,
-                currentMonsterHealth: firstMonster.stats.health,
-                currentMonsterIndex: 0,
+                monsterId: firstMonster?.id || null,
+                currentMonsterHealth: firstMonster?.stats.health || null,
+                currentMonsterIndex: firstRoom.type === 'combat' ? 0 : -1,
                 combatLog: [{ id: uuidv4(), type: 'info', message: `You have entered the ${dungeon.name}.`, actor: 'system' }],
+                rooms: dungeonRooms,
+                currentRoomIndex: 0,
             },
         };
     }
@@ -366,24 +391,21 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         try {
             const proceduralDungeon = generateProceduralDungeon(floor, activeCharacter.level);
             
-            const firstMonsterId = proceduralDungeon.monsters[0];
-            let firstMonster = ALL_MONSTERS[firstMonsterId];
+            const firstRoom = proceduralDungeon.rooms[0];
+            let firstMonster = null;
             
-            if (!firstMonster) {
-                console.error(`Monster ${firstMonsterId} not found in ALL_MONSTERS`);
-                return state;
+            if (firstRoom.type === 'combat' || firstRoom.type === 'boss') {
+                const baseMonster = ALL_MONSTERS[firstRoom.monsterId!];
+                if (baseMonster) {
+                    firstMonster = generateScaledMonster(
+                        firstRoom.monsterId!, 
+                        activeCharacter.level, 
+                        proceduralDungeon.difficulty,
+                        proceduralDungeon.floor
+                    );
+                    ALL_MONSTERS[firstMonster.id] = firstMonster;
+                }
             }
-
-            // Scale the first monster for procedural dungeons
-            const scaledFirstMonster = generateScaledMonster(
-                firstMonsterId, 
-                activeCharacter.level, 
-                proceduralDungeon.difficulty,
-                proceduralDungeon.floor
-            );
-            // Register the scaled monster in ALL_MONSTERS for combat
-            ALL_MONSTERS[scaledFirstMonster.id] = scaledFirstMonster;
-            firstMonster = scaledFirstMonster;
 
             const refreshedParty = activeCharacter.party.map(p => ({
                 ...p,
@@ -402,17 +424,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
                 dungeonState: {
                     ...initialDungeonState,
-                    status: 'fighting',
+                    status: firstRoom.type === 'combat' ? 'fighting' : (firstRoom.type === 'treasure' ? 'treasure_found' : 'event'),
                     dungeonId: proceduralDungeon.id,
-                    monsterId: firstMonster.id,
-                    currentMonsterHealth: firstMonster.stats.health,
-                    currentMonsterIndex: 0,
+                    monsterId: firstMonster?.id || null,
+                    currentMonsterHealth: firstMonster?.stats.health || null,
+                    currentMonsterIndex: firstRoom.type === 'combat' ? 0 : -1,
                     combatLog: [{ id: uuidv4(), type: 'info', message: `You have entered ${proceduralDungeon.name}.`, actor: 'system' }],
                     proceduralDungeonData: proceduralDungeon,
+                    rooms: proceduralDungeon.rooms,
+                    currentRoomIndex: 0,
                 },
             };
         } catch (error) {
-            console.error('Failed to generate procedural dungeon:', error);
+            console.error('Failed to start endless dungeon:', error);
             return state;
         }
     }
@@ -478,7 +502,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         }
 
         if (turnResult.newMonsterHealth <= 0) {
-            let newlyUnlocked = checkKillAchievements(monster.id, new Set(updatedCharacter.unlockedAchievements));
+            const newlyUnlocked = checkKillAchievements(monster.id, new Set(updatedCharacter.unlockedAchievements));
+            
+            if (newlyUnlocked.length > 0) {
+                updatedCharacter.unlockedAchievements = Array.from(new Set([...updatedCharacter.unlockedAchievements, ...newlyUnlocked]));
+                newlyUnlocked.forEach(achievementId => {
+                    const achievement = ACHIEVEMENTS[achievementId];
+                    if (achievement) {
+                        combatLogs.push({ id: uuidv4(), type: 'special', message: `ACHIEVEMENT UNLOCKED: ${achievement.name}!`, actor: 'system' });
+                    }
+                });
+            }
             
             updatedCharacter.quests = updatedCharacter.quests.map(playerQuest => {
                 const updatedObjectives = playerQuest.objectives.map(obj => {
@@ -491,328 +525,164 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 return { ...playerQuest, objectives: updatedObjectives };
             });
 
-            const goldDropped = monster.goldDrop || 0;
+            const { goldGain } = getGlobalModifiers(state.worldState.activeEvents);
+            const goldDropped = Math.floor((monster.goldDrop || 0) * goldGain);
+            const newGoldGained = (state.dungeonState.goldGained || 0) + goldDropped;
             if (goldDropped > 0) {
                 updatedCharacter.gold = (updatedCharacter.gold || 0) + goldDropped;
                 combatLogs.push({ id: uuidv4(), type: 'gold', message: `You looted ${goldDropped}G.`, actor: 'system' });
             }
 
-                const allMonstersInDungeon = [...dungeon.monsters, dungeon.boss];
-                const nextMonsterIndex = state.dungeonState.currentMonsterIndex + 1;
-                const newGoldGained = state.dungeonState.goldGained + goldDropped;
-
-                if (nextMonsterIndex < allMonstersInDungeon.length) {
-                    const nextMonsterId = allMonstersInDungeon[nextMonsterIndex];
-                    let nextMonster = ALL_MONSTERS[nextMonsterId];
-                    
-                    // For procedural dungeons, scale the monster
-                    if (state.dungeonState.proceduralDungeonData) {
-                        const scaledMonster = generateScaledMonster(
-                            nextMonsterId, 
-                            activeCharacter.level, 
-                            state.dungeonState.proceduralDungeonData.difficulty,
-                            state.dungeonState.proceduralDungeonData.floor
-                        );
-                        // Register the scaled monster in ALL_MONSTERS for combat
-                        ALL_MONSTERS[scaledMonster.id] = scaledMonster;
-                        nextMonster = scaledMonster;
-                    }
-                    
-                    combatLogs.push({ id: uuidv4(), type: 'info', message: `A ${nextMonster.name} appears!`, actor: 'system' });
-                
-                if (newlyUnlocked.length > 0) {
-                    updatedCharacter.unlockedAchievements.push(...newlyUnlocked);
-                    combatLogs.push({ id: uuidv4(), type: 'victory', message: `Achievement Unlocked: ${ACHIEVEMENTS[newlyUnlocked[0]].name}!`, actor: 'system' });
-                }
-
+            const currentRoom = state.dungeonState.rooms[state.dungeonState.currentRoomIndex];
+            const isBoss = currentRoom.type === 'boss';
+            
+            if (!isBoss) {
                 return {
                     ...state,
                     characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
                     dungeonState: {
                         ...state.dungeonState,
-                        monsterId: nextMonsterId,
-                        currentMonsterHealth: nextMonster.stats.health,
-                        currentMonsterIndex: nextMonsterIndex,
+                        status: 'room_cleared',
                         goldGained: newGoldGained,
-                        combatLog: combatLogs,
+                        combatLog: [...combatLogs, { id: uuidv4(), type: 'victory', message: `${monster.name} defeated! Room cleared.`, actor: 'system' }],
                         cooldowns: turnResult.updatedCooldowns,
                         turnCount: newTurnCount,
+                        rooms: state.dungeonState.rooms.map((r, i) => i === state.dungeonState.currentRoomIndex ? { ...r, isCleared: true } : r)
                     },
                 };
-            } else { // Dungeon cleared
-                // For procedural dungeons, scale the boss for XP calculation
-                let bossForXp = ALL_MONSTERS[dungeon.boss];
-                if (state.dungeonState.proceduralDungeonData) {
-                    const scaledBoss = generateScaledMonster(
-                        dungeon.boss, 
+            }
+
+            // If boss room cleared, proceed to dungeon completion
+            const allMonstersInRooms = state.dungeonState.rooms.filter(r => r.type === 'combat' || r.type === 'boss');
+            const globalMods = getGlobalModifiers(state.worldState.activeEvents);
+            const factionMods = getFactionModifiers(state.worldState.factionStandings);
+            const xpGain = globalMods.xpGain * factionMods.xpGain;
+            const totalXp = Math.floor(allMonstersInRooms.reduce((acc, room) => {
+                const m = ALL_MONSTERS[room.monsterId!];
+                return acc + (m ? m.xpReward : 0);
+            }, 0) * xpGain);
+            
+            combatLogs.push({ id: uuidv4(), type: 'victory', message: `You have cleared the dungeon!`, actor: 'system' });
+            combatLogs.push({ id: uuidv4(), type: 'special', message: `You and your party gained ${totalXp} XP!`, actor: 'system' });
+
+            const lootFound: Equipment[] = [];
+            // Pick one random item from dungeon loot table as final boss reward
+            if (dungeon.lootTable.length > 0) {
+                const droppedItemBaseId = dungeon.lootTable[Math.floor(Math.random() * dungeon.lootTable.length)];
+                if (droppedItemBaseId.startsWith('proc_') && state.dungeonState.proceduralDungeonData) {
+                    const proceduralItem = generateProceduralItem(
                         activeCharacter.level, 
-                        state.dungeonState.proceduralDungeonData.difficulty,
+                        state.dungeonState.proceduralDungeonData.difficulty, 
                         state.dungeonState.proceduralDungeonData.floor
                     );
-                    bossForXp = scaledBoss;
+                    lootFound.push(proceduralItem);
+                    combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${proceduralItem.name}!`, actor: 'system' });
+                } else {
+                    const itemTemplate = ITEMS[droppedItemBaseId];
+                    if (itemTemplate) {
+                        const newItem: Equipment = {
+                            ...itemTemplate,
+                            id: uuidv4(),
+                            baseId: droppedItemBaseId,
+                            baseName: itemTemplate.name,
+                            upgradeLevel: 0,
+                            price: 0,
+                        };
+                        lootFound.push(newItem);
+                        combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
+                    }
                 }
-                
-                const totalXp = allMonstersInDungeon.slice(0, -1).reduce((acc, mId) => {
-                    const monster = ALL_MONSTERS[mId];
-                    return acc + (monster ? monster.xpReward : 0);
-                }, 0) + bossForXp.xpReward;
-                
-                combatLogs.push({ id: uuidv4(), type: 'victory', message: `You have cleared the ${dungeon.name}!`, actor: 'system' });
-                combatLogs.push({ id: uuidv4(), type: 'special', message: `You and your party gained ${totalXp} XP!`, actor: 'system' });
-
-                const lootFound: Equipment[] = [];
-                if (dungeon.lootTable.length > 0) {
-                    // Handle procedural dungeons differently
-                    if (state.dungeonState.proceduralDungeonData) {
-                        // For procedural dungeons, generate actual loot items
-                        for (const itemBaseId of dungeon.lootTable) {
-                            // Check if it's a procedural item ID or a regular item ID
-                            if (itemBaseId.startsWith('proc_')) {
-                                // This is a procedural item - we need to regenerate it
-                                // Extract the target level and difficulty from the procedural dungeon
-                                const proceduralItem = generateProceduralItem(
-                                    activeCharacter.level, 
-                                    state.dungeonState.proceduralDungeonData.difficulty, 
-                                    state.dungeonState.proceduralDungeonData.floor
-                                );
-                                lootFound.push(proceduralItem);
-                                combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${proceduralItem.name}!`, actor: 'system' });
-                            } else {
-                                // Regular item from ITEMS collection
-                                const itemTemplate = ITEMS[itemBaseId];
-                                if (itemTemplate) {
-                                    const newItem: Equipment = {
-                                        ...itemTemplate,
-                                        id: uuidv4(),
-                                        baseId: itemBaseId,
-                                        baseName: itemTemplate.name,
-                                        upgradeLevel: 0,
-                                        price: 0,
-                                    };
-                                    lootFound.push(newItem);
-                                    combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
-                                }
-                            }
+            }
+            
+            // Distribute loot intelligently to party members
+            const { playerItems, distributions } = distributeEquipment(lootFound, updatedCharacter, updatedCharacter.party);
+            
+            // Add player items to inventory
+            updatedCharacter.inventory = [...updatedCharacter.inventory, ...playerItems];
+            
+            // Update party members with their new equipment
+            updatedCharacter.party = updatedCharacter.party.map(member => {
+                const distribution = distributions.find(d => d.recipient.id === member.id);
+                if (distribution) {
+                    let newEquipment = [...member.equipment];
+                    
+                    // Replace or add the new item
+                    const existingIndex = newEquipment.findIndex(e => e.slot === distribution.item.slot);
+                    if (existingIndex > -1) {
+                        newEquipment[existingIndex] = distribution.item;
+                        // Add replaced item to player inventory
+                        if (distribution.replacedItem) {
+                            updatedCharacter.inventory.push(distribution.replacedItem);
                         }
                     } else {
-                        // Regular dungeon - pick one random item
-                        const droppedItemBaseId = dungeon.lootTable[Math.floor(Math.random() * dungeon.lootTable.length)];
-                        const itemTemplate = ITEMS[droppedItemBaseId];
-                        if (itemTemplate) {
-                            const newItem: Equipment = {
-                                ...itemTemplate,
-                                id: uuidv4(),
-                                baseId: droppedItemBaseId,
-                                baseName: itemTemplate.name,
-                                upgradeLevel: 0,
-                                price: 0, // Initialize price for newly found loot
-                            };
-                            lootFound.push(newItem);
-                            combatLogs.push({ id: uuidv4(), type: 'special', message: `You found: ${newItem.name}!`, actor: 'system' });
-                        }
-                    }
-                }
-                
-                // Distribute loot intelligently to party members
-                const { playerItems, distributions } = distributeEquipment(lootFound, updatedCharacter, updatedCharacter.party);
-                
-                // Add player items to inventory
-                updatedCharacter.inventory = [...updatedCharacter.inventory, ...playerItems];
-                
-                // Update party members with their new equipment
-                updatedCharacter.party = updatedCharacter.party.map(member => {
-                    const distribution = distributions.find(d => d.recipient.id === member.id);
-                    if (distribution) {
-                        let newEquipment = [...member.equipment];
-                        
-                        // Replace or add the new item
-                        const existingIndex = newEquipment.findIndex(e => e.slot === distribution.item.slot);
-                        if (existingIndex > -1) {
-                            newEquipment[existingIndex] = distribution.item;
-                            // Add replaced item to player inventory
-                            if (distribution.replacedItem) {
-                                updatedCharacter.inventory.push(distribution.replacedItem);
-                            }
-                        } else {
-                            newEquipment.push(distribution.item);
-                        }
-                        
-                        // Add distribution message to combat log
-                        combatLogs.push({ 
-                            id: uuidv4(), 
-                            type: 'special', 
-                            message: `${member.name} equipped: ${distribution.item.name}!`, 
-                            actor: 'system' 
-                        });
-                        
-                        return { ...member, equipment: newEquipment };
-                    }
-                    return member;
-                });
-
-                let currentExperience = updatedCharacter.experience + totalXp;
-                let currentLevel = updatedCharacter.level;
-                while (currentExperience >= calculateXpForLevel(currentLevel)) {
-                    currentExperience -= calculateXpForLevel(currentLevel);
-                    currentLevel += 1;
-                    combatLogs.push({ id: uuidv4(), type: 'victory', message: `LEVEL UP! You are now level ${currentLevel}!`, actor: 'system' });
-                }
-                updatedCharacter = { ...updatedCharacter, level: currentLevel, experience: currentExperience };
-
-                const updatedPartyWithXP = updatedCharacter.party.map(member => {
-                    // Only give experience to living party members
-                    if ((member.currentHealth ?? member.stats.health) <= 0) {
-                        return member; // Return member unchanged if they are defeated
+                        newEquipment.push(distribution.item);
                     }
                     
-                    let memberXP = (member.experience ?? 0) + totalXp;
-                    let memberLevel = member.level;
-                    let memberLeveledUp = false;
-                    while (memberXP >= calculateXpForLevel(memberLevel)) {
-                        memberXP -= calculateXpForLevel(memberLevel);
-                        memberLevel++;
-                        memberLeveledUp = true;
-                    }
-                    if (memberLeveledUp) {
-                        const newStats = getScaledStats(memberLevel, member.class);
-                        combatLogs.push({ id: uuidv4(), type: 'victory', message: `[${member.name}] LEVEL UP! They are now level ${memberLevel}!`, actor: 'system' });
-                        return { ...member, level: memberLevel, experience: memberXP, stats: newStats };
-                    }
-                    return { ...member, experience: memberXP };
-                });
-                updatedCharacter.party = updatedPartyWithXP;
-                
-                const { stats, maxStats } = recalculateStats(updatedCharacter);
-                updatedCharacter.stats = { ...stats, health: updatedCharacter.currentHealth ?? stats.health, mana: updatedCharacter.currentMana ?? stats.mana };
-                updatedCharacter.maxStats = maxStats;
-
-                // Update endless dungeon progress if this was a procedural dungeon
-                if (state.dungeonState.proceduralDungeonData) {
-                    const currentFloor = state.dungeonState.proceduralDungeonData.floor;
-                    if (currentFloor >= updatedCharacter.endlessDungeonProgress) {
-                        updatedCharacter.endlessDungeonProgress = currentFloor + 1;
-                        combatLogs.push({ 
-                            id: uuidv4(), 
-                            type: 'special', 
-                            message: `New floor unlocked! You can now access Floor ${currentFloor + 1}.`, 
-                            actor: 'system' 
-                        });
-                    }
-
-                    // Auto-progression logic for endless dungeons
-                    if (state.settings.endlessAutoProgress) {
-                        const nextFloor = currentFloor + 1;
-                        combatLogs.push({ 
-                            id: uuidv4(), 
-                            type: 'info', 
-                            message: `Auto-progressing to Floor ${nextFloor}...`, 
-                            actor: 'system' 
-                        });
-
-                        try {
-                            const nextProceduralDungeon = generateProceduralDungeon(nextFloor, updatedCharacter.level);
-                            const firstMonsterId = nextProceduralDungeon.monsters[0];
-                            let firstMonster = ALL_MONSTERS[firstMonsterId];
-                            
-                            if (!firstMonster) {
-                                console.error(`Monster ${firstMonsterId} not found in ALL_MONSTERS`);
-                                // Fall back to victory state if monster generation fails
-                                let newState = {
-                                    ...state,
-                                    characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
-                                    dungeonState: {
-                                        ...state.dungeonState,
-                                        status: 'victory' as DungeonStatus,
-                                        xpGained: totalXp,
-                                        goldGained: newGoldGained,
-                                        lootFound,
-                                        combatLog: combatLogs,
-                                    }
-                                };
-                                return newState;
-                            }
-
-                            // Scale the first monster for the new floor
-                            const scaledFirstMonster = generateScaledMonster(
-                                firstMonsterId, 
-                                updatedCharacter.level, 
-                                nextProceduralDungeon.difficulty,
-                                nextProceduralDungeon.floor
-                            );
-                            ALL_MONSTERS[scaledFirstMonster.id] = scaledFirstMonster;
-                            firstMonster = scaledFirstMonster;
-
-                            combatLogs.push({ 
-                                id: uuidv4(), 
-                                type: 'info', 
-                                message: `You have entered ${nextProceduralDungeon.name}.`, 
-                                actor: 'system' 
-                            });
-                            combatLogs.push({ 
-                                id: uuidv4(), 
-                                type: 'info', 
-                                message: `A ${firstMonster.name} appears!`, 
-                                actor: 'system' 
-                            });
-
-                            // Continue fighting on the next floor instead of ending
-                            let newState = {
-                                ...state,
-                                characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
-                                dungeonState: {
-                                    ...state.dungeonState,
-                                    status: 'fighting' as DungeonStatus,
-                                    dungeonId: nextProceduralDungeon.id,
-                                    monsterId: firstMonster.id,
-                                    currentMonsterHealth: firstMonster.stats.health,
-                                    currentMonsterIndex: 0,
-                                    xpGained: totalXp,
-                                    goldGained: newGoldGained,
-                                    lootFound,
-                                    combatLog: combatLogs,
-                                    proceduralDungeonData: nextProceduralDungeon,
-                                    cooldowns: {}, // Reset cooldowns for new floor
-                                    turnCount: 0, // Reset turn count for new floor
-                                }
-                            };
-
-                            const allNewlyUnlocked = checkAllAchievements(updatedCharacter, newState);
-                            if (allNewlyUnlocked.length > 0) {
-                                return gameReducer(newState, { type: 'ADD_ACHIEVEMENTS', payload: { characterId: updatedCharacter.id, achievementIds: allNewlyUnlocked } });
-                            }
-                            return newState;
-                        } catch (error) {
-                            console.error('Failed to generate next procedural dungeon for auto-progression:', error);
-                            combatLogs.push({ 
-                                id: uuidv4(), 
-                                type: 'info', 
-                                message: `Auto-progression failed. Dungeon completed.`, 
-                                actor: 'system' 
-                            });
-                            // Fall back to victory state
-                        }
-                    }
+                    // Add distribution message to combat log
+                    combatLogs.push({ 
+                        id: uuidv4(), 
+                        type: 'special', 
+                        message: `${member.name} equipped: ${distribution.item.name}!`, 
+                        actor: 'system' 
+                    });
+                    
+                    return { ...member, equipment: newEquipment };
                 }
+                return member;
+            });
 
-                let newState = {
-                    ...state,
-                    characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
-                    dungeonState: {
-                        ...state.dungeonState,
-                        status: 'victory' as DungeonStatus,
-                        xpGained: totalXp,
-                        goldGained: newGoldGained,
-                        lootFound,
-                        combatLog: combatLogs,
-                    }
-                };
-
-                const allNewlyUnlocked = checkAllAchievements(updatedCharacter, newState);
-                if (allNewlyUnlocked.length > 0) {
-                    return gameReducer(newState, { type: 'ADD_ACHIEVEMENTS', payload: { characterId: updatedCharacter.id, achievementIds: allNewlyUnlocked } });
-                }
-                return newState;
+            let currentExperience = updatedCharacter.experience + totalXp;
+            let currentLevel = updatedCharacter.level;
+            while (currentExperience >= calculateXpForLevel(currentLevel)) {
+                currentExperience -= calculateXpForLevel(currentLevel);
+                currentLevel += 1;
+                combatLogs.push({ id: uuidv4(), type: 'victory', message: `LEVEL UP! You are now level ${currentLevel}!`, actor: 'system' });
             }
+            updatedCharacter = { ...updatedCharacter, level: currentLevel, experience: currentExperience };
+
+            const updatedPartyWithXP = updatedCharacter.party.map(member => {
+                if ((member.currentHealth ?? member.stats.health) <= 0) return member;
+                
+                let memberXP = (member.experience ?? 0) + totalXp;
+                let memberLevel = member.level;
+                let memberLeveledUp = false;
+                while (memberXP >= calculateXpForLevel(memberLevel)) {
+                    memberXP -= calculateXpForLevel(memberLevel);
+                    memberLevel++;
+                    memberLeveledUp = true;
+                }
+                if (memberLeveledUp) {
+                    const newStats = getScaledStats(memberLevel, member.class);
+                    combatLogs.push({ id: uuidv4(), type: 'victory', message: `[${member.name}] LEVEL UP! Now level ${memberLevel}!`, actor: 'system' });
+                    return { ...member, level: memberLevel, experience: memberXP, stats: newStats };
+                }
+                return { ...member, experience: memberXP };
+            });
+            updatedCharacter.party = updatedPartyWithXP;
+            
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+            updatedCharacter.stats = { ...stats, health: updatedCharacter.currentHealth ?? stats.health, mana: updatedCharacter.currentMana ?? stats.mana };
+            updatedCharacter.maxStats = maxStats;
+
+            // Handle dungeon completion status
+            let newState = {
+                ...state,
+                characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+                dungeonState: {
+                    ...state.dungeonState,
+                    status: 'victory' as DungeonStatus,
+                    xpGained: totalXp,
+                    goldGained: newGoldGained,
+                    lootFound,
+                    combatLog: combatLogs,
+                }
+            };
+
+            const allNewlyUnlocked = checkAllAchievements(updatedCharacter, newState);
+            if (allNewlyUnlocked.length > 0) {
+                return gameReducer(newState, { type: 'ADD_ACHIEVEMENTS', payload: { characterId: updatedCharacter.id, achievementIds: allNewlyUnlocked } });
+            }
+            return newState;
         }
 
         return {
@@ -825,6 +695,126 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 cooldowns: turnResult.updatedCooldowns,
                 turnCount: newTurnCount,
             },
+        };
+    }
+    case 'NEXT_ROOM': {
+        if (!state.activeCharacterId || state.dungeonState.status === 'idle') return state;
+        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
+        const nextRoomIndex = state.dungeonState.currentRoomIndex + 1;
+        
+        if (nextRoomIndex >= state.dungeonState.rooms.length) {
+            return {
+                ...state,
+                dungeonState: { ...state.dungeonState, status: 'victory' }
+            };
+        }
+
+        const nextRoom = state.dungeonState.rooms[nextRoomIndex];
+        let nextMonster = null;
+        let status: DungeonStatus = 'event';
+
+        if (nextRoom.type === 'combat' || nextRoom.type === 'boss') {
+            status = 'fighting';
+            const monsterId = nextRoom.monsterId!;
+            const baseMonster = ALL_MONSTERS[monsterId];
+            
+            if (state.dungeonState.proceduralDungeonData) {
+                const { monsterStats } = getGlobalModifiers(state.worldState.activeEvents);
+                nextMonster = generateScaledMonster(
+                    monsterId, 
+                    activeCharacter.level, 
+                    state.dungeonState.proceduralDungeonData.difficulty * monsterStats,
+                    state.dungeonState.proceduralDungeonData.floor
+                );
+                ALL_MONSTERS[nextMonster.id] = nextMonster;
+            } else {
+                nextMonster = baseMonster;
+            }
+        } else if (nextRoom.type === 'treasure') {
+            status = 'treasure_found';
+        } else if (nextRoom.type === 'rest') {
+            status = 'resting';
+        }
+
+        return {
+            ...state,
+            dungeonState: {
+                ...state.dungeonState,
+                status,
+                monsterId: nextMonster?.id || null,
+                currentMonsterHealth: nextMonster?.stats.health || null,
+                currentRoomIndex: nextRoomIndex,
+                combatLog: [...state.dungeonState.combatLog, { id: uuidv4(), type: 'info', message: `Entering room ${nextRoomIndex + 1}: ${nextRoom.type.charAt(0).toUpperCase() + nextRoom.type.slice(1)}`, actor: 'system' }]
+            }
+        };
+    }
+    case 'CLAIM_TREASURE': {
+        if (!state.activeCharacterId || state.dungeonState.status !== 'treasure_found') return state;
+        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
+        const currentRoom = state.dungeonState.rooms[state.dungeonState.currentRoomIndex];
+        
+        if (!currentRoom.treasure) return state;
+
+        let updatedCharacter = { ...activeCharacter };
+        const { goldGain } = getGlobalModifiers(state.worldState.activeEvents);
+        const treasureGold = Math.floor(currentRoom.treasure.gold * goldGain);
+        updatedCharacter.gold += treasureGold;
+        
+        const foundItems: Equipment[] = [];
+        for (const itemBaseId of currentRoom.treasure.items) {
+             if (itemBaseId.startsWith('proc_')) {
+                const proceduralItem = generateProceduralItem(
+                    activeCharacter.level, 
+                    state.dungeonState.proceduralDungeonData?.difficulty || 1, 
+                    state.dungeonState.proceduralDungeonData?.floor || 1
+                );
+                foundItems.push(proceduralItem);
+            } else {
+                const itemTemplate = ITEMS[itemBaseId];
+                if (itemTemplate) {
+                    foundItems.push({ ...itemTemplate, id: uuidv4(), baseId: itemBaseId, baseName: itemTemplate.name, upgradeLevel: 0, price: 0 });
+                }
+            }
+        }
+
+        updatedCharacter.inventory = [...updatedCharacter.inventory, ...foundItems];
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+            dungeonState: {
+                ...state.dungeonState,
+                status: 'room_cleared',
+                goldGained: state.dungeonState.goldGained + treasureGold,
+                lootFound: [...state.dungeonState.lootFound, ...foundItems],
+                combatLog: [...state.dungeonState.combatLog, { id: uuidv4(), type: 'treasure', message: `Claimed ${treasureGold}G and ${foundItems.length} items!`, actor: 'system' }]
+            }
+        };
+    }
+    case 'REST': {
+        if (!state.activeCharacterId || state.dungeonState.status !== 'resting') return state;
+        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
+        
+        const healPercent = 0.3; // Restore 30% HP/MP
+        const updatedCharacter = {
+            ...activeCharacter,
+            currentHealth: Math.min(activeCharacter.maxStats.health, (activeCharacter.currentHealth || 0) + Math.round(activeCharacter.maxStats.health * healPercent)),
+            currentMana: Math.min(activeCharacter.maxStats.mana, (activeCharacter.currentMana || 0) + Math.round(activeCharacter.maxStats.mana * healPercent)),
+            party: activeCharacter.party.map(p => ({
+                ...p,
+                currentHealth: Math.min(p.stats.health, (p.currentHealth || 0) + Math.round(p.stats.health * healPercent)),
+                currentMana: Math.min(p.stats.mana, (p.currentMana || 0) + Math.round(p.stats.mana * healPercent)),
+            }))
+        };
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+            dungeonState: {
+                ...state.dungeonState,
+                status: 'room_cleared',
+                combatLog: [...state.dungeonState.combatLog, { id: uuidv4(), type: 'info', message: `You take a short rest, recovering some health and mana.`, actor: 'system' }]
+            }
         };
     }
     case 'LEAVE_DUNGEON': {
@@ -871,7 +861,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         }
 
         let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
-        const { stats, maxStats } = recalculateStats(updatedCharacter);
+        const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
         updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
 
         let newState = {
@@ -916,7 +906,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         newInventory.push(itemToUnequip);
         
         let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
-        const { stats, maxStats } = recalculateStats(updatedCharacter);
+        const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
         updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
 
         return {
@@ -960,7 +950,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
 
         if (character.equipment.some(i => i.id === itemId)) {
-            const { stats, maxStats } = recalculateStats(updatedCharacter);
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
             updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
         }
         
@@ -1003,7 +993,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         if (character.gold < SHOP_REFRESH_COST) return state;
 
         const updatedCharacter = { ...character, gold: character.gold - SHOP_REFRESH_COST };
-        const newShopItems = generateShopItems(updatedCharacter.level);
+        const globalMods = getGlobalModifiers(state.worldState.activeEvents);
+        const factionMods = getFactionModifiers(state.worldState.factionStandings);
+        const shopPrices = globalMods.shopPrices * factionMods.shopPrices;
+        const newShopItems = generateShopItems(updatedCharacter.level, shopPrices);
+        
 
         const newState = {
             ...state,
@@ -1146,7 +1140,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         const character = state.characters.find(c => c.id === characterId)!;
         if (state.guild || character.gold < GUILD_CREATE_COST) return state;
         
-        const newGuild = { id: uuidv4(), name: guildName, level: 1, xp: 0 };
+        const newGuild = { id: uuidv4(), name: guildName, level: 1, xp: 0, members: [] };
         const updatedCharacter = { ...character, gold: character.gold - GUILD_CREATE_COST, guildId: newGuild.id };
 
         const newState = {
@@ -1191,6 +1185,33 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             return gameReducer(newState, { type: 'ADD_ACHIEVEMENTS', payload: { characterId: updatedCharacter.id, achievementIds: newlyUnlocked } });
         }
         return newState;
+    }
+    case 'RECRUIT_TO_GUILD': {
+        const { adventurerId } = action.payload;
+        const adventurer = state.tavernAdventurers.find(a => a.id === adventurerId)!;
+        
+        if (!state.guild || !adventurer) return state;
+
+        // Add to guild roster
+        const updatedGuild = {
+            ...state.guild,
+            members: [...state.guild.members, adventurer]
+        };
+
+        const newTavernAdventurers = state.tavernAdventurers.filter(a => a.id !== adventurerId);
+
+        return {
+            ...state,
+            guild: updatedGuild,
+            tavernAdventurers: newTavernAdventurers,
+            socialLog: [...state.socialLog, { 
+                id: uuidv4(), 
+                timestamp: new Date().toISOString(),
+                type: 'social_interaction' as const,
+                content: `${adventurer.name} has joined ${state.guild.name}!`,
+                participantIds: [adventurer.id]
+            }]
+        };
     }
     case 'START_RAID': {
         const { raidId } = action.payload;
@@ -1263,7 +1284,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         if (turnResult.newMonsterHealth <= 0) {
             combatLogs.push({ id: uuidv4(), type: 'victory', message: `${boss.name} has been vanquished!`, actor: 'system' });
             
-            const goldDropped = boss.goldDrop || 0;
+            const { goldGain } = getGlobalModifiers(state.worldState.activeEvents);
+            const goldDropped = Math.floor((boss.goldDrop || 0) * goldGain);
             if (goldDropped > 0) {
                 updatedCharacter.gold += goldDropped;
                 combatLogs.push({ id: uuidv4(), type: 'gold', message: `You looted ${goldDropped}G.`, actor: 'system' });
@@ -1410,7 +1432,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         }
 
         if (levelUp) {
-            const { stats, maxStats } = recalculateStats(updatedCharacter);
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
             updatedCharacter.stats = { ...stats, health: updatedCharacter.currentHealth ?? stats.health, mana: updatedCharacter.currentMana ?? stats.mana };
             updatedCharacter.maxStats = maxStats;
             updatedCharacter.currentHealth = maxStats.health;
@@ -1422,7 +1444,14 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         
         let newState = {
             ...state,
-            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
+            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c),
+            worldState: {
+                ...state.worldState,
+                factionStandings: {
+                    ...state.worldState.factionStandings,
+                    ...(questDef.factionId ? { [questDef.factionId]: (state.worldState.factionStandings[questDef.factionId] || 0) + 10 } : {})
+                }
+            }
         };
         
         const newlyUnlocked = checkAllAchievements(updatedCharacter, newState);
@@ -1455,8 +1484,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 let relationship = newRelationships.find(r => r.id === relId);
                 if (!relationship) continue;
                 
+                const { relationshipGain } = getGlobalModifiers(state.worldState.activeEvents);
                 const compatibility = PERSONALITY_TRAITS[p1.personality].compatibility[p2.personality] || 0;
-                relationship.score += compatibility * 0.1;
+                relationship.score += compatibility * 0.1 * relationshipGain;
 
                 let currentStatus = relationship.status;
                 let newStatus: RelationshipStatus = 'acquaintances';
@@ -1471,7 +1501,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 
                 if (newStatus !== currentStatus) {
                     relationship.status = newStatus;
-                    newSocialLog.push({ id: uuidv4(), message: `${p1.name} and ${p2.name} are now ${newStatus.replace('_', ' ')}.`, participantIds: ids as [string, string] });
+                    newSocialLog.push({ 
+                        id: uuidv4(), 
+                        timestamp: new Date().toISOString(),
+                        type: 'social_interaction' as const,
+                        content: `${p1.name} and ${p2.name} are now ${newStatus.replace('_', ' ')}.`, 
+                        participantIds: ids
+                    });
                     
                     if (newStatus === 'married' && !p1.partnerId && !p2.partnerId) {
                          const isPlayerInvolved = 'generation' in p1 || 'generation' in p2;
@@ -1529,7 +1565,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                  const eventTemplate = eventsForPersonality[Math.floor(Math.random() * eventsForPersonality.length)];
                  message = eventTemplate.replace('[P1]', `${'generation' in p1 ? 'You' : p1.name}`);
             }
-            if (message) newSocialLog.push({ id: uuidv4(), message });
+            if (message) newSocialLog.push({ 
+                id: uuidv4(), 
+                timestamp: new Date().toISOString(),
+                type: 'social_interaction' as const,
+                content: message,
+                participantIds: participants.map(p => p.id) 
+            });
         }
 
         if (newSocialLog.length > 50) newSocialLog = newSocialLog.slice(newSocialLog.length - 50);
@@ -1618,8 +1660,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
         let newSocialLog = [...state.socialLog, {
             id: uuidv4(),
-            message: `[You] give ${itemToGive.name} to ${adventurer.name}. ${adventurer.name}: "${giftResponse.response}"`,
-            participantIds: [characterId, adventurerId] as [string, string]
+            timestamp: new Date().toISOString(),
+            type: 'social_interaction' as const,
+            content: `[You] give ${itemToGive.name} to ${adventurer.name}. ${adventurer.name}: "${giftResponse.response}"`,
+            participantIds: [characterId, adventurerId]
         }];
         if (newSocialLog.length > 50) newSocialLog = newSocialLog.slice(newSocialLog.length - 50);
 
@@ -1631,6 +1675,110 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             relationships: newRelationships,
             socialLog: newSocialLog,
         };
+    }
+    case 'MARRY_PARTNER': {
+        const { characterId, partnerId } = action.payload;
+        const charIndex = state.characters.findIndex(c => c.id === characterId);
+        if (charIndex === -1) return state;
+
+        let character = { ...state.characters[charIndex] };
+        let partner = character.party.find(p => p.id === partnerId);
+        if (!partner || character.partnerId || partner.partnerId) return state;
+
+        const ids = [characterId, partnerId].sort();
+        const relId = ids.join('-');
+        const relIndex = state.relationships.findIndex(r => r.id === relId);
+        if (relIndex === -1 || state.relationships[relIndex].score < 100) return state; // Threshold check
+
+        character.partnerId = partnerId;
+        partner.partnerId = characterId;
+        
+        const newRelationships = [...state.relationships];
+        newRelationships[relIndex] = { ...newRelationships[relIndex], status: 'married' };
+
+        const parent1: ParentInfo = { id: character.id, name: character.name, class: character.class, stats: character.maxStats };
+        const parent2: ParentInfo = { id: partner.id, name: partner.name, class: partner.class, stats: partner.stats };
+
+        const newState = {
+            ...state,
+            characters: state.characters.map(c => c.id === characterId ? character : c),
+            relationships: newRelationships,
+            socialLog: [...state.socialLog, { 
+                id: uuidv4(), 
+                timestamp: new Date().toISOString(),
+                type: 'social_interaction' as const,
+                content: `${character.name} and ${partner.name} have tied the knot!`,
+                participantIds: [characterId, partnerId]
+            }]
+        };
+
+        return gameReducer(newState, { type: 'CREATE_HEIR', payload: { characterId, parents: [parent1, parent2] } });
+    }
+    case 'RETIRE_CHARACTER': {
+        const { characterId, heirloomId } = action.payload;
+        const character = state.characters.find(c => c.id === characterId);
+        if (!character || character.level < 10) return state; // Min level to retire
+
+        const heirloom = character.inventory.find(i => i.id === heirloomId) || character.equipment.find(i => i.id === heirloomId);
+        if (!heirloom) return state;
+
+        const legacyBonus: Partial<GameStats> = {};
+        for (const stat in character.maxStats) {
+            const key = stat as keyof GameStats;
+            legacyBonus[key] = Math.floor(character.maxStats[key] * 0.05); // 5% of parents stats as legacy bonus
+        }
+
+        return {
+            ...state,
+            pendingGeneration: {
+                parentId: characterId,
+                legacyBonus,
+                heirloom: { ...heirloom, isHeirloom: true },
+                availableHeirs: character.potentialHeirs,
+                gold: Math.floor(character.gold * 0.2) // Pass down 20% gold
+            },
+            characters: state.characters.map(c => c.id === characterId ? { ...c, status: 'retired' } : c),
+            activeCharacterId: null
+        };
+    }
+    case 'SELECT_HEIR': {
+        const { characterId, heirId } = action.payload;
+        if (!state.pendingGeneration) return state;
+
+        const chosenHeir = state.pendingGeneration.availableHeirs?.find(h => h.childId === heirId);
+        if (!chosenHeir) return state;
+
+        return gameReducer(state, {
+            type: 'CREATE_CHARACTER',
+            payload: {
+                name: chosenHeir.name,
+                class: chosenHeir.class,
+                level: 1,
+                experience: 0,
+                stats: chosenHeir.baseStats,
+                maxStats: chosenHeir.baseStats,
+                equipment: [state.pendingGeneration.heirloom],
+                accessorySlots: [null, null],
+                inventory: [],
+                generation: (state.characters.find(c => c.id === state.pendingGeneration?.parentId)?.generation || 1) + 1,
+                parentIds: [state.pendingGeneration.parentId],
+                children: [],
+                lastActive: new Date().toISOString(),
+                gold: state.pendingGeneration.gold,
+                status: 'active',
+                legacyBonus: state.pendingGeneration.legacyBonus,
+                party: [],
+                completedRaids: {},
+                quests: [],
+                completedQuests: [],
+                activePassives: [],
+                personality: 'jovial', // Default or random
+                unlockedAchievements: [],
+                equippedTitle: null,
+                endlessDungeonProgress: 0,
+                heir: chosenHeir
+            }
+        });
     }
     case 'ADD_ACHIEVEMENTS': {
         const { characterId, achievementIds } = action.payload;
@@ -1665,7 +1813,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         }
 
         let updatedCharacter: Character = { ...character, activePassives: Array.from(currentPassives) };
-        const { stats, maxStats } = recalculateStats(updatedCharacter);
+        const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
         updatedCharacter = { ...updatedCharacter, stats, maxStats };
 
         return {
@@ -1724,7 +1872,40 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             },
         };
     }
-    default:
+        case 'ADVANCE_WORLD_STATE': {
+            const isNight = state.worldState.time === 'day';
+            const newTime = isNight ? 'night' : 'day';
+            let newDay = state.worldState.day;
+            let activeEvents = [...state.worldState.activeEvents];
+
+            if (!isNight) {
+                newDay += 1;
+                activeEvents = updateActiveEvents(activeEvents);
+                const newEvent = rollForNewEvent(newDay);
+                if (newEvent) {
+                    activeEvents.push(newEvent);
+                    // Add to social log
+                    state.socialLog.push({
+                        id: uuidv4(),
+                        timestamp: new Date().toISOString(),
+                        type: 'world_event' as const,
+                        content: `New World Event: ${newEvent.name} - ${newEvent.description}`,
+                        participantIds: []
+                    });
+                }
+            }
+
+            return {
+                ...state,
+                worldState: {
+                    ...state.worldState,
+                    time: newTime as 'day' | 'night',
+                    day: newDay,
+                    activeEvents
+                }
+            };
+        }
+        default:
         return state;
   }
 };

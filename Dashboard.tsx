@@ -11,7 +11,8 @@ import GuildView from './components/GuildView';
 import QuestView from './components/QuestView';
 import AchievementsView from './components/AchievementsView';
 import { EndlessDungeonView } from './components/EndlessDungeonView';
-import TutorialModal from './components/TutorialModal'; // Import the new TutorialModal
+import TutorialModal from './components/TutorialModal';
+import HeirSelectionView from './components/HeirSelectionView';
 import { useGame } from './context/GameContext';
 
 const Dashboard: React.FC = () => {
@@ -94,6 +95,7 @@ const Dashboard: React.FC = () => {
         {renderContent()}
       </div>
       {showTutorial && <TutorialModal onClose={handleCloseTutorial} />}
+      {state.pendingGeneration && <HeirSelectionView />}
     </GameLayout>
   );
 };

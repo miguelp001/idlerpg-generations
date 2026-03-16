@@ -49,7 +49,7 @@ const AdventurerCard: React.FC<AdventurerCardProps> = React.memo(({ adventurer, 
 });
 
 const RelationshipDisplay: React.FC = () => {
-    const { state, activeCharacter } = useGame();
+    const { state, dispatch, activeCharacter } = useGame();
     if (!activeCharacter || activeCharacter.party.length < 1) {
         return <p className="text-center p-8 text-on-background/70">Recruit adventurers to build relationships.</p>
     }
@@ -91,7 +91,26 @@ const RelationshipDisplay: React.FC = () => {
                  <div className="space-y-4">
                     {partyMembers.map(p => {
                         const rel = getRelationship(activeCharacter.id, p.id);
-                        return renderRelCard("You", p.name, rel);
+                        const canMarry = rel && rel.status !== 'married' && rel.score >= 100 && !activeCharacter.partnerId && !p.partnerId;
+                        return (
+                            <div key={p.id} className="space-y-2">
+                                {renderRelCard("You", p.name, rel)}
+                                {canMarry && (
+                                    <Button 
+                                        size="sm" 
+                                        className="w-full bg-pink-600 hover:bg-pink-700"
+                                        onClick={() => dispatch({ type: 'MARRY_PARTNER', payload: { characterId: activeCharacter.id, partnerId: p.id } })}
+                                    >
+                                        💍 Propose Marriage
+                                    </Button>
+                                )}
+                                {activeCharacter.partnerId === p.id && (
+                                    <div className="text-center text-pink-400 font-bold text-sm bg-pink-900/20 py-1 rounded">
+                                        Spouse
+                                    </div>
+                                )}
+                            </div>
+                        );
                     })}
                  </div>
             </div>
@@ -349,11 +368,44 @@ const SocialView: React.FC = () => {
             </div>
 
             <div>
-                {activeTab === 'tavern' && renderTavern()}
-                {activeTab === 'relationships' && renderRelationships()}
                 {activeTab === 'socialLog' && renderSocialLog()}
                 {activeTab === 'shop' && renderShop()}
             </div>
+
+            {/* Heritage Section (Phase 3) */}
+            {activeCharacter.level >= 10 && (
+                <div className="mt-12 p-8 border border-primary/20 bg-surface-2 rounded-xl text-center">
+                    <h2 className="text-3xl font-bold text-secondary mb-4">Legacy & Heritage</h2>
+                    <p className="text-on-background/80 mb-6 max-w-2xl mx-auto">
+                        You have reached a venerable level. You can choose to retire and pass your legacy to a new generation. 
+                        Your heir will inherit a portion of your stats as a permanent bonus and one powerful heirloom.
+                    </p>
+                    
+                    {activeCharacter.potentialHeirs.length > 0 ? (
+                        <div className="space-y-4">
+                            <p className="font-bold text-primary">Potential Heirs Available: {activeCharacter.potentialHeirs.length}</p>
+                            <Button 
+                                variant="shadow" 
+                                className="px-8"
+                                onClick={() => {
+                                    const heirloom = activeCharacter.equipment[0] || activeCharacter.inventory[0];
+                                    if (!heirloom) {
+                                        alert("You need at least one item to pass down as an heirloom!");
+                                        return;
+                                    }
+                                    if (window.confirm("Are you sure you want to retire? This character will no longer be playable.")) {
+                                        dispatch({ type: 'RETIRE_CHARACTER', payload: { characterId: activeCharacter.id, heirloomId: heirloom.id } });
+                                    }
+                                }}
+                            >
+                                Initiate Heritage Transition
+                            </Button>
+                        </div>
+                    ) : (
+                        <p className="text-yellow-400 italic">You must be married and have potential heirs to retire with a legacy.</p>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

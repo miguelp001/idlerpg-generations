@@ -78,6 +78,7 @@ export interface Guild {
     name: string;
     level: number;
     xp: number;
+    members: Adventurer[]; // Roster of adventurers in the guild
 }
 
 export interface QuestObjective {
@@ -102,6 +103,7 @@ export interface Quest {
         items?: string[]; // array of item baseIds
     };
     followUpQuestId?: string;
+    factionId?: string;
 }
 
 export interface PlayerQuest {
@@ -181,14 +183,39 @@ export interface Monster {
     isRaidBoss?: boolean;
 }
 
+export type DungeonRoomType = 'combat' | 'treasure' | 'event' | 'boss' | 'rest';
+
+export interface DungeonRoom {
+    id: string;
+    type: DungeonRoomType;
+    monsterId?: string; // For combat and boss rooms
+    treasure?: {
+        gold: number;
+        items: string[]; // baseIds
+    };
+    event?: {
+        description: string;
+        choices: DungeonEventChoice[];
+    };
+    isCleared: boolean;
+}
+
+export interface DungeonEventChoice {
+    id: string;
+    label: string;
+    description: string;
+    outcomeId: string; // Handle in reducer
+}
+
 export interface Dungeon {
     id: string;
     name: string;
     description: string;
     levelRequirement: number;
-    monsters: string[]; // array of monster ids
-    boss: string; // monster id
-    lootTable: string[]; // array of item baseIds
+    monsters: string[]; // array of monster ids (fallback/legacy)
+    boss: string; // monster id (fallback/legacy)
+    lootTable: string[]; // array of item baseIds (fallback/legacy)
+    rooms?: DungeonRoom[]; // New room-based structure
 }
 
 export interface Raid {
@@ -203,17 +230,19 @@ export interface Raid {
 export interface CombatLogEntry {
     id: string;
     message: string;
-    type: 'damage' | 'info' | 'victory' | 'defeat' | 'special' | 'gold' | 'quest' | 'banter' | 'ability' | 'dodge' | 'critical' | 'parry' | 'block';
+    type: 'damage' | 'info' | 'victory' | 'defeat' | 'special' | 'gold' | 'quest' | 'banter' | 'ability' | 'dodge' | 'critical' | 'parry' | 'block' | 'treasure';
     actor?: 'player' | 'ally' | 'enemy' | 'system';
 }
 
 export interface SocialLogEntry {
     id: string;
-    message: string;
-    participantIds?: [string, string];
+    timestamp: string;
+    type: 'social_interaction' | 'marriage' | 'retirement' | 'world_event' | 'quest';
+    content: string;
+    participantIds?: string[];
 }
 
-export type DungeonStatus = 'idle' | 'fighting' | 'paused' | 'victory' | 'defeat';
+export type DungeonStatus = 'idle' | 'fighting' | 'paused' | 'victory' | 'defeat' | 'room_cleared' | 'treasure_found' | 'resting' | 'event';
 export type RaidStatus = 'idle' | 'fighting' | 'paused' | 'victory' | 'defeat';
 
 export interface DungeonState {
@@ -229,6 +258,8 @@ export interface DungeonState {
     turnCount: number;
     cooldowns: Record<string, number>;
     proceduralDungeonData?: any; // Store the generated procedural dungeon data
+    rooms: DungeonRoom[];
+    currentRoomIndex: number;
 }
 
 export interface RaidState {
@@ -251,9 +282,39 @@ export interface Relationship {
     giftCount: number;
 }
 
+export type WorldEventType = 'economic' | 'combat' | 'social' | 'catastrophe' | 'favorable';
+
+export interface WorldEvent {
+  id: string;
+  name: string;
+  description: string;
+  type: WorldEventType;
+  duration: number; // in days
+  modifiers: {
+    shopPrices?: number; // multiplier, e.g., 0.8 for 20% discount
+    monsterStats?: number; // multiplier
+    xpGain?: number;
+    goldGain?: number;
+    relationshipGain?: number;
+  };
+}
+
+export interface Faction {
+  id: string;
+  name: string;
+  description: string;
+  alignment: 'order' | 'chaos' | 'neutral';
+  reputation: number; // -100 to 100
+  tier: number; // 0 to 5
+  bonuses: string[];
+}
+
 export interface WorldState {
   day: number;
   time: 'day' | 'night';
+  activeEvents: WorldEvent[];
+  factionStandings: Record<string, number>;
+  globalGoldMultiplier: number;
 }
 
 export interface GameSettings {
@@ -312,6 +373,7 @@ export type Action =
   | { type: 'REFRESH_TAVERN_ADVENTURERS'; payload: { characterId: string } }
   | { type: 'CREATE_GUILD'; payload: { characterId: string; guildName: string; } }
   | { type: 'DONATE_TO_GUILD'; payload: { characterId: string; amount: number; } }
+  | { type: 'RECRUIT_TO_GUILD'; payload: { characterId: string; adventurerId: string; } }
   | { type: 'START_RAID'; payload: { raidId: string } }
   | { type: 'DO_RAID_COMBAT_TURN' }
   | { type: 'END_RAID' }
@@ -335,4 +397,10 @@ export type Action =
   | { type: 'RESUME_COMBAT' }
   | { type: 'PAUSE_RAID_COMBAT' }
   | { type: 'RESUME_RAID_COMBAT' }
-  | { type: 'UPDATE_SETTINGS'; payload: Partial<GameSettings> };
+  | { type: 'CLAIM_TREASURE' }
+  | { type: 'REST' }
+  | { type: 'NEXT_ROOM' }
+  | { type: 'UPDATE_SETTINGS'; payload: Partial<GameSettings> }
+  | { type: 'MARRY_PARTNER'; payload: { characterId: string; partnerId: string; } }
+  | { type: 'SELECT_HEIR'; payload: { characterId: string; heirId: string; } }
+  | { type: 'ADVANCE_WORLD_STATE' };

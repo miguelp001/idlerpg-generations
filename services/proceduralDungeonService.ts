@@ -1,4 +1,4 @@
-import { Dungeon } from '../types';
+import { Dungeon, DungeonRoom, DungeonRoomType } from '../types';
 import { generateProceduralLoot } from './lootGenerationService';
 
 export interface ProceduralDungeon extends Omit<Dungeon, 'id' | 'name' | 'description'> {
@@ -9,6 +9,7 @@ export interface ProceduralDungeon extends Omit<Dungeon, 'id' | 'name' | 'descri
     biome: DungeonBiome;
     difficulty: number;
     isEndless: true;
+    rooms: DungeonRoom[];
 }
 
 export type DungeonBiome = 
@@ -109,14 +110,13 @@ export function generateProceduralDungeon(floor: number, targetLevel: number): P
     const biomeConfig = BIOME_CONFIGS[biome];
     const difficulty = calculateDifficulty(floor, targetLevel);
     
-    // Generate monster composition - reduced scaling and max count
-    const monsterCount = Math.min(5, 3 + Math.floor(floor / 15)); // More monsters on deeper floors, max 5
-    const monsters = generateMonsterList(biomeConfig.monsterTypes, monsterCount, targetLevel, difficulty);
+    // Generate room sequence
+    const roomCount = 5 + Math.floor(floor / 10); // Dungeon length scales with floor
+    const rooms = generateRooms(roomCount, biomeConfig, targetLevel, difficulty, floor);
     
-    // Select boss
-    const bossId = biomeConfig.bossTypes[Math.floor(Math.random() * biomeConfig.bossTypes.length)];
-    
-    // Generate procedural loot table
+    // Legacy support (though we should favor rooms)
+    const monsters = rooms.filter(r => r.type === 'combat').map(r => r.monsterId!);
+    const bossId = rooms.find(r => r.type === 'boss')?.monsterId || biomeConfig.bossTypes[0];
     const lootTable = generateProceduralLoot(targetLevel, difficulty, floor);
     
     // Generate dungeon name and description
@@ -132,6 +132,7 @@ export function generateProceduralDungeon(floor: number, targetLevel: number): P
         monsters,
         boss: bossId,
         lootTable,
+        rooms,
         floor,
         biome,
         difficulty,
@@ -139,6 +140,69 @@ export function generateProceduralDungeon(floor: number, targetLevel: number): P
     };
 }
 
+function generateRooms(count: number, config: BiomeConfig, targetLevel: number, difficulty: number, floor: number): DungeonRoom[] {
+    const rooms: DungeonRoom[] = [];
+    
+    for (let i = 0; i < count; i++) {
+        let type: DungeonRoomType;
+        
+        if (i === 0) {
+            type = 'combat'; // Always start with combat
+        } else if (i === count - 1) {
+            type = 'boss'; // Always end with boss
+        } else {
+            // Weighted random for middle rooms
+            const rand = Math.random();
+            if (rand < 0.6) type = 'combat';
+            else if (rand < 0.8) type = 'treasure';
+            else if (rand < 0.9) type = 'rest';
+            else type = 'event';
+        }
+        
+        const room: DungeonRoom = {
+            id: `room_${i}_${Date.now()}`,
+            type,
+            isCleared: false
+        };
+        
+        if (type === 'combat' || type === 'boss') {
+            const types = type === 'boss' ? config.bossTypes : config.monsterTypes;
+            room.monsterId = types[Math.floor(Math.random() * types.length)];
+        } else if (type === 'treasure') {
+            room.treasure = {
+                gold: Math.floor(50 * difficulty * (1 + floor / 10)),
+                items: generateProceduralLoot(targetLevel, difficulty, floor).slice(0, 1) // One item in treasure rooms
+            };
+        } else if (type === 'event') {
+            room.event = generateRandomEvent(floor);
+        }
+        
+        rooms.push(room);
+    }
+    
+    return rooms;
+}
+
+function generateRandomEvent(floor: number) {
+    const events = [
+        {
+            description: "You find a mysterious altar glowing with soft blue light.",
+            choices: [
+                { id: 'pray', label: 'Pray at the altar', description: 'Seek a blessing from the ancient spirits.', outcomeId: 'event_altar_pray' },
+                { id: 'ignore', label: 'Ignore it', description: 'Better safe than sorry.', outcomeId: 'event_ignore' }
+            ]
+        },
+        {
+            description: "A suspicious-looking merchant waves you over from the shadows.",
+            choices: [
+                { id: 'trade', label: 'Trade with him', description: 'See what he has to offer.', outcomeId: 'event_merchant_trade' },
+                { id: 'refuse', label: 'Walk away', description: 'He looks untrustworthy.', outcomeId: 'event_ignore' }
+            ]
+        }
+    ];
+    
+    return events[Math.floor(Math.random() * events.length)];
+}
 
 function selectBiome(floor: number): DungeonBiome {
     const biomes: DungeonBiome[] = ['forest', 'cave', 'undead', 'elemental', 'demonic', 'celestial', 'void', 'draconic', 'giant', 'construct'];
@@ -159,25 +223,9 @@ function calculateDifficulty(floor: number, targetLevel: number): number {
     return baseDifficulty * levelAdjustment;
 }
 
-function generateMonsterList(monsterTypes: string[], count: number, _targetLevel: number, _difficulty: number): string[] {
-    const monsters: string[] = [];
-    
-    for (let i = 0; i < count; i++) {
-        const randomMonster = monsterTypes[Math.floor(Math.random() * monsterTypes.length)];
-        // For now, just use the base monster ID - scaling will be handled during combat
-        monsters.push(randomMonster);
-    }
-    
-    return monsters;
-}
-
 export function getEndlessDungeonProgress(_characterId: string): number {
-    // This would be stored in character data or separate progress tracking
-    // For now, return a default value
     return 1;
 }
 
 export function setEndlessDungeonProgress(_characterId: string, _floor: number): void {
-    // This would update the character's endless dungeon progress
-    // Implementation would depend on how we want to store this data
 }
