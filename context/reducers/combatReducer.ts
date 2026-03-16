@@ -11,6 +11,7 @@ import { calculateXpForLevel } from '../../constants';
 import { recalculateStats } from '../../services/statService';
 import { checkKillAchievements } from '../../services/achievementService';
 import { RAIDS } from '../../data/raids';
+import { instantiateItem } from '../../services/itemService';
 
 const initialDungeonState = {
     status: 'idle',
@@ -69,7 +70,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
             dungeonState: {
                 ...initialDungeonState,
-                status: firstRoom.type === 'combat' ? 'fighting' : (firstRoom.type === 'treasure' ? 'treasure_found' : (firstRoom.type === 'rest' ? 'resting' : 'event')) as any,
+                status: (firstRoom.type === 'combat' || firstRoom.type === 'boss') ? 'fighting' : (firstRoom.type === 'treasure' ? 'treasure_found' : (firstRoom.type === 'rest' ? 'resting' : 'event')) as any,
                 dungeonId: dungeon.id,
                 monsterId: firstMonster?.id || null,
                 currentMonsterHealth: firstMonster?.stats.health || null,
@@ -108,7 +109,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
                 characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
                 dungeonState: {
                     ...initialDungeonState,
-                    status: firstRoom.type === 'combat' ? 'fighting' : (firstRoom.type === 'treasure' ? 'treasure_found' : 'event') as any,
+                    status: (firstRoom.type === 'combat' || firstRoom.type === 'boss') ? 'fighting' : (firstRoom.type === 'treasure' ? 'treasure_found' : 'event') as any,
                     dungeonId: proceduralDungeon.id,
                     monsterId: firstMonster?.id || null,
                     currentMonsterHealth: firstMonster?.stats.health || null,
@@ -227,6 +228,124 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
         };
     }
 
+    case 'NEXT_ROOM': {
+        if (state.dungeonState.currentRoomIndex >= state.dungeonState.rooms.length - 1) return state;
+        const nextRoomIndex = state.dungeonState.currentRoomIndex + 1;
+        const nextRoom = state.dungeonState.rooms[nextRoomIndex];
+        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId);
+        if (!activeCharacter) return state;
+
+        let monsterId = null;
+        let monsterHealth = null;
+
+        if (nextRoom.type === 'combat' || nextRoom.type === 'boss') {
+            let monster = nextRoom.monsterId ? ALL_MONSTERS[nextRoom.monsterId] : null;
+            if (state.dungeonState.proceduralDungeonData && nextRoom.monsterId) {
+                monster = generateScaledMonster(
+                    nextRoom.monsterId,
+                    activeCharacter.level,
+                    state.dungeonState.proceduralDungeonData.difficulty,
+                    state.dungeonState.proceduralDungeonData.floor
+                );
+                ALL_MONSTERS[monster.id] = monster;
+            }
+            monsterId = monster?.id || null;
+            monsterHealth = monster?.stats.health || null;
+        }
+
+        return {
+            ...state,
+            dungeonState: {
+                ...state.dungeonState,
+                status: (nextRoom.type === 'combat' || nextRoom.type === 'boss') ? 'fighting' : (nextRoom.type === 'treasure' ? 'treasure_found' : (nextRoom.type === 'rest' ? 'resting' : 'event')) as any,
+                currentRoomIndex: nextRoomIndex,
+                monsterId: monsterId,
+                currentMonsterHealth: monsterHealth,
+                combatLog: [...state.dungeonState.combatLog, { id: uuidv4(), type: 'info', message: `Entering ${nextRoom.type} room...`, actor: 'system' }]
+            } as any
+        };
+    }
+
+    case 'CLAIM_TREASURE': {
+        const currentRoom = state.dungeonState.rooms[state.dungeonState.currentRoomIndex];
+        if (currentRoom?.type !== 'treasure' || !currentRoom.treasure || !state.activeCharacterId) return state;
+
+        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
+        const { gold, items } = currentRoom.treasure;
+
+        const newItems = items.map(id => instantiateItem(id)).filter((item): item is Equipment => item !== null);
+
+        const updatedCharacter: Character = {
+            ...activeCharacter,
+            gold: activeCharacter.gold + gold,
+            inventory: [...activeCharacter.inventory, ...newItems]
+        };
+
+        const nextRoomExists = state.dungeonState.currentRoomIndex < state.dungeonState.rooms.length - 1;
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+            dungeonState: {
+                ...state.dungeonState,
+                status: nextRoomExists ? 'room_cleared' : 'victory',
+                goldGained: state.dungeonState.goldGained + gold,
+                lootFound: [...state.dungeonState.lootFound, ...items],
+                combatLog: [...state.dungeonState.combatLog, { id: uuidv4(), type: 'gold', message: `Found ${gold} gold and ${items.length} items!`, actor: 'system' }]
+            } as any
+        };
+    }
+
+    case 'REST': {
+        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId);
+        if (!activeCharacter) return state;
+
+        const updatedCharacter = {
+            ...activeCharacter,
+            currentHealth: Math.min(activeCharacter.maxStats.health, (activeCharacter.currentHealth || 0) + Math.floor(activeCharacter.maxStats.health * 0.3)),
+            currentMana: Math.min(activeCharacter.maxStats.mana, (activeCharacter.currentMana || 0) + Math.floor(activeCharacter.maxStats.mana * 0.3)),
+            party: activeCharacter.party.map(p => ({
+                ...p,
+                currentHealth: Math.min(p.stats.health, (p.currentHealth || 0) + Math.floor(p.stats.health * 0.3)),
+                currentMana: Math.min(p.stats.mana, (p.currentMana || 0) + Math.floor(p.stats.mana * 0.3))
+            }))
+        };
+
+        const nextRoomExists = state.dungeonState.currentRoomIndex < state.dungeonState.rooms.length - 1;
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+            dungeonState: {
+                ...state.dungeonState,
+                status: nextRoomExists ? 'room_cleared' : 'victory',
+                combatLog: [...state.dungeonState.combatLog, { id: uuidv4(), type: 'info', message: "The party takes a moment to rest and recover.", actor: 'system' }]
+            } as any
+        };
+    }
+
+    case 'LEAVE_DUNGEON': {
+        return {
+            ...state,
+            dungeonState: { ...initialDungeonState } as any,
+            isGrinding: false
+        };
+    }
+
+    case 'PAUSE_COMBAT': {
+        return {
+            ...state,
+            dungeonState: { ...state.dungeonState, status: 'paused' } as any
+        };
+    }
+
+    case 'RESUME_COMBAT': {
+        return {
+            ...state,
+            dungeonState: { ...state.dungeonState, status: 'fighting' } as any
+        };
+    }
+
     case 'START_RAID': {
         const raid = RAIDS.find(r => r.id === action.payload.raidId)!;
         const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
@@ -250,6 +369,13 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
         const turnResult = processCombatTurn(activeCharacter, activeCharacter.party, boss, { ...state.raidState, turnCount: state.raidState.turnCount + 1 } as any);
         // Simplified same as dungeon combat for brevity...
         return state; // Placeholder for full implementation in final step
+    }
+
+    case 'SET_GRINDING': {
+        return {
+            ...state,
+            isGrinding: action.payload
+        };
     }
 
     default:

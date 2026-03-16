@@ -244,14 +244,6 @@ const DungeonView: React.FC = () => {
         }
     }, [dungeonState.status, isGrinding, dispatch]);
     
-    useEffect(() => {
-        // This cleanup function will run when the component unmounts.
-        return () => {
-            if (state.isGrinding) {
-                dispatch({ type: 'SET_GRINDING', payload: false });
-            }
-        };
-    }, [state.isGrinding, dispatch]);
 
 
     const handleConfirmFlee = () => {
