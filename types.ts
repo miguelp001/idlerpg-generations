@@ -301,6 +301,30 @@ export interface Relationship {
     giftCount: number;
 }
 
+export interface MercenaryHeir {
+    id: string; // instance ID
+    ownerId: string;
+    ownerName: string;
+    characterData: Adventurer;
+    dailyRate: number;
+    totalEarned: number;
+    description: string;
+    isRegistered: boolean;
+}
+
+export interface DungeonCorpse {
+    id: string;
+    playerName: string;
+    characterClass: CharacterClassType;
+    level: number;
+    dungeonId: string;
+    floor: number;
+    roomIndex: number;
+    timestamp: string; // ISO string
+    gold: number;
+    materials: Record<string, number>;
+}
+
 export type WorldEventType = 'economic' | 'combat' | 'social' | 'catastrophe' | 'favorable';
 
 export interface WorldEvent {
@@ -334,6 +358,8 @@ export interface WorldState {
   activeEvents: WorldEvent[];
   factionStandings: Record<string, number>;
   globalGoldMultiplier: number;
+  mercenaries: MercenaryHeir[];
+  corpses: DungeonCorpse[];
 }
 
 export interface GameSettings {
@@ -401,6 +427,7 @@ export type Action =
   | { type: 'SIMULATE_SOCIAL_TURN' }
   | { type: 'CREATE_HEIR'; payload: { characterId: string, parents: [ParentInfo, ParentInfo] } }
   | { type: 'GIVE_ITEM_TO_ADVENTURER'; payload: { characterId: string; adventurerId: string; itemId: string; giftResponse: { response: string; scoreChange: number; } } }
+  | { type: 'MARRY_PARTNER'; payload: { characterId: string; partnerId: string; } }
   | { type: 'ADD_COMBAT_BANTER'; payload: { message: string } }
   | { type: 'ADD_SOCIAL_LOG'; payload: { message: string; participantIds?: [string, string]; } }
   | { type: 'ADD_ACHIEVEMENTS'; payload: { characterId: string; achievementIds: string[] } }
@@ -425,4 +452,11 @@ export type Action =
   | { type: 'UPDATE_SETTINGS'; payload: Partial<GameSettings> }
   | { type: 'MARRY_PARTNER'; payload: { characterId: string; partnerId: string; } }
   | { type: 'SELECT_HEIR'; payload: { characterId: string; heirId: string; } }
-  | { type: 'ADVANCE_WORLD_STATE' };
+  | { type: 'ADVANCE_WORLD_STATE' }
+  | { type: 'REGISTER_MERCENARY'; payload: { characterId: string; rate: number; description: string } }
+  | { type: 'HIRE_MERCENARY'; payload: { characterId: string; mercenaryId: string } }
+  | { type: 'CLAIM_MERCENARY_REWARDS'; payload: { characterId: string } }
+  | { type: 'DROP_CORPSE'; payload: { characterId: string; dungeonId: string; floor: number; roomIndex: number } }
+  | { type: 'LOOT_CORPSE'; payload: { characterId: string; corpseId: string } }
+  | { type: 'BLESS_CORPSE'; payload: { characterId: string; corpseId: string } }
+  | { type: 'PRUNE_WORLD_STATE' };

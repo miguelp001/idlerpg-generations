@@ -1,4 +1,5 @@
 import React from 'react';
+export const SAVE_KEY = 'idleRpgSaveData';
 import { CharacterClassType, GameStats, Equipment, EquipmentRarity, PersonalityTrait, RelationshipStatus } from './types';
 import { ShieldExclamationIcon, SparklesIcon, BoltIcon, HeartIcon } from './components/ui/Icons';
 

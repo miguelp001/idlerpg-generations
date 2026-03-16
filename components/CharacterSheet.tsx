@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo } from 'react';
-import { Equipment, Adventurer, Ability, EquipmentSlot, GameStats } from '../types';
+import { Equipment, Adventurer, Ability, GameStats } from '../types';
 import { calculateXpForLevel, CLASSES, RARITY_COLORS, RETIREMENT_LEVEL, GUILD_XP_TABLE, PERSONALITY_TRAITS } from '../constants';
 import { SETS } from '../data/sets';
 import Card from './ui/Card';

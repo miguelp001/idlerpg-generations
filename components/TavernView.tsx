@@ -89,7 +89,7 @@ const SocialLogDisplay: React.FC = () => {
         <div ref={logRef} className="h-96 bg-black/30 rounded-lg p-4 overflow-y-auto font-mono text-sm shadow-inner" aria-live="polite">
             {state.socialLog.map(log => (
                 <p key={log.id} className="animate-fade-in text-on-background/90">
-                    &gt; {log.message}
+                    &gt; {log.content}
                 </p>
             ))}
             {state.socialLog.length === 0 && <p className="text-on-background/70">&gt; The party is quiet for now...</p>}

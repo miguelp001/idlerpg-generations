@@ -183,7 +183,7 @@ function generateRooms(count: number, config: BiomeConfig, targetLevel: number, 
     return rooms;
 }
 
-function generateRandomEvent(floor: number) {
+function generateRandomEvent(_floor: number) {
     const events = [
         {
             description: "You find a mysterious altar glowing with soft blue light.",

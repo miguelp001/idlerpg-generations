@@ -151,6 +151,7 @@ const CharacterCreator: React.FC = () => {
             unlockedAchievements: [],
             equippedTitle: null,
             endlessDungeonProgress: 0,
+            materials: {},
             heir: selectedHeir,
         }
     } else {
@@ -181,6 +182,7 @@ const CharacterCreator: React.FC = () => {
           unlockedAchievements: [],
           equippedTitle: null,
           endlessDungeonProgress: 0,
+          materials: {},
         };
     }
 

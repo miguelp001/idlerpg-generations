@@ -79,7 +79,7 @@ function getClassStatWeights(characterClass: CharacterClassType): Partial<Record
 /**
  * Checks if a character can use a piece of equipment
  */
-function canUseEquipment(equipment: Equipment, character: Adventurer | Character): boolean {
+function canUseEquipment(): boolean {
     // All characters can use all equipment types in this game
     // Class affinity affects effectiveness but doesn't prevent usage
     return true;
@@ -99,7 +99,7 @@ export function findBestRecipient(
     
     // Check each party member
     for (const member of party) {
-        if (!canUseEquipment(equipment, member)) {
+        if (!canUseEquipment()) {
             continue;
         }
         

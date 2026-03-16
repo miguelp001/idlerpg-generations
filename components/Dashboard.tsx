@@ -6,7 +6,7 @@ import DungeonList from './DungeonList';
 import DungeonView from './DungeonView';
 import Inventory from './Inventory';
 import FamilyTree from './FamilyTree';
-import SocialView from './SocialView';
+import SocialHallView from './SocialHallView';
 import GuildView from './GuildView';
 import QuestView from './QuestView';
 import AchievementsView from './AchievementsView';
@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
             ? <EndlessDungeonView />
             : <DungeonView />;
       case 'social':
-        return <SocialView />;
+        return <SocialHallView />;
       case 'guild':
         return <GuildView />;
       case 'achievements':

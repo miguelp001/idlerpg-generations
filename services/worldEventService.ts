@@ -1,4 +1,4 @@
-import { WorldEvent, WorldEventType } from '../types';
+import { WorldEvent } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 const EVENT_TEMPLATES: Omit<WorldEvent, 'id' | 'duration'>[] = [
@@ -40,7 +40,7 @@ const EVENT_TEMPLATES: Omit<WorldEvent, 'id' | 'duration'>[] = [
     }
 ];
 
-export const rollForNewEvent = (currentDay: number): WorldEvent | null => {
+export const rollForNewEvent = (_currentDay: number): WorldEvent | null => {
     // 20% chance for a new event each day if none are active
     if (Math.random() > 0.2) return null;
 

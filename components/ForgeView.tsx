@@ -13,7 +13,7 @@ const RARITY_OPTIONS: EquipmentRarity[] = ['common', 'uncommon', 'rare', 'epic',
 const SLOT_OPTIONS: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
 export const ForgeView: React.FC = () => {
-    const { state, dispatch, activeCharacter } = useGame();
+    const { activeCharacter, dispatch } = useGame();
     const [selectedSlot, setSelectedSlot] = useState<EquipmentSlot>('weapon');
     const [selectedRarity, setSelectedRarity] = useState<EquipmentRarity>('common');
     const [selectedStats, setSelectedStats] = useState<Partial<GameStats>>({ attack: 5 });

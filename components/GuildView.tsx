@@ -159,7 +159,7 @@ const ManageGuildView: React.FC = () => {
                                     </div>
                                     <Button 
                                         size="sm" 
-                                        variant="outline"
+                                        variant="void"
                                         onClick={() => dispatch({ type: 'RECRUIT_TO_GUILD', payload: { characterId: activeCharacter.id, adventurerId: adventurer.id } })}
                                     >
                                         Recruit

@@ -109,6 +109,42 @@ const FleeConfirmationModal: React.FC<{
     </div>
 );
 
+const CorpseInteraction: React.FC<{ 
+    corpses: any[], 
+    onLoot: (corpseId: string) => void, 
+    onBless: (corpseId: string) => void 
+}> = ({ corpses, onLoot, onBless }) => {
+    if (corpses.length === 0) return null;
+
+    return (
+        <div className="space-y-4 animate-fade-in mt-4">
+            <h3 className="text-sm font-bold text-on-background/60 flex items-center gap-2">
+                <SkullIcon className="w-4 h-4" /> Fallen Adventurers Linger Here...
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {corpses.map(corpse => (
+                    <Card key={corpse.id} className="bg-red-900/10 border-red-500/30 p-4 border-2">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 className="font-bold text-red-400">{corpse.playerName}</h4>
+                                <p className="text-xs text-on-background/70">Lvl {corpse.level} {corpse.characterClass}</p>
+                            </div>
+                            <span className="text-[10px] text-on-background/40">{new Date(corpse.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mt-4">
+                            <Button size="sm" variant="void" className="text-red-400 border-red-500/50 hover:bg-red-900/30" onClick={() => onLoot(corpse.id)}>
+                                Loot Remains
+                            </Button>
+                            <Button size="sm" variant="void" className="text-blue-400 border-blue-500/50 hover:bg-blue-900/30" onClick={() => onBless(corpse.id)}>
+                                Bless Soul
+                            </Button>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 const DungeonView: React.FC = () => {
     const { state, dispatch, activeCharacter } = useGame();
@@ -164,11 +200,10 @@ const DungeonView: React.FC = () => {
         if (dungeonState.status === 'victory' && isGrinding && dungeonState.dungeonId) {
             const timer = setTimeout(() => {
                 // Calculate character health percentage
-                const healthPercent = activeCharacter.currentHealth ? 
-                    activeCharacter.currentHealth / activeCharacter.maxStats.health : 1;
+                const healthPercent = (activeCharacter?.currentHealth ?? 0) / (activeCharacter?.maxStats.health ?? 1);
                 
                 // Check if there's a better dungeon available
-                const bestDungeon = getBestAvailableDungeon(activeCharacter.level, dungeonState.dungeonId, healthPercent);
+                const bestDungeon = getBestAvailableDungeon(activeCharacter?.level ?? 1, dungeonState.dungeonId ?? undefined, healthPercent);
                 
                 if (bestDungeon && bestDungeon.id !== dungeonState.dungeonId) {
                     // Switch to the better dungeon
@@ -181,7 +216,7 @@ const DungeonView: React.FC = () => {
 
             return () => clearTimeout(timer);
         }
-    }, [dungeonState.status, isGrinding, dungeonState.dungeonId, dispatch, activeCharacter.level, activeCharacter.currentHealth, activeCharacter.maxStats.health]);
+    }, [dungeonState.status, isGrinding, dungeonState.dungeonId, dispatch, activeCharacter?.level, activeCharacter?.currentHealth, activeCharacter?.maxStats.health]);
 
     // Auto-advance through rooms when grinding
     useEffect(() => {
@@ -433,6 +468,12 @@ const DungeonView: React.FC = () => {
         );
     };
 
+    const currentRoomCorpses = state.worldState.corpses.filter(c => 
+        c.dungeonId === dungeonState.dungeonId && 
+        c.floor === (dungeonState.proceduralDungeonData?.floor ?? 0) &&
+        c.roomIndex === dungeonState.currentRoomIndex
+    );
+
     return (
         <div className="space-y-6">
              {isFleeing && (
@@ -461,6 +502,14 @@ const DungeonView: React.FC = () => {
             </div>
 
             {renderRoomProgress()}
+
+            {dungeonState.status === 'room_cleared' && activeCharacter && (
+                <CorpseInteraction 
+                    corpses={currentRoomCorpses}
+                    onLoot={(corpseId: string) => dispatch({ type: 'LOOT_CORPSE', payload: { characterId: activeCharacter.id, corpseId } })}
+                    onBless={(corpseId: string) => dispatch({ type: 'BLESS_CORPSE', payload: { characterId: activeCharacter.id, corpseId } })}
+                />
+            )}
 
             {dungeonState.status === 'fighting' && renderFightingView()}
             {dungeonState.status === 'room_cleared' && renderRoomClearedView()}
