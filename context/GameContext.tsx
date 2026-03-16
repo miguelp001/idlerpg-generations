@@ -17,7 +17,9 @@ import { checkAllAchievements, checkKillAchievements } from '../services/achieve
 import { ACHIEVEMENTS } from '../data/achievements';
 import { OFFLINE_SOCIAL_EVENTS } from '../data/socialEvents';
 import { rollForNewEvent, updateActiveEvents, getGlobalModifiers, getFactionModifiers } from '../services/worldEventService';
-import { generateShopItems } from '../services/shopService'; // Import the new service
+import { generateShopItems } from '../services/shopService';
+import { generateMaterialDrops } from '../services/lootGenerationService';
+import { calculateForgeCost, generateForgeItem } from '../services/forgeService';
 import { generateProceduralDungeon } from '../services/proceduralDungeonService';
 import { generateScaledMonster } from '../services/monsterScalingService';
 import { generateProceduralItem } from '../services/lootGenerationService';
@@ -199,6 +201,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             equippedTitle: c.equippedTitle || null,
             accessorySlots: c.accessorySlots || [null, null], // Initialize accessory slots
             endlessDungeonProgress: c.endlessDungeonProgress || 1, // Initialize endless dungeon progress
+            materials: c.materials || {},
         }));
         
         const activeChar = loadedState.characters.find(c => c.id === loadedState.activeCharacterId);
@@ -230,6 +233,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         equipment: [], // Initialize equipment as empty
         accessorySlots: [null, null], // Initialize accessory slots as empty
         endlessDungeonProgress: 1, // Initialize endless dungeon progress
+        materials: {},
       };
 
       // Equip starting gear
@@ -599,6 +603,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             
             // Add player items to inventory
             updatedCharacter.inventory = [...updatedCharacter.inventory, ...playerItems];
+
+            // --- Material Drops ---
+            if (turnResult.newMonsterHealth <= 0) {
+                const materialDrops = generateMaterialDrops(monster.xpReward);
+                materialDrops.forEach(drop => {
+                    updatedCharacter.materials[drop.materialId] = (updatedCharacter.materials[drop.materialId] || 0) + drop.amount;
+                    combatLogs.push({ id: uuidv4(), type: 'info', message: `You found ${drop.amount}x ${drop.materialId.replace(/_/g, ' ')}!`, actor: 'system' });
+                });
+            }
             
             // Update party members with their new equipment
             updatedCharacter.party = updatedCharacter.party.map(member => {
@@ -1005,6 +1018,98 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             shopItems: newShopItems,
         };
         return newState;
+    }
+
+    case 'REQUEST_FORGE': {
+        const char = state.characters.find(c => c.id === action.payload.characterId);
+        if (!char) return state;
+
+        const { materials, gold } = calculateForgeCost(action.payload.order.rarity, action.payload.order.targetStats);
+        
+        if (char.gold < gold) return state;
+        for (const req of materials) {
+            if ((char.materials[req.materialId] || 0) < req.amount) return state;
+        }
+
+        const newMaterials = { ...char.materials };
+        materials.forEach(req => {
+            newMaterials[req.materialId] -= req.amount;
+        });
+
+        const updatedChar: Character = {
+            ...char,
+            gold: char.gold - gold,
+            materials: newMaterials,
+            activeForgeOrder: {
+                ...action.payload.order,
+                id: uuidv4(),
+                requiredMaterials: materials,
+                goldCost: gold,
+            }
+        };
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === char.id ? updatedChar : c),
+            socialLog: [{ 
+                id: uuidv4(), 
+                timestamp: new Date().toISOString(),
+                type: 'social_interaction',
+                content: `The Blacksmith has started working on your ${action.payload.order.rarity} ${action.payload.order.slot}.`
+            }, ...state.socialLog].slice(0, 50),
+        };
+    }
+
+    case 'CANCEL_FORGE': {
+        const char = state.characters.find(c => c.id === action.payload.characterId);
+        if (!char || !char.activeForgeOrder) return state;
+
+        const newMaterials = { ...char.materials };
+        char.activeForgeOrder.requiredMaterials.forEach(req => {
+            const refund = Math.floor(req.amount * 0.5);
+            newMaterials[req.materialId] = (newMaterials[req.materialId] || 0) + refund;
+        });
+
+        const updatedChar: Character = {
+            ...char,
+            materials: newMaterials,
+            activeForgeOrder: undefined,
+        };
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === char.id ? updatedChar : c),
+            socialLog: [{ 
+                id: uuidv4(), 
+                timestamp: new Date().toISOString(),
+                type: 'social_interaction',
+                content: `Forge order cancelled. Some materials were salvaged.`
+            }, ...state.socialLog].slice(0, 50),
+        };
+    }
+
+    case 'CLAIM_FORGE': {
+        const char = state.characters.find(c => c.id === action.payload.characterId);
+        if (!char || !char.activeForgeOrder) return state;
+
+        const forgedItem = generateForgeItem(char.activeForgeOrder);
+        
+        const updatedChar: Character = {
+            ...char,
+            inventory: [...char.inventory, forgedItem],
+            activeForgeOrder: undefined,
+        };
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === char.id ? updatedChar : c),
+            socialLog: [{ 
+                id: uuidv4(), 
+                timestamp: new Date().toISOString(),
+                type: 'social_interaction',
+                content: `You claimed your forged item: ${forgedItem.name}!`
+            }, ...state.socialLog].slice(0, 50),
+        };
     }
     case 'BUY_ITEM': {
         const { characterId, itemId } = action.payload;

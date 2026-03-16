@@ -182,6 +182,32 @@ const DungeonView: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [dungeonState.status, isGrinding, dungeonState.dungeonId, dispatch, activeCharacter.level, activeCharacter.currentHealth, activeCharacter.maxStats.health]);
+
+    // Auto-advance through rooms when grinding
+    useEffect(() => {
+        if (!isGrinding) return;
+
+        const autoAdvanceStates = ['room_cleared', 'treasure_found', 'resting', 'event'];
+        if (autoAdvanceStates.includes(dungeonState.status)) {
+            const timer = setTimeout(() => {
+                switch (dungeonState.status) {
+                    case 'room_cleared':
+                    case 'event':
+                        dispatch({ type: 'NEXT_ROOM' });
+                        break;
+                    case 'treasure_found':
+                        dispatch({ type: 'CLAIM_TREASURE' });
+                        break;
+                    case 'resting':
+                        // For grinding, we skip rest to save time or just take it? 
+                        // Let's 'Rest' to be safe for health, then it will become 'room_cleared' and then 'NEXT_ROOM'
+                        dispatch({ type: 'REST' });
+                        break;
+                }
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [dungeonState.status, isGrinding, dispatch]);
     
     useEffect(() => {
         // This cleanup function will run when the component unmounts.

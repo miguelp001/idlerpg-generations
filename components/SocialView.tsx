@@ -8,6 +8,7 @@ import Button from './ui/Button';
 import { calculateMaxPartySize } from '../services/socialService';
 import { ExclamationTriangleIcon } from './ui/Icons'; // Import ExclamationTriangleIcon for ItemCard
 import { SETS } from '../data/sets'; // Import SETS for ItemCard
+import ForgeView from './ForgeView';
 
 interface AdventurerCardProps {
     adventurer: Adventurer;
@@ -365,11 +366,18 @@ const SocialView: React.FC = () => {
                 >
                     Shop
                 </button>
+                <button
+                    className={`ml-4 px-4 py-2 text-lg font-semibold ${activeTab === 'forge' ? 'text-primary border-b-2 border-primary' : 'text-on-background/60 hover:text-on-background'}`}
+                    onClick={() => setActiveTab('forge')}
+                >
+                    Forge
+                </button>
             </div>
 
             <div>
                 {activeTab === 'socialLog' && renderSocialLog()}
                 {activeTab === 'shop' && renderShop()}
+                {activeTab === 'forge' && <ForgeView />}
             </div>
 
             {/* Heritage Section (Phase 3) */}

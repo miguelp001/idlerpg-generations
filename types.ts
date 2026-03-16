@@ -13,6 +13,23 @@ export interface GameStats {
 
 export type EquipmentRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type EquipmentSlot = 'weapon' | 'armor' | 'accessory';
+export type MaterialRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export interface Material {
+  id: string;
+  name: string;
+  rarity: MaterialRarity;
+  description: string;
+}
+
+export interface ForgeOrder {
+  id: string;
+  slot: EquipmentSlot;
+  rarity: EquipmentRarity;
+  targetStats: Partial<GameStats>;
+  requiredMaterials: { materialId: string; amount: number }[];
+  goldCost: number;
+}
 
 export interface Equipment {
   id: string; // Unique instance ID
@@ -169,6 +186,8 @@ export interface Character {
   unlockedAchievements: string[];
   equippedTitle: string | null;
   endlessDungeonProgress: number; // Highest floor reached in endless dungeons
+  materials: Record<string, number>;
+  activeForgeOrder?: ForgeOrder;
   // Transient combat state
   currentHealth?: number;
   currentMana?: number;
@@ -392,6 +411,9 @@ export type Action =
   | { type: 'SET_SHOP_ITEMS'; payload: Equipment[]; }
   | { type: 'REFRESH_SHOP'; payload: { characterId: string; } }
   | { type: 'BUY_ITEM'; payload: { characterId: string; itemId: string; } }
+  | { type: 'REQUEST_FORGE'; payload: { characterId: string; order: Omit<ForgeOrder, 'id' | 'requiredMaterials' | 'goldCost'> } }
+  | { type: 'CANCEL_FORGE'; payload: { characterId: string } }
+  | { type: 'CLAIM_FORGE'; payload: { characterId: string } }
   | { type: 'SET_TUTORIAL_SHOWN'; payload: boolean }
   | { type: 'PAUSE_COMBAT' }
   | { type: 'RESUME_COMBAT' }
