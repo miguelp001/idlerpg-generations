@@ -53,10 +53,10 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
     case 'CREATE_GUILD': {
         const { characterId, guildName } = action.payload;
         const character = state.characters.find(c => c.id === characterId)!;
-        if (state.guild || character.gold < GUILD_CREATE_COST) return state;
+        if (state.guild || (character.gold || 0) < GUILD_CREATE_COST) return state;
         
         const newGuild: Guild = { id: uuidv4(), name: guildName, level: 1, experience: 0, members: [] };
-        const updatedCharacter = { ...character, gold: character.gold - GUILD_CREATE_COST, guildId: newGuild.id };
+        const updatedCharacter = { ...character, gold: Math.max(0, (character.gold || 0) - GUILD_CREATE_COST), guildId: newGuild.id };
 
         return {
             ...state,
@@ -117,7 +117,7 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
         
         let updatedCharacter = { ...character };
         updatedCharacter.experience += (questDef.rewards.xp || 0);
-        updatedCharacter.gold = Math.min(updatedCharacter.gold + (questDef.rewards.gold || 0), MAX_GOLD);
+        updatedCharacter.gold = Math.min((updatedCharacter.gold || 0) + (questDef.rewards.gold || 0), MAX_GOLD);
         if (questDef.rewards.items) {
             const newItems = questDef.rewards.items.map(itemId => {
                 const itemTemplate = ITEMS[itemId];

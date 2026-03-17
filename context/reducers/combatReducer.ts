@@ -176,8 +176,18 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             }
             
             const { goldGain = 1 } = getGlobalModifiers(state.worldState.activeEvents) || {};
-            const goldDropped = Math.floor((monster.goldDrop || 0) * (goldGain || 1));
-            updatedCharacter.gold = Math.min(updatedCharacter.gold + goldDropped, MAX_GOLD);
+            const goldDropped = Math.floor((monster.goldDrop || 0) * (goldGain || 1)) || 0;
+            updatedCharacter.gold = Math.min((updatedCharacter.gold || 0) + goldDropped, MAX_GOLD);
+
+            // Update Quest Progress for ANY monster kill
+            updatedCharacter.quests = (updatedCharacter.quests || []).map(q => ({
+                ...q,
+                objectives: q.objectives.map(obj => 
+                    obj.type === 'kill' && (obj.targetId === monster.originalId || obj.targetId === monster.id)
+                        ? { ...obj, currentAmount: Math.min(obj.requiredAmount, obj.currentAmount + 1) }
+                        : obj
+                )
+            }));
 
             const achievementUnlocked = checkAllAchievements(updatedCharacter, state);
             if (achievementUnlocked.length > 0) {
@@ -199,16 +209,6 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
                 });
             }
 
-            // Update Quest Progress
-            updatedCharacter.quests = (updatedCharacter.quests || []).map(q => ({
-                ...q,
-                objectives: q.objectives.map(obj => {
-                    if (obj.type === 'kill' && obj.targetId === monster.id) {
-                        return { ...obj, currentAmount: Math.min(obj.requiredAmount, obj.currentAmount + 1) };
-                    }
-                    return obj;
-                })
-            }));
 
             const isBoss = state.dungeonState.rooms[state.dungeonState.currentRoomIndex].type === 'boss';
             if (!isBoss) {
@@ -229,11 +229,34 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             const factionMods = getFactionModifiers(state.worldState.factionStandings);
             const totalXp = Math.floor(state.dungeonState.rooms.reduce((acc, r) => acc + (ALL_MONSTERS[r.monsterId!]?.xpReward || 0), 0) * globalMods.xpGain * factionMods.xpGain);
             
-            const lootFound: Equipment[] = [];
-            // Simplified loot logic for brevity
+            // Get loot from the dungeon's loot table
+            const dungeon = state.dungeonState.proceduralDungeonData || DUNGEONS.find(d => d.id === state.dungeonState.dungeonId);
+            const rawLoot = dungeon?.lootTable || [];
             
-            const { playerItems } = distributeEquipment(lootFound, updatedCharacter, updatedCharacter.party);
+            // Instantiate items from IDs or use existing Equipment objects
+            const lootFound: Equipment[] = rawLoot.map((lootItem: string | Equipment) => {
+                if (typeof lootItem === 'string') {
+                    return instantiateItem(lootItem);
+                }
+                return lootItem;
+            }).filter((item: Equipment | null): item is Equipment => item !== null);
+            
+            // Distribute loot to party members or player
+            const { playerItems, distributions } = distributeEquipment(lootFound, updatedCharacter, updatedCharacter.party);
             updatedCharacter.inventory = [...updatedCharacter.inventory, ...playerItems];
+            
+            // Log loot findings
+            lootFound.forEach(item => {
+                const recipient = distributions.find(d => d.item.id === item.id)?.recipient;
+                combatLogs.push({
+                    id: uuidv4(),
+                    type: 'treasure',
+                    message: recipient 
+                        ? `${recipient.name} received ${item.name}!` 
+                        : `You found ${item.name}!`,
+                    actor: 'system'
+                });
+            });
             
             // Level Up logic
             updatedCharacter.experience += totalXp;
@@ -313,12 +336,16 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
 
         const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
         const { gold, items } = currentRoom.treasure;
-
-        const newItems = items.map(id => instantiateItem(id)).filter((item): item is Equipment => item !== null);
+        const newItems = items.map((lootItem: string | Equipment) => {
+            if (typeof lootItem === 'string') {
+                return instantiateItem(lootItem);
+            }
+            return lootItem;
+        }).filter((item: Equipment | null): item is Equipment => item !== null);
 
         const updatedCharacter: Character = {
             ...activeCharacter,
-            gold: Math.min(activeCharacter.gold + (gold || 0), MAX_GOLD),
+            gold: Math.min((activeCharacter.gold || 0) + (gold || 0), MAX_GOLD),
             inventory: [...activeCharacter.inventory, ...newItems]
         };
 

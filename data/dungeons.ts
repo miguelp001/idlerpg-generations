@@ -347,6 +347,16 @@ export const DUNGEONS: Dungeon[] = [
 
     // Level 20
     {
+        id: 'dungeon_giant_encampment',
+        name: 'Giant Encampment',
+        description: 'A massive encampment where giants gather. High Priest Malak has significant influence here.',
+        levelRequirement: 20,
+        monsters: ['hill_giant', 'hill_giant', 'ogre_mage', 'ogre_mage', 'ogre_brute', 'ogre_brute'],
+        boss: 'high_priest_malak',
+        lootTable: ['helm_of_the_behemoth', 'archmage_robes', 'kingslayers'],
+    },
+    // Level 20
+    {
         id: 'dungeon_celestial_nexus',
         name: 'Celestial Nexus',
         description: 'A shimmering gateway to the heavens, guarded by powerful celestial beings.',

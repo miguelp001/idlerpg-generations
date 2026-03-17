@@ -37,7 +37,7 @@ An immersive idle RPG where you manage a lineage of heroes across generations, e
 ### ⚔️ Combat & Exploration
 
 #### **Dungeon Crawling**
-- **128+ Dungeons:** From Goblin Caves to the Celestial Nexus.
+- **128+ Dungeons:** From Goblin Caves and the **Giant Encampment** to the Celestial Nexus.
 - **Room-Based Navigation:** Explore dungeons room by room, encountering combat, treasure, rest points, and unique events.
 - **Automated Combat:** Strategic turn-based combat with abilities, cooldowns, and tactical decisions.
 - **Auto Grind:** Enable Auto Grind to automatically advance through rooms, claim treasure, and rest until the dungeon is cleared.

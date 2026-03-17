@@ -1,16 +1,16 @@
 import { Equipment, EquipmentRarity, EquipmentSlot, CharacterClassType, GameStats } from '../types';
 import { RARITY_MULTIPLIER } from '../constants';
 
-export function generateProceduralLoot(targetLevel: number, difficulty: number, floor: number): string[] {
-    const lootTable: string[] = [];
+export function generateProceduralLoot(targetLevel: number, difficulty: number, floor: number): Equipment[] {
+    const loot: Equipment[] = [];
     const lootCount = Math.min(8, 3 + Math.floor(floor / 20)); // More loot on deeper floors, max 8
     
     for (let i = 0; i < lootCount; i++) {
         const item = generateProceduralItem(targetLevel, difficulty, floor);
-        lootTable.push(item.baseId);
+        loot.push(item);
     }
     
-    return lootTable;
+    return loot;
 }
 
 export function generateProceduralItem(targetLevel: number, difficulty: number, floor: number): Equipment {

@@ -86,6 +86,7 @@ export interface Adventurer {
     partnerId?: string;
     equipment: Equipment[];
     accessorySlots: [Equipment | null, Equipment | null]; // Two accessory slots
+    recruitmentCost: number;
     // Transient combat state
     currentHealth?: number;
     currentMana?: number;
@@ -201,6 +202,7 @@ export interface Monster {
     xpReward: number;
     goldDrop: number;
     isRaidBoss?: boolean;
+    originalId?: string; // Track base monster ID for quests
 }
 
 export type DungeonRoomType = 'combat' | 'treasure' | 'event' | 'boss' | 'rest';
@@ -211,7 +213,7 @@ export interface DungeonRoom {
     monsterId?: string; // For combat and boss rooms
     treasure?: {
         gold: number;
-        items: string[]; // baseIds
+        items: (string | Equipment)[]; // baseIds or fully generated items
     };
     event?: {
         description: string;
@@ -234,7 +236,7 @@ export interface Dungeon {
     levelRequirement: number;
     monsters: string[]; // array of monster ids (fallback/legacy)
     boss: string; // monster id (fallback/legacy)
-    lootTable: string[]; // array of item baseIds (fallback/legacy)
+    lootTable: (string | Equipment)[]; // array of item baseIds or Equipment objects (fallback/legacy)
     rooms?: DungeonRoom[]; // New room-based structure
 }
 

@@ -9,6 +9,7 @@ import {
     PERSONALITY_TRAITS,
     RELATIONSHIP_THRESHOLDS,
     RARITY_ORDER,
+    MAX_PARTY_SIZE,
     MAX_GOLD,
     GUILD_CREATE_COST,
     GUILD_DONATION_GOLD,
@@ -326,11 +327,12 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         let character = state.characters.find(c => c.id === characterId)!;
         const adventurer = state.tavernAdventurers.find(a => a.id === adventurerId)!;
         
-        if (character.gold < (adventurer as any).recruitmentCost) return state;
+        const cost = adventurer.recruitmentCost || 0;
+        if (character.gold < cost || character.party.length >= MAX_PARTY_SIZE - 1) return state;
 
         const updatedCharacter = {
             ...character,
-            gold: character.gold - (adventurer as any).recruitmentCost,
+            gold: Math.max(0, (character.gold || 0) - cost),
             party: [...character.party, adventurer]
         };
 
@@ -361,11 +363,11 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
     case 'REFRESH_TAVERN_ADVENTURERS': {
         const { characterId } = action.payload;
         let character = state.characters.find(c => c.id === characterId)!;
-        if (character.gold < REFRESH_TAVERN_COST) return state;
+        if ((character.gold || 0) < REFRESH_TAVERN_COST) return state;
 
         return {
             ...state,
-            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold - REFRESH_TAVERN_COST } : c),
+            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: Math.max(0, (c.gold || 0) - REFRESH_TAVERN_COST) } : c),
             tavernAdventurers: Array.from({ length: 5 }, () => generateAdventurer(character.level))
         };
     }
@@ -373,11 +375,11 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
     case 'REFRESH_SHOP': {
         const { characterId } = action.payload;
         let character = state.characters.find(c => c.id === characterId)!;
-        if (character.gold < SHOP_REFRESH_COST) return state;
+        if ((character.gold || 0) < SHOP_REFRESH_COST) return state;
 
         return {
             ...state,
-            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold - SHOP_REFRESH_COST } : c),
+            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: Math.max(0, (c.gold || 0) - SHOP_REFRESH_COST) } : c),
             shopItems: generateShopItems(character.level)
         };
     }
@@ -387,11 +389,12 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         let character = state.characters.find(c => c.id === characterId)!;
         const item = state.shopItems.find(i => i.id === itemId)!;
         
-        if (character.gold < item.price) return state;
+        const price = item.price || 0;
+        if ((character.gold || 0) < price) return state;
 
         return {
             ...state,
-            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold - item.price, inventory: [...c.inventory, item] } : c),
+            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: Math.max(0, (c.gold || 0) - price), inventory: [...c.inventory, item] } : c),
             shopItems: state.shopItems.filter(i => i.id !== itemId)
         };
     }
@@ -403,7 +406,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         if (item.isHeirloom) return state;
 
         const goldValue = SELL_PRICE(item);
-        const updatedGold = Math.min(character.gold + goldValue, MAX_GOLD);
+        const updatedGold = Math.min((character.gold || 0) + goldValue, MAX_GOLD);
         
         const updatedCharacter = { 
             ...character, 
@@ -436,7 +439,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         if (itemsToSell.length === 0) return state;
 
         const totalGold = itemsToSell.reduce((sum, item) => sum + SELL_PRICE(item), 0);
-        const updatedGold = Math.min(character.gold + totalGold, MAX_GOLD);
+        const updatedGold = Math.min((character.gold || 0) + totalGold, MAX_GOLD);
         const soldItemIds = new Set(itemsToSell.map(i => i.id));
         const newInventory = character.inventory.filter(item => !soldItemIds.has(item.id));
 
@@ -606,7 +609,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
                 parentId: characterId,
                 legacyBonus,
                 heirloom: { ...heirloom, upgradeLevel: Math.max(0, heirloom.upgradeLevel - 1) }, // Heirlooms lose one level
-                gold: Math.floor(character.gold * 0.1), // Inherit 10% gold
+                gold: Math.floor((character.gold || 0) * 0.1), // Inherit 10% gold
                 materials: Object.entries(character.materials || {}).reduce((acc, [id, amt]) => ({ ...acc, [id]: Math.floor(amt * 0.2) }), {}),
                 availableHeirs: character.potentialHeirs
             },
@@ -698,6 +701,42 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
             ...state,
             guild: { ...state.guild, members: [...state.guild.members, adventurer] },
             tavernAdventurers: state.tavernAdventurers.filter(a => a.id !== adventurerId)
+        };
+    }
+
+    case 'TOGGLE_PASSIVE_ABILITY': {
+        const { characterId, abilityId } = action.payload;
+        let character = state.characters.find(c => c.id === characterId);
+        if (!character) return state;
+
+        const activePassives = character.activePassives || [];
+        const isCurrentlyActive = activePassives.includes(abilityId);
+        
+        const newActivePassives = isCurrentlyActive
+            ? activePassives.filter(id => id !== abilityId)
+            : [...activePassives, abilityId];
+
+        let updatedCharacter: Character = {
+            ...character,
+            activePassives: newActivePassives
+        };
+
+        const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+        updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
+        };
+    }
+
+    case 'EQUIP_TITLE': {
+        const { characterId, title } = action.payload;
+        return {
+            ...state,
+            characters: state.characters.map(c => 
+                c.id === characterId ? { ...c, equippedTitle: title } : c
+            )
         };
     }
 

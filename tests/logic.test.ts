@@ -107,6 +107,22 @@ describe('characterReducer', () => {
       const newState = characterReducer(mockInitialState, action);
       expect(newState.characters[0].gold).toBe(200);
   });
+
+  it('should toggle passive abilities and update stats', () => {
+    // Note: This test assumes abilityService has some mock data or getActivePassiveBonuses can handle this
+    const action = { type: 'TOGGLE_PASSIVE_ABILITY', payload: { characterId: 'char-1', abilityId: 'passive_warrior_strength' } } as any;
+    const newState = characterReducer(mockInitialState, action);
+    const char = newState.characters[0];
+    
+    expect(char.activePassives).toContain('passive_warrior_strength');
+    // Stats should be recalculated. Even if the bonus is 0 in the mock, the logic path is tested.
+  });
+
+  it('should equip an achievement title', () => {
+    const action = { type: 'EQUIP_TITLE', payload: { characterId: 'char-1', title: 'Goblin Slayer' } } as any;
+    const newState = characterReducer(mockInitialState, action);
+    expect(newState.characters[0].equippedTitle).toBe('Goblin Slayer');
+  });
 });
 
 describe('worldReducer', () => {

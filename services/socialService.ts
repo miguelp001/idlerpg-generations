@@ -16,6 +16,11 @@ export const getScaledStats = (level: number, classKey: CharacterClassType): Gam
     return scaledStats;
 };
 
+export const calculateRecruitmentCost = (level: number): number => {
+    // Base cost is 50, scales with level
+    return Math.floor(50 * Math.pow(level, 1.2));
+};
+
 export const generateAdventurer = (playerLevel: number): Adventurer => {
     const classKeys = Object.keys(CLASSES) as CharacterClassType[];
     const randomClass = classKeys[Math.floor(Math.random() * classKeys.length)];
@@ -38,6 +43,7 @@ export const generateAdventurer = (playerLevel: number): Adventurer => {
         personality: randomPersonality,
         equipment: [],
         accessorySlots: [null, null],
+        recruitmentCost: calculateRecruitmentCost(level),
     };
 };
 

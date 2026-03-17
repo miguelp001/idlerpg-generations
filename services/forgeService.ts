@@ -3,9 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { 
     RARITY_MULTIPLIER, 
     FORGE_BASE_STAT_VALUE, 
-    FORGE_STAT_PER_LEVEL, 
-    FORGE_EXTREME_POWER_THRESHOLD, 
-    FORGE_EXTREME_COST_EXPONENT 
+    FORGE_STAT_PER_LEVEL 
 } from '../constants';
 
 export const FORGE_MATERIAL_COSTS: Record<EquipmentRarity, { materialId: string; baseAmount: number }> = {
@@ -23,33 +21,37 @@ export function calculateForgeCost(rarity: EquipmentRarity, stats: Partial<GameS
     const statValues = Object.values(stats);
     const statCount = statValues.length;
     
-    // Standard stat limit for this level
-    const standardLimit = FORGE_BASE_STAT_VALUE + (characterLevel * FORGE_STAT_PER_LEVEL);
+    // Standard stat limit for this level (base power)
+    const basePower = FORGE_BASE_STAT_VALUE + (characterLevel * FORGE_STAT_PER_LEVEL);
     
     // Calculate "Magnitude" - how much power we are packing into the item
+    // Power is now logarithmic, so we calculate magnitude based on the multiplier
     let totalMagnitude = 0;
     statValues.forEach(val => {
-        const ratio = val / standardLimit;
-        if (ratio > FORGE_EXTREME_POWER_THRESHOLD) {
-            // Extreme power scales exponentially
-            totalMagnitude += Math.pow(ratio, FORGE_EXTREME_COST_EXPONENT);
+        const multiplier = val / basePower;
+        if (multiplier > 1.1) { 
+            // Beyond 1.1x, cost scales with power. For 1000x, we need extreme scaling but capped.
+            // Using a power of 1.5 ensures 1000x power costs roughly 1000^1.5 = 31,622x base cost.
+            totalMagnitude += Math.pow(multiplier, 1.5);
         } else {
-            totalMagnitude += ratio;
+            totalMagnitude += multiplier;
         }
     });
 
-    // Materials scale with magnitude and rarity
+    // Material cost damping: materials shouldn't scale as aggressively as gold
+    // We use a log-based damping for high material amounts
     const baseMaterial = FORGE_MATERIAL_COSTS[rarity];
+    const rawMaterialAmount = baseMaterial.baseAmount * (1 + totalMagnitude * 0.5) * (1 + (statCount * 0.2));
     const materialAmount = Math.max(
         baseMaterial.baseAmount,
-        Math.floor(baseMaterial.baseAmount * (1 + totalMagnitude) * (1 + (statCount * 0.1)))
+        Math.floor(rawMaterialAmount > 1000 ? 1000 + Math.log10(rawMaterialAmount - 999) * 100 : rawMaterialAmount)
     );
     
-    // Gold cost scales with rarity, magnitude, and count
+    // Gold cost calculation
     const goldCost = Math.floor(
         FORGE_GOLD_BASE_COST * 
         rarityMultiplier * 
-        (1 + totalMagnitude) * 
+        (1 + totalMagnitude * 2) * 
         (1 + (statCount * 0.5))
     );
     
