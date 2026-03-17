@@ -79,7 +79,7 @@ const ManageGuildView: React.FC = () => {
                         {!xpForNextLevel && <span className="text-gold-400 ml-2">(MAX LEVEL)</span>}
                     </p>
                     {xpForNextLevel ? (
-                        <ProgressBar label="Guild XP" value={guild.xp} max={xpForNextLevel} colorClass="bg-purple-500" />
+                        <ProgressBar label="Guild XP" value={guild.experience} max={xpForNextLevel} colorClass="bg-purple-500" />
                     ) : (
                         <div className="text-center text-gold-400 font-semibold py-2">
                             Maximum Guild Level Reached!

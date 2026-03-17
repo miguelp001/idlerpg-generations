@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, useEffect, useContext, ReactNode, useCallback, useMemo } from 'react';
-import { GameState, Action, Character, DungeonState, RaidState } from '../types';
+import { GameState, Action, Character, DungeonState, RaidState, Equipment } from '../types';
 import { SAVE_KEY, MAX_GOLD } from '../constants';
 
 // Reducers
@@ -110,28 +110,39 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             }
 
             // Ensure arrays and objects exist
-            loadedState.characters = (loadedState.characters || []).map((char: Character) => ({
-                ...char,
-                inventory: char.inventory || [],
-                equipment: char.equipment || [],
-                accessorySlots: char.accessorySlots || [null, null],
-                party: (char.party || []).map((p: any) => ({
-                    ...p,
-                    accessorySlots: p.accessorySlots || [null, null],
-                    equipment: p.equipment || []
-                })),
-                quests: char.quests || [],
-                completedQuests: char.completedQuests || [],
-                potentialHeirs: char.potentialHeirs || [],
-                activePassives: char.activePassives || [],
-                unlockedAchievements: char.unlockedAchievements || [],
-                materials: char.materials || {},
-                parentIds: char.parentIds || [],
-                children: char.children || [],
-                completedRaids: char.completedRaids || {},
-                endlessDungeonProgress: char.endlessDungeonProgress || 1,
-                gold: Math.min(char.gold || 0, MAX_GOLD),
-            }));
+            loadedState.characters = (loadedState.characters || []).map((char: Character) => {
+                const migrateItem = (item: any) => {
+                    if (!item) return null;
+                    return {
+                        ...item,
+                        upgradeLevel: item.upgradeLevel ?? 0,
+                        rarity: item.rarity ?? 'common',
+                    };
+                };
+
+                return {
+                    ...char,
+                    inventory: (char.inventory || []).map(migrateItem),
+                    equipment: (char.equipment || []).map(migrateItem),
+                    accessorySlots: (char.accessorySlots || [null, null]).map(migrateItem) as [Equipment | null, Equipment | null],
+                    party: (char.party || []).map((p: any) => ({
+                        ...p,
+                        accessorySlots: (p.accessorySlots || [null, null]).map(migrateItem),
+                        equipment: (p.equipment || []).map(migrateItem)
+                    })),
+                    quests: char.quests || [],
+                    completedQuests: char.completedQuests || [],
+                    potentialHeirs: char.potentialHeirs || [],
+                    activePassives: char.activePassives || [],
+                    unlockedAchievements: char.unlockedAchievements || [],
+                    materials: char.materials || {},
+                    parentIds: char.parentIds || [],
+                    children: char.children || [],
+                    completedRaids: char.completedRaids || {},
+                    endlessDungeonProgress: char.endlessDungeonProgress || 1,
+                    gold: Math.min(char.gold || 0, MAX_GOLD),
+                };
+            });
             
             if (loadedState.guild) {
                 loadedState.guild = {

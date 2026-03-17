@@ -173,8 +173,8 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
                 updatedCharacter.unlockedAchievements = Array.from(new Set([...updatedCharacter.unlockedAchievements, ...newlyUnlocked]));
             }
             
-            const { goldGain } = getGlobalModifiers(state.worldState.activeEvents);
-            const goldDropped = Math.floor((monster.goldDrop || 0) * goldGain);
+            const { goldGain = 1 } = getGlobalModifiers(state.worldState.activeEvents) || {};
+            const goldDropped = Math.floor((monster.goldDrop || 0) * (goldGain || 1));
             updatedCharacter.gold = Math.min(updatedCharacter.gold + goldDropped, MAX_GOLD);
 
             const achievementUnlocked = checkAllAchievements(updatedCharacter, state);
@@ -301,7 +301,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
 
         const updatedCharacter: Character = {
             ...activeCharacter,
-            gold: Math.min(activeCharacter.gold + gold, MAX_GOLD),
+            gold: Math.min(activeCharacter.gold + (gold || 0), MAX_GOLD),
             inventory: [...activeCharacter.inventory, ...newItems]
         };
 

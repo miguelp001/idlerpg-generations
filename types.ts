@@ -95,7 +95,7 @@ export interface Guild {
     id: string;
     name: string;
     level: number;
-    xp: number;
+    experience: number;
     members: Adventurer[]; // Roster of adventurers in the guild
 }
 

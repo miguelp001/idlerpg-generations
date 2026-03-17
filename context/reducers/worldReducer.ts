@@ -116,13 +116,22 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
         if (!playerQuest.objectives.every(obj => obj.currentAmount >= obj.requiredAmount)) return state;
         
         let updatedCharacter = { ...character };
-        updatedCharacter.experience += questDef.rewards.xp;
-        updatedCharacter.gold = Math.min(updatedCharacter.gold + questDef.rewards.gold, MAX_GOLD);
+        updatedCharacter.experience += (questDef.rewards.xp || 0);
+        updatedCharacter.gold = Math.min(updatedCharacter.gold + (questDef.rewards.gold || 0), MAX_GOLD);
         if (questDef.rewards.items) {
             const newItems = questDef.rewards.items.map(itemId => {
                 const itemTemplate = ITEMS[itemId];
-                return { ...itemTemplate, id: uuidv4(), baseId: itemId, baseName: itemTemplate.name, upgradeLevel: 0, price: 0 } as Equipment;
-            });
+                if (!itemTemplate) return null;
+                return { 
+                    ...itemTemplate, 
+                    id: uuidv4(), 
+                    baseId: itemId, 
+                    baseName: itemTemplate.name, 
+                    upgradeLevel: 0, 
+                    rarity: itemTemplate.rarity || 'common',
+                    price: 0 
+                } as Equipment;
+            }).filter((i): i is Equipment => i !== null);
             updatedCharacter.inventory = [...updatedCharacter.inventory, ...newItems];
         }
 

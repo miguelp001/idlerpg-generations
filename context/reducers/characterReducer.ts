@@ -1,4 +1,4 @@
-import { GameState, Action, Character, Equipment, RelationshipStatus, PotentialHeir, GameStats } from '../../types';
+import { GameState, Action, Character, Equipment, RelationshipStatus, PotentialHeir, GameStats, Guild } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { 
     CLASSES, 
@@ -9,7 +9,11 @@ import {
     PERSONALITY_TRAITS,
     RELATIONSHIP_THRESHOLDS,
     RARITY_ORDER,
-    MAX_GOLD 
+    MAX_GOLD,
+    GUILD_CREATE_COST,
+    GUILD_DONATION_GOLD,
+    GUILD_DONATION_XP,
+    GUILD_XP_TABLE
 } from '../../constants';
 import { ITEMS } from '../../data/items';
 import { generateAdventurer } from '../../services/socialService';
@@ -574,6 +578,123 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         return { 
             ...state, 
             characters: state.characters.map(c => c.id === characterId ? { ...c, potentialHeirs: [...c.potentialHeirs, newHeir] } : c) 
+        };
+    }
+
+    case 'RETIRE_CHARACTER': {
+        const { characterId, heirloomId } = action.payload;
+        const character = state.characters.find(c => c.id === characterId);
+        if (!character) return state;
+
+        const heirloom = [...character.equipment, ...character.inventory].find(i => i.id === heirloomId);
+        if (!heirloom) return state;
+
+        const legacyBonus: Partial<GameStats> = {};
+        for (const stat in character.stats) {
+            const key = stat as keyof GameStats;
+            const val = character.stats[key];
+            if (typeof val === 'number') {
+                legacyBonus[key] = Math.floor(val * 0.05);
+            }
+        }
+
+        return {
+            ...state,
+            pendingGeneration: {
+                parentId: characterId,
+                legacyBonus,
+                heirloom: { ...heirloom, upgradeLevel: Math.max(0, heirloom.upgradeLevel - 1) }, // Heirlooms lose one level
+                gold: Math.floor(character.gold * 0.1), // Inherit 10% gold
+                availableHeirs: character.potentialHeirs
+            },
+            characters: state.characters.map(c => c.id === characterId ? { ...c, status: 'retired' } : c)
+        } as GameState;
+    }
+
+    case 'SELECT_HEIR': {
+        const { characterId, heirId } = action.payload;
+        const character = state.characters.find(c => c.id === characterId);
+        if (!character) return state;
+
+        const heir = character.potentialHeirs.find(h => h.childId === heirId);
+        if (!heir) return state;
+
+        // This action usually triggers the UI to show the character creator with pre-filled heir info
+        // For the reducer, we might just need to store the selection or update pendingGeneration
+        return {
+            ...state,
+            pendingGeneration: {
+                ...state.pendingGeneration!,
+                availableHeirs: [heir] // Filter to only the selected heir for the creator
+            }
+        };
+    }
+
+    case 'ADD_ACHIEVEMENTS': {
+        const { characterId, achievementIds } = action.payload;
+        return {
+            ...state,
+            characters: state.characters.map(c => 
+                c.id === characterId 
+                    ? { ...c, unlockedAchievements: Array.from(new Set([...c.unlockedAchievements, ...achievementIds])) } 
+                    : c
+            )
+        };
+    }
+
+    case 'CREATE_GUILD': {
+        const { characterId, guildName } = action.payload;
+        const character = state.characters.find(c => c.id === characterId);
+        if (!character || character.gold < GUILD_CREATE_COST || state.guild) return state;
+
+        const newGuild: Guild = {
+            id: uuidv4(),
+            name: guildName,
+            level: 1,
+            experience: 0,
+            members: [],
+        };
+
+        return {
+            ...state,
+            guild: newGuild,
+            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold - GUILD_CREATE_COST } : c)
+        };
+    }
+
+    case 'DONATE_TO_GUILD': {
+        const { characterId, amount } = action.payload;
+        const character = state.characters.find(c => c.id === characterId);
+        if (!character || character.gold < amount || !state.guild) return state;
+
+        const xpGained = Math.floor(amount * (GUILD_DONATION_XP / GUILD_DONATION_GOLD));
+        let newXp = state.guild.experience + xpGained;
+        let newLevel = state.guild.level;
+        
+        // Simple level up logic for guilds
+        while (GUILD_XP_TABLE[newLevel] && newXp >= GUILD_XP_TABLE[newLevel]) {
+            newXp -= GUILD_XP_TABLE[newLevel];
+            newLevel++;
+        }
+
+        return {
+            ...state,
+            guild: { ...state.guild, level: newLevel, experience: newXp },
+            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold - amount } : c)
+        };
+    }
+
+    case 'RECRUIT_TO_GUILD': {
+        const { adventurerId } = action.payload;
+        if (!state.guild || state.guild.members.some(m => m.id === adventurerId)) return state;
+
+        const adventurer = state.tavernAdventurers.find(a => a.id === adventurerId);
+        if (!adventurer) return state;
+
+        return {
+            ...state,
+            guild: { ...state.guild, members: [...state.guild.members, adventurer] },
+            tavernAdventurers: state.tavernAdventurers.filter(a => a.id !== adventurerId)
         };
     }
 
