@@ -213,6 +213,14 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             updatedCharacter.stats = stats;
             updatedCharacter.maxStats = maxStats;
 
+            // Handle endless dungeon progress
+            if (state.dungeonState.proceduralDungeonData) {
+                const completedFloor = state.dungeonState.proceduralDungeonData.floor;
+                if (completedFloor >= (updatedCharacter.endlessDungeonProgress || 1)) {
+                    updatedCharacter.endlessDungeonProgress = completedFloor + 1;
+                }
+            }
+
             return {
                 ...state,
                 characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
@@ -348,7 +356,6 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
 
     case 'START_RAID': {
         const raid = RAIDS.find(r => r.id === action.payload.raidId)!;
-        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
         const boss = ALL_MONSTERS[raid.bossId];
 
         return {
@@ -366,7 +373,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
         const boss = ALL_MONSTERS[state.raidState.bossId!];
         if (!activeCharacter || !boss) return state;
 
-        const turnResult = processCombatTurn(activeCharacter, activeCharacter.party, boss, { ...state.raidState, turnCount: state.raidState.turnCount + 1 } as any);
+        processCombatTurn(activeCharacter, activeCharacter.party, boss, { ...state.raidState, turnCount: state.raidState.turnCount + 1 } as any);
         // Simplified same as dungeon combat for brevity...
         return state; // Placeholder for full implementation in final step
     }

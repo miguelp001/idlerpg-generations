@@ -152,26 +152,22 @@ const DungeonView: React.FC = () => {
     const combatIntervalRef = useRef<number | null>(null);
     const [isFleeing, setIsFleeing] = useState(false);
 
-    // Try to find dungeon in regular dungeons first, then generate procedural if not found
-    let dungeon = dungeonState.dungeonId ? DUNGEONS.find(d => d.id === dungeonState.dungeonId) : null;
-    console.log('DungeonView - dungeonId:', dungeonState.dungeonId, 'found in DUNGEONS:', !!dungeon);
+    // Priority: 1. State data (for procedural), 2. DUNGEONS data (for static)
+    let dungeon = dungeonState.proceduralDungeonData || (dungeonState.dungeonId ? DUNGEONS.find(d => d.id === dungeonState.dungeonId) : null);
     
-    // If not found in regular dungeons, it might be a procedural dungeon
+    console.log('DungeonView - dungeonId:', dungeonState.dungeonId, 'Found from state/data:', !!dungeon);
+    
+    // Fallback for safety (should rarely be hit if state is correctly initialized)
     if (!dungeon && dungeonState.dungeonId && activeCharacter) {
-        console.log('Attempting to generate procedural dungeon for ID:', dungeonState.dungeonId);
+        console.log('Attempting to generate procedural dungeon for ID as fallback:', dungeonState.dungeonId);
         try {
-            // Extract floor number from dungeon ID (format: procedural_1_forest_1752528762253)
             const floorMatch = dungeonState.dungeonId.match(/procedural_(\d+)_/);
             if (floorMatch) {
                 const floor = parseInt(floorMatch[1]);
-                console.log('Generating procedural dungeon for floor:', floor);
                 dungeon = generateProceduralDungeon(floor, activeCharacter.level);
-                console.log('Generated dungeon:', dungeon);
-            } else {
-                console.log('No floor match found for dungeon ID:', dungeonState.dungeonId);
             }
         } catch (error) {
-            console.error('Failed to generate procedural dungeon for view:', error);
+            console.error('Failed to generate procedural dungeon fallback:', error);
         }
     }
     
@@ -199,20 +195,41 @@ const DungeonView: React.FC = () => {
     useEffect(() => {
         if (dungeonState.status === 'victory' && isGrinding && dungeonState.dungeonId) {
             const timer = setTimeout(() => {
-                // Calculate character health percentage
+                // Handle Endless Dungeon Auto-Progression
+                if (dungeonState.proceduralDungeonData) {
+                    const currentFloor = dungeonState.proceduralDungeonData.floor;
+                    if (activeCharacter && state.settings.endlessAutoProgress) {
+                        dispatch({ 
+                            type: 'START_ENDLESS_DUNGEON', 
+                            payload: { 
+                                characterId: activeCharacter.id, 
+                                floor: currentFloor + 1 
+                            } 
+                        });
+                        return;
+                    } else if (activeCharacter && isGrinding) {
+                        // Repeat current floor if grinding but not auto-progressing
+                        dispatch({ 
+                            type: 'START_ENDLESS_DUNGEON', 
+                            payload: { 
+                                characterId: activeCharacter.id, 
+                                floor: currentFloor 
+                            } 
+                        });
+                        return;
+                    }
+                }
+
+                // Standard Dungeon Grinding
                 const healthPercent = (activeCharacter?.currentHealth ?? 0) / (activeCharacter?.maxStats.health ?? 1);
-                
-                // Check if there's a better dungeon available
                 const bestDungeon = getBestAvailableDungeon(activeCharacter?.level ?? 1, dungeonState.dungeonId ?? undefined, healthPercent);
                 
                 if (bestDungeon && bestDungeon.id !== dungeonState.dungeonId) {
-                    // Switch to the better dungeon
                     dispatch({ type: 'START_DUNGEON', payload: { dungeonId: bestDungeon.id } });
                 } else {
-                    // Continue with the same dungeon if no better option
                     dispatch({ type: 'START_DUNGEON', payload: { dungeonId: dungeonState.dungeonId! } });
                 }
-            }, 2000); // 2 second delay to show results
+            }, 2000);
 
             return () => clearTimeout(timer);
         }
