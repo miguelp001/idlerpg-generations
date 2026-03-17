@@ -7,7 +7,12 @@ import { generateProceduralDungeon } from '../../services/proceduralDungeonServi
 import { generateScaledMonster } from '../../services/monsterScalingService';
 import { distributeEquipment } from '../../services/lootDistributionService';
 import { getGlobalModifiers, getFactionModifiers } from '../../services/worldEventService';
-import { calculateXpForLevel, MAX_GOLD } from '../../constants';
+import { 
+    calculateXpForLevel, 
+    MAX_GOLD, 
+    GUILD_VAULT_BONUS, 
+    GUILD_LIBRARY_BONUS 
+} from '../../constants';
 import { recalculateStats } from '../../services/statService';
 import { checkKillAchievements, checkAllAchievements } from '../../services/achievementService';
 import { RAIDS } from '../../data/raids';
@@ -203,7 +208,8 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             }
             
             const { goldGain = 1 } = getGlobalModifiers(state.worldState.activeEvents) || {};
-            const goldDropped = Math.floor((monster.goldDrop || 0) * (goldGain || 1)) || 0;
+            const vaultBonus = 1 + (state.guild?.upgrades?.vault || 0) * GUILD_VAULT_BONUS;
+            const goldDropped = Math.floor((monster.goldDrop || 0) * (goldGain || 1) * vaultBonus) || 0;
             updatedCharacter.gold = Math.min((updatedCharacter.gold || 0) + goldDropped, MAX_GOLD);
 
             // Update Quest Progress for ANY monster kill
@@ -254,7 +260,8 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             // Dungeon Clear (Boss Defeated)
             const globalMods = getGlobalModifiers(state.worldState.activeEvents);
             const factionMods = getFactionModifiers(state.worldState.factionStandings);
-            const totalXp = Math.floor(state.dungeonState.rooms.reduce((acc, r) => acc + (ALL_MONSTERS[r.monsterId!]?.xpReward || 0), 0) * globalMods.xpGain * factionMods.xpGain);
+            const libraryBonus = 1 + (state.guild?.upgrades?.library || 0) * GUILD_LIBRARY_BONUS;
+            const totalXp = Math.floor(state.dungeonState.rooms.reduce((acc, r) => acc + (ALL_MONSTERS[r.monsterId!]?.xpReward || 0), 0) * globalMods.xpGain * factionMods.xpGain * libraryBonus);
             
             // Get loot from the dungeon's loot table
             const dungeon = state.dungeonState.proceduralDungeonData || DUNGEONS.find(d => d.id === state.dungeonState.dungeonId);
@@ -292,7 +299,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
                 updatedCharacter.level++;
             }
             
-            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild);
             updatedCharacter.stats = stats;
             updatedCharacter.maxStats = maxStats;
 

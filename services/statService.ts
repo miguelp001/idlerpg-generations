@@ -1,5 +1,5 @@
-import { Character, GameStats, Equipment, Adventurer, CharacterClassType } from '../types';
-import { CLASSES, GUILD_LEVEL_BONUS } from '../constants';
+import { Character, GameStats, Equipment, Adventurer, CharacterClassType, Guild } from '../types';
+import { CLASSES, GUILD_LEVEL_BONUS, GUILD_BARRACKS_BONUS } from '../constants';
 import { SETS } from '../data/sets';
 import { getActivePassiveBonuses } from './abilityService';
 
@@ -53,7 +53,7 @@ const applyEquipmentStats = (stats: GameStats, equipment: Equipment[], accessory
     return newStats;
 };
 
-export const recalculateStats = (character: Character, guildLevel: number = 0): { stats: GameStats, maxStats: GameStats } => {
+export const recalculateStats = (character: Character, guild: Guild | null = null): { stats: GameStats, maxStats: GameStats } => {
     const baseStats = { ...CLASSES[character.class].baseStats };
     let newMaxStats: GameStats = { ...baseStats };
 
@@ -72,16 +72,19 @@ export const recalculateStats = (character: Character, guildLevel: number = 0): 
 
     newMaxStats = applyEquipmentStats(newMaxStats, character.equipment, character.accessorySlots, character.class);
 
-    // Apply Guild Level Bonus if character is in a guild
-    if (guildLevel > 0) {
-        const bonusMultiplier = 1 + (guildLevel * GUILD_LEVEL_BONUS);
+    // Apply Guild Level Bonus and Upgrades
+    if (guild) {
+        const guildLevelBonus = guild.level * GUILD_LEVEL_BONUS;
+        const barracksBonus = (guild.upgrades?.barracks || 0) * GUILD_BARRACKS_BONUS;
+        const totalMultiplier = 1 + guildLevelBonus + barracksBonus;
+        
         for (const stat in newMaxStats) {
-            (newMaxStats as any)[stat] = Math.round((newMaxStats as any)[stat] * bonusMultiplier);
+            (newMaxStats as any)[stat] = Math.round((newMaxStats as any)[stat] * totalMultiplier);
         }
     }
     
-    const currentHealthPercent = character.maxStats.health > 0 ? (character.currentHealth ?? character.stats.health) / character.maxStats.health : 1;
-    const currentManaPercent = character.maxStats.mana > 0 ? (character.currentMana ?? character.stats.mana) / character.maxStats.mana : 1;
+    const currentHealthPercent = (character.maxStats && character.maxStats.health > 0) ? (character.currentHealth ?? character.stats.health) / character.maxStats.health : 1;
+    const currentManaPercent = (character.maxStats && character.maxStats.mana > 0) ? (character.currentMana ?? character.stats.mana) / character.maxStats.mana : 1;
     
     const newCurrentHealth = Math.round(newMaxStats.health * currentHealthPercent);
     const newCurrentMana = Math.round(newMaxStats.mana * currentManaPercent);

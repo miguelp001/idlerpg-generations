@@ -1,4 +1,4 @@
-import { GameState, Action, Character, Equipment, RelationshipStatus, PotentialHeir, GameStats, Guild } from '../../types';
+import { GameState, Action, Character, Equipment, RelationshipStatus, PotentialHeir, GameStats } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { 
     CLASSES, 
@@ -10,11 +10,7 @@ import {
     RELATIONSHIP_THRESHOLDS,
     RARITY_ORDER,
     MAX_PARTY_SIZE,
-    MAX_GOLD,
-    GUILD_CREATE_COST,
-    GUILD_DONATION_GOLD,
-    GUILD_DONATION_XP,
-    GUILD_XP_TABLE
+    MAX_GOLD
 } from '../../constants';
 import { ITEMS } from '../../data/items';
 import { generateAdventurer } from '../../services/socialService';
@@ -38,6 +34,13 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         accessorySlots: [null, null],
         endlessDungeonProgress: 1,
         materials: {},
+        inventory: [],
+        stats: { health: 0, mana: 0, attack: 0, defense: 0, agility: 0, intelligence: 0 },
+        maxStats: { health: 0, mana: 0, attack: 0, defense: 0, agility: 0, intelligence: 0 },
+        completedRaids: {},
+        quests: [],
+        completedQuests: [],
+        children: [],
       };
 
       // Starting gear
@@ -69,12 +72,11 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         newCharacter.materials = { ...state.pendingGeneration.materials };
         newRelationships = state.relationships.filter(r => !r.participantIds.includes(parentId));
       } else {
-        newGuild = null;
         newRelationships = [];
         newSocialLog = [];
       }
       
-      const { stats, maxStats } = recalculateStats(newCharacter, state.guild?.level || 0);
+      const { stats, maxStats } = recalculateStats(newCharacter, state.guild);
       newCharacter.stats = stats;
       newCharacter.currentHealth = stats.health;
       newCharacter.currentMana = stats.mana;
@@ -184,7 +186,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
             }
 
             let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
-            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild);
             updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
 
             return {
@@ -265,7 +267,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
             newInventory.push(itemToUnequip);
             
             let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
-            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild);
             updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
 
             return {
@@ -312,7 +314,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         };
 
         if (character.equipment.some(i => i.id === itemId)) {
-            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild);
             updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
         }
         
@@ -648,62 +650,6 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         };
     }
 
-    case 'CREATE_GUILD': {
-        const { characterId, guildName } = action.payload;
-        const character = state.characters.find(c => c.id === characterId);
-        if (!character || character.gold < GUILD_CREATE_COST || state.guild) return state;
-
-        const newGuild: Guild = {
-            id: uuidv4(),
-            name: guildName,
-            level: 1,
-            experience: 0,
-            members: [],
-        };
-
-        return {
-            ...state,
-            guild: newGuild,
-            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold - GUILD_CREATE_COST } : c)
-        };
-    }
-
-    case 'DONATE_TO_GUILD': {
-        const { characterId, amount } = action.payload;
-        const character = state.characters.find(c => c.id === characterId);
-        if (!character || character.gold < amount || !state.guild) return state;
-
-        const xpGained = Math.floor(amount * (GUILD_DONATION_XP / GUILD_DONATION_GOLD));
-        let newXp = state.guild.experience + xpGained;
-        let newLevel = state.guild.level;
-        
-        // Simple level up logic for guilds
-        while (GUILD_XP_TABLE[newLevel] && newXp >= GUILD_XP_TABLE[newLevel]) {
-            newXp -= GUILD_XP_TABLE[newLevel];
-            newLevel++;
-        }
-
-        return {
-            ...state,
-            guild: { ...state.guild, level: newLevel, experience: newXp },
-            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold - amount } : c)
-        };
-    }
-
-    case 'RECRUIT_TO_GUILD': {
-        const { adventurerId } = action.payload;
-        if (!state.guild || state.guild.members.some(m => m.id === adventurerId)) return state;
-
-        const adventurer = state.tavernAdventurers.find(a => a.id === adventurerId);
-        if (!adventurer) return state;
-
-        return {
-            ...state,
-            guild: { ...state.guild, members: [...state.guild.members, adventurer] },
-            tavernAdventurers: state.tavernAdventurers.filter(a => a.id !== adventurerId)
-        };
-    }
-
     case 'TOGGLE_PASSIVE_ABILITY': {
         const { characterId, abilityId } = action.payload;
         let character = state.characters.find(c => c.id === characterId);
@@ -721,7 +667,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
             activePassives: newActivePassives
         };
 
-        const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+        const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild);
         updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
 
         return {

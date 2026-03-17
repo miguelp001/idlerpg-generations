@@ -5,6 +5,8 @@ import {
     GUILD_DONATION_XP, 
     GUILD_DONATION_GOLD, 
     GUILD_XP_TABLE, 
+    GUILD_UPGRADE_BASE_COST,
+    GUILD_UPGRADE_COST_MULTIPLIER,
     calculateXpForLevel,
     MAX_GOLD 
 } from '../../constants';
@@ -55,7 +57,14 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
         const character = state.characters.find(c => c.id === characterId)!;
         if (state.guild || (character.gold || 0) < GUILD_CREATE_COST) return state;
         
-        const newGuild: Guild = { id: uuidv4(), name: guildName, level: 1, experience: 0, members: [] };
+        const newGuild: Guild = { 
+            id: uuidv4(), 
+            name: guildName, 
+            level: 1, 
+            experience: 0, 
+            members: [], 
+            upgrades: { barracks: 0, vault: 0, library: 0 } 
+        };
         const updatedCharacter = { ...character, gold: Math.max(0, (character.gold || 0) - GUILD_CREATE_COST), guildId: newGuild.id };
 
         return {
@@ -214,6 +223,38 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
                 corpses: state.worldState.corpses.filter(c => c.id !== corpseId)
             },
             socialLog: [{ id: uuidv4(), timestamp: new Date().toISOString(), type: 'social_interaction' as const, content: `${char.name} blessed the remains of ${corpse.playerName}.` }, ...state.socialLog].slice(0, 50)
+        };
+    }
+    case 'UPGRADE_GUILD': {
+        const { characterId, upgradeType } = action.payload;
+        const char = state.characters.find(c => c.id === characterId);
+        if (!char || !state.guild) return state;
+
+        const currentLevel = state.guild.upgrades[upgradeType] || 0;
+        const cost = Math.floor(GUILD_UPGRADE_BASE_COST * Math.pow(GUILD_UPGRADE_COST_MULTIPLIER, currentLevel));
+
+        if (char.gold < cost) return state;
+
+        const updatedGuild = {
+            ...state.guild,
+            upgrades: {
+                ...state.guild.upgrades,
+                [upgradeType]: currentLevel + 1
+            }
+        };
+
+        const updatedChar = { ...char, gold: char.gold - cost };
+
+        return {
+            ...state,
+            guild: updatedGuild,
+            characters: state.characters.map(c => c.id === char.id ? updatedChar : c),
+            socialLog: [{ 
+                id: uuidv4(), 
+                timestamp: new Date().toISOString(), 
+                type: 'social_interaction' as const, 
+                content: `Guild upgraded: ${upgradeType} Level ${currentLevel + 1}!` 
+            }, ...state.socialLog].slice(0, 50),
         };
     }
 

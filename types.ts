@@ -98,6 +98,11 @@ export interface Guild {
     level: number;
     experience: number;
     members: Adventurer[]; // Roster of adventurers in the guild
+    upgrades: {
+        barracks: number; // Stat bonus
+        vault: number;    // Gold bonus
+        library: number;  // XP bonus
+    };
 }
 
 export interface QuestObjective {
@@ -463,4 +468,5 @@ export type Action =
   | { type: 'DROP_CORPSE'; payload: { characterId: string; dungeonId: string; floor: number; roomIndex: number } }
   | { type: 'LOOT_CORPSE'; payload: { characterId: string; corpseId: string } }
   | { type: 'BLESS_CORPSE'; payload: { characterId: string; corpseId: string } }
+  | { type: 'UPGRADE_GUILD'; payload: { characterId: string; upgradeType: 'barracks' | 'vault' | 'library' } }
   | { type: 'PRUNE_WORLD_STATE' };

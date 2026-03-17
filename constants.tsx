@@ -51,6 +51,11 @@ export const GUILD_XP_TABLE: { [level: number]: number } = {
     30: 12000000,
 };
 export const GUILD_LEVEL_BONUS = 0.01; // 1% stat bonus per guild level
+export const GUILD_UPGRADE_BASE_COST = 10000;
+export const GUILD_UPGRADE_COST_MULTIPLIER = 1.8;
+export const GUILD_BARRACKS_BONUS = 0.02; // 2% stat bonus per barracks level
+export const GUILD_VAULT_BONUS = 0.05;    // 5% gold bonus per vault level
+export const GUILD_LIBRARY_BONUS = 0.05;  // 5% XP bonus per library level
 export const DANGEROUS_DUNGEON_LEVEL_OFFSET = 5;
 
 export const CLASSES: { [key in CharacterClassType]: { name: string; description: string; baseStats: GameStats; icon: React.ReactNode; color: string } } = {
