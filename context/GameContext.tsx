@@ -125,7 +125,16 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 parentIds: char.parentIds || [],
                 children: char.children || [],
                 completedRaids: char.completedRaids || {},
+                endlessDungeonProgress: char.endlessDungeonProgress || 1,
             }));
+            
+            if (loadedState.guild) {
+                loadedState.guild = {
+                    ...loadedState.guild,
+                    members: loadedState.guild.members || [],
+                };
+            }
+
             loadedState.tavernAdventurers = loadedState.tavernAdventurers || [];
             loadedState.shopItems = loadedState.shopItems || [];
             loadedState.relationships = loadedState.relationships || [];

@@ -131,14 +131,14 @@ const ManageGuildView: React.FC = () => {
                  <Card>
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xl font-bold text-primary">Guild Hall members</h3>
-                        <span className="text-sm text-on-background/60">{guild.members.length + 1} Members</span>
+                        <span className="text-sm text-on-background/60">{(guild.members?.length ?? 0) + 1} Members</span>
                     </div>
                     <ul className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                         <li className="flex items-center p-2 bg-surface-2/50 border border-secondary/20 rounded">
                             <span className="font-bold text-on-surface flex-grow">{activeCharacter.name} (Leader)</span>
                             <span className={`text-sm font-semibold ${CLASSES[activeCharacter.class].color}`}>Lvl {activeCharacter.level} {CLASSES[activeCharacter.class].name}</span>
                         </li>
-                        {guild.members.map(member => (
+                        {(guild.members ?? []).map(member => (
                             <li key={member.id} className="flex items-center p-2 bg-surface-2 rounded">
                                 <span className="font-bold text-on-surface flex-grow">{member.name}</span>
                                 <span className={`text-sm font-semibold ${CLASSES[member.class].color}`}>Lvl {member.level} {CLASSES[member.class].name}</span>
@@ -178,7 +178,7 @@ const ManageGuildView: React.FC = () => {
                     <div className="space-y-4">
                         {RAIDS.map(raid => {
                             const canEnter = guild.level >= raid.guildLevelRequirement;
-                            const completedTimestamp = activeCharacter.completedRaids[raid.id];
+                            const completedTimestamp = activeCharacter.completedRaids?.[raid.id];
                             const onCooldown = completedTimestamp && (new Date().getTime() - new Date(completedTimestamp).getTime()) < 7 * 24 * 60 * 60 * 1000;
                             const isLocked = !canEnter || onCooldown;
 
