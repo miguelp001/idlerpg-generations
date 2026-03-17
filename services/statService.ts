@@ -7,17 +7,19 @@ const applyEquipmentStats = (stats: GameStats, equipment: Equipment[], accessory
     const newStats = { ...stats };
     
     for (const item of equipment) {
-        const affinity = item.classAffinity?.[characterClass] ?? 1.0;
+        const affinityBonus = item.classAffinity?.[characterClass] ?? 0;
+        const affinityMultiplier = 1 + (affinityBonus / 100);
         for (const [stat, value] of Object.entries(item.stats)) {
-            (newStats as any)[stat] = ((newStats as any)[stat] || 0) + Math.round(value * affinity);
+            (newStats as any)[stat] = ((newStats as any)[stat] || 0) + Math.round(value * affinityMultiplier);
         }
     }
 
     for (const item of accessorySlots) {
         if (item) {
-            const affinity = item.classAffinity?.[characterClass] ?? 1.0;
+            const affinityBonus = item.classAffinity?.[characterClass] ?? 0;
+            const affinityMultiplier = 1 + (affinityBonus / 100);
             for (const [stat, value] of Object.entries(item.stats)) {
-                (newStats as any)[stat] = ((newStats as any)[stat] || 0) + Math.round(value * affinity);
+                (newStats as any)[stat] = ((newStats as any)[stat] || 0) + Math.round(value * affinityMultiplier);
             }
         }
     }

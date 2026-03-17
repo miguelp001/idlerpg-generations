@@ -129,9 +129,10 @@ const ItemCard: React.FC<{
     actionLabel: string;
     characterClass: CharacterClassType;
 }> = React.memo(({ item, onAction, actionLabel, characterClass }) => {
-    const affinity = item.classAffinity?.[characterClass] ?? 1.0;
-    const hasLowAffinity = affinity < 0.7;
-    const affinityTitle = hasLowAffinity ? `Ineffective for your class (${Math.round((1 - affinity) * 100)}% penalty)` : undefined;
+    const affinityBonus = item.classAffinity?.[characterClass] ?? 0;
+    const affinityMultiplier = 1 + (affinityBonus / 100);
+    const hasLowAffinity = affinityMultiplier < 1.0; 
+    const affinityTitle = hasLowAffinity ? `Ineffective for your class` : undefined;
 
     return (
         <Card className="flex flex-col justify-between h-full bg-surface-2/50 border-white/5 hover:border-primary/20 border transition-all">
@@ -147,7 +148,7 @@ const ItemCard: React.FC<{
                     {Object.entries(item.stats).map(([stat, value]) => (
                         <p key={stat} className="text-green-400 flex justify-between">
                             <span className="capitalize text-on-background/60">{stat}</span>
-                            <span>+{Math.round(value * affinity)}</span>
+                            <span>+{Math.round(value * affinityMultiplier)}</span>
                         </p>
                     ))}
                 </div>

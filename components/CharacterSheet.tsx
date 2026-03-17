@@ -295,7 +295,7 @@ const CharacterSheet: React.FC = () => {
                   <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Guild</h2>
                   <p className="text-xl sm:text-2xl font-bold text-secondary">{guild.name}</p>
                   <p className="text-md sm:text-lg font-semibold mb-2 sm:mb-3">Level {guild.level}</p>
-                  <ProgressBar label="Guild XP" value={guild.xp} max={GUILD_XP_TABLE[guild.level] || guild.xp} colorClass="bg-purple-500" />
+                  <ProgressBar label="Guild XP" value={guild.experience} max={GUILD_XP_TABLE[guild.level] || guild.experience} colorClass="bg-purple-500" />
               </Card>
           )}
           {character.level >= RETIREMENT_LEVEL && (
@@ -365,8 +365,17 @@ const CharacterSheet: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {(character.party || []).map((member: Adventurer) => (
                         <div key={member.id} className="bg-surface-2 p-3 rounded-lg">
-                            <p className="font-bold text-on-surface text-base sm:text-lg">{member.name}</p>
-                            <p className={`text-sm ${CLASSES[member.class].color}`}>Lvl {member.level} {CLASSES[member.class].name}</p>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-bold text-on-surface text-base sm:text-lg">{member.name}</p>
+                                    <p className={`text-sm ${CLASSES[member.class].color}`}>Lvl {member.level} {CLASSES[member.class].name}</p>
+                                </div>
+                                <div className="text-right text-[10px] space-y-0.5 opacity-80">
+                                    <p>ATK: {member.stats.attack}</p>
+                                    <p>DEF: {member.stats.defense}</p>
+                                    <p>AGI: {member.stats.agility}</p>
+                                </div>
+                            </div>
                             <AdventurerEquipmentDisplay adventurer={member} characterId={character.id} />
                         </div>
                     ))}
