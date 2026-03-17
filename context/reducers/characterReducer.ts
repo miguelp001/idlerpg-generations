@@ -397,10 +397,22 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         if (item.isHeirloom) return state;
 
         const goldValue = SELL_PRICE(item);
+        const updatedGold = Math.min(character.gold + goldValue, MAX_GOLD);
+        
+        const updatedCharacter = { 
+            ...character, 
+            gold: updatedGold, 
+            inventory: character.inventory.filter(i => i.id !== itemId) 
+        };
+        
+        const newlyUnlocked = checkAllAchievements(updatedCharacter, state);
+        if (newlyUnlocked.length > 0) {
+            updatedCharacter.unlockedAchievements = Array.from(new Set([...updatedCharacter.unlockedAchievements, ...newlyUnlocked]));
+        }
 
         return {
             ...state,
-            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: Math.min(c.gold + goldValue, MAX_GOLD), inventory: c.inventory.filter(i => i.id !== itemId) } : c)
+            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
         };
     }
 
@@ -418,16 +430,24 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         if (itemsToSell.length === 0) return state;
 
         const totalGold = itemsToSell.reduce((sum, item) => sum + SELL_PRICE(item), 0);
+        const updatedGold = Math.min(character.gold + totalGold, MAX_GOLD);
         const soldItemIds = new Set(itemsToSell.map(i => i.id));
         const newInventory = character.inventory.filter(item => !soldItemIds.has(item.id));
 
+        const updatedCharacter = { 
+            ...character, 
+            gold: updatedGold, 
+            inventory: newInventory 
+        };
+
+        const newlyUnlocked = checkAllAchievements(updatedCharacter, state);
+        if (newlyUnlocked.length > 0) {
+            updatedCharacter.unlockedAchievements = Array.from(new Set([...updatedCharacter.unlockedAchievements, ...newlyUnlocked]));
+        }
+
         return {
             ...state,
-            characters: state.characters.map(c => c.id === characterId ? { 
-                ...c, 
-                gold: Math.min(c.gold + totalGold, MAX_GOLD), 
-                inventory: newInventory 
-            } : c)
+            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
         };
     }
 

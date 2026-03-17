@@ -12,6 +12,7 @@ import { QUESTS } from '../../data/quests';
 import { ITEMS } from '../../data/items';
 import { updateActiveEvents, rollForNewEvent } from '../../services/worldEventService';
 import { calculateForgeCost, generateForgeItem } from '../../services/forgeService';
+import { checkAllAchievements } from '../../services/achievementService';
 import { Equipment } from '../../types';
 
 export const worldReducer = (state: GameState, action: Action): GameState => {
@@ -133,6 +134,11 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
         updatedCharacter.quests = updatedCharacter.quests.filter(q => q.questId !== questId);
         updatedCharacter.completedQuests = [...updatedCharacter.completedQuests, questId];
         
+        const newlyUnlocked = checkAllAchievements(updatedCharacter, state);
+        if (newlyUnlocked.length > 0) {
+            updatedCharacter.unlockedAchievements = Array.from(new Set([...updatedCharacter.unlockedAchievements, ...newlyUnlocked]));
+        }
+
         return {
             ...state,
             characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c),

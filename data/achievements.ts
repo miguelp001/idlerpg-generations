@@ -1,4 +1,5 @@
 import { Achievement } from '../types';
+import { MAX_GOLD } from '../constants';
 
 export const ACHIEVEMENTS: { [id: string]: Achievement } = {
     // Leveling Achievements
@@ -31,6 +32,7 @@ export const ACHIEVEMENTS: { [id: string]: Achievement } = {
     // Economic & Item Achievements
     'moneybags': { id: 'moneybags', name: 'Moneybags', description: 'Accumulate 10,000 gold.', title: 'Moneybags', unlock: { type: 'gold', value: 10000 } },
     'one_percenter': { id: 'one_percenter', name: 'One Percenter', description: 'Accumulate 100,000 gold.', title: 'the Affluent', unlock: { type: 'gold', value: 100000 } },
+    'gold_cap': { id: 'gold_cap', name: 'Gilded Titan', description: `Accumulate the maximum possible gold (${(MAX_GOLD).toLocaleString()} G).`, title: 'the Gilded Titan', unlock: { type: 'gold', value: MAX_GOLD } },
     'epic_gear': { id: 'epic_gear', name: 'Well-Geared', description: 'Equip an Epic item.', title: 'Epic', unlock: { type: 'item_rarity', value: 'epic' } },
     'legendary_owner': { id: 'legendary_owner', name: 'Legendary', description: 'Equip a Legendary item.', title: 'Legendary', unlock: { type: 'item_rarity', value: 'legendary' } },
     'master_crafter': { id: 'master_crafter', name: 'Master Crafter', description: 'Upgrade an item to +5.', title: 'the Master Crafter', unlock: { type: 'upgrade_level', value: 5 } },

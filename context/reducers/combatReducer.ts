@@ -9,7 +9,7 @@ import { distributeEquipment } from '../../services/lootDistributionService';
 import { getGlobalModifiers, getFactionModifiers } from '../../services/worldEventService';
 import { calculateXpForLevel, MAX_GOLD } from '../../constants';
 import { recalculateStats } from '../../services/statService';
-import { checkKillAchievements } from '../../services/achievementService';
+import { checkKillAchievements, checkAllAchievements } from '../../services/achievementService';
 import { RAIDS } from '../../data/raids';
 import { instantiateItem } from '../../services/itemService';
 
@@ -175,7 +175,12 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             
             const { goldGain } = getGlobalModifiers(state.worldState.activeEvents);
             const goldDropped = Math.floor((monster.goldDrop || 0) * goldGain);
-            updatedCharacter.gold += goldDropped;
+            updatedCharacter.gold = Math.min(updatedCharacter.gold + goldDropped, MAX_GOLD);
+
+            const achievementUnlocked = checkAllAchievements(updatedCharacter, state);
+            if (achievementUnlocked.length > 0) {
+                updatedCharacter.unlockedAchievements = Array.from(new Set([...updatedCharacter.unlockedAchievements, ...achievementUnlocked]));
+            }
 
             // Update Quest Progress
             updatedCharacter.quests = (updatedCharacter.quests || []).map(q => ({
@@ -299,6 +304,11 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             gold: Math.min(activeCharacter.gold + gold, MAX_GOLD),
             inventory: [...activeCharacter.inventory, ...newItems]
         };
+
+        const newlyUnlocked = checkAllAchievements(updatedCharacter, state);
+        if (newlyUnlocked.length > 0) {
+            updatedCharacter.unlockedAchievements = Array.from(new Set([...updatedCharacter.unlockedAchievements, ...newlyUnlocked]));
+        }
 
         const nextRoomExists = state.dungeonState.currentRoomIndex < state.dungeonState.rooms.length - 1;
 
