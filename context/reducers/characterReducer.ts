@@ -64,6 +64,8 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         
         newCharacter.legacyBonus = legacyBonus;
         newCharacter.inventory.push(heirloom);
+        newCharacter.gold = state.pendingGeneration.gold || 0;
+        newCharacter.materials = { ...state.pendingGeneration.materials };
         newRelationships = state.relationships.filter(r => !r.participantIds.includes(parentId));
       } else {
         newGuild = null;
@@ -605,6 +607,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
                 legacyBonus,
                 heirloom: { ...heirloom, upgradeLevel: Math.max(0, heirloom.upgradeLevel - 1) }, // Heirlooms lose one level
                 gold: Math.floor(character.gold * 0.1), // Inherit 10% gold
+                materials: Object.entries(character.materials || {}).reduce((acc, [id, amt]) => ({ ...acc, [id]: Math.floor(amt * 0.2) }), {}),
                 availableHeirs: character.potentialHeirs
             },
             characters: state.characters.map(c => c.id === characterId ? { ...c, status: 'retired' } : c)

@@ -222,22 +222,25 @@ export function generateMaterialDrops(monster: any): { materialId: string; amoun
     const drops: { materialId: string; amount: number }[] = [];
     const roll = Math.random();
     
-    // Basic drop logic based on monster level/difficulty
-    // We'll use monster's XP reward as a proxy for power/rarity for now
-    if (monster.xpReward >= 5000) { // Legendary/Boss tier
-        if (roll < 0.3) drops.push({ materialId: 'dragon_scale', amount: 1 });
-        else if (roll < 0.7) drops.push({ materialId: 'void_shard', amount: 1 + Math.floor(Math.random() * 2) });
-    } else if (monster.xpReward >= 1000) { // Epic tier
-        if (roll < 0.4) drops.push({ materialId: 'void_shard', amount: 1 });
-        else drops.push({ materialId: 'magic_essence', amount: 2 + Math.floor(Math.random() * 3) });
-    } else if (monster.xpReward >= 300) { // Rare tier
-        if (roll < 0.5) drops.push({ materialId: 'magic_essence', amount: 1 });
-        else drops.push({ materialId: 'thick_hide', amount: 3 + Math.floor(Math.random() * 4) });
-    } else if (monster.xpReward >= 50) { // Uncommon tier
-        drops.push({ materialId: 'thick_hide', amount: 1 + Math.floor(Math.random() * 2) });
-        if (Math.random() < 0.3) drops.push({ materialId: 'iron_ore', amount: 3 });
-    } else { // Common tier
-        drops.push({ materialId: 'iron_ore', amount: 1 + Math.floor(Math.random() * 3) });
+    // Improved drop logic based on monster XP reward (proxy for power)
+    // Rarity thresholds should align with FORGE_MATERIAL_COSTS
+    if (monster.xpReward >= 5000) { // Legendary Tier / High Bosses
+        if (roll < 0.2) drops.push({ materialId: 'dragon_scale', amount: 1 });
+        else if (roll < 0.5) drops.push({ materialId: 'void_shard', amount: 1 + Math.floor(Math.random() * 2) });
+        else drops.push({ materialId: 'magic_essence', amount: 3 + Math.floor(Math.random() * 5) });
+    } else if (monster.xpReward >= 1500) { // Epic Tier / Bosses
+        if (roll < 0.25) drops.push({ materialId: 'void_shard', amount: 1 });
+        else if (roll < 0.6) drops.push({ materialId: 'magic_essence', amount: 2 + Math.floor(Math.random() * 3) });
+        else drops.push({ materialId: 'thick_hide', amount: 5 + Math.floor(Math.random() * 5) });
+    } else if (monster.xpReward >= 500) { // Rare Tier
+        if (roll < 0.3) drops.push({ materialId: 'magic_essence', amount: 1 });
+        else if (roll < 0.7) drops.push({ materialId: 'thick_hide', amount: 2 + Math.floor(Math.random() * 3) });
+        else drops.push({ materialId: 'iron_ore', amount: 5 + Math.floor(Math.random() * 5) });
+    } else if (monster.xpReward >= 100) { // Uncommon Tier
+        if (roll < 0.4) drops.push({ materialId: 'thick_hide', amount: 1 });
+        else drops.push({ materialId: 'iron_ore', amount: 2 + Math.floor(Math.random() * 3) });
+    } else { // Common Tier
+        if (roll < 0.5) drops.push({ materialId: 'iron_ore', amount: 1 + Math.floor(Math.random() * 2) });
     }
     
     return drops;

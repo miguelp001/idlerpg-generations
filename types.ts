@@ -383,6 +383,7 @@ export interface GameState {
     heirloom: Equipment;
     availableHeirs?: PotentialHeir[];
     gold: number;
+    materials: Record<string, number>;
   } | null;
   tavernAdventurers: Adventurer[];
   guild: Guild | null;

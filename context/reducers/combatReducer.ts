@@ -12,6 +12,8 @@ import { recalculateStats } from '../../services/statService';
 import { checkKillAchievements, checkAllAchievements } from '../../services/achievementService';
 import { RAIDS } from '../../data/raids';
 import { instantiateItem } from '../../services/itemService';
+import { generateMaterialDrops } from '../../services/lootGenerationService';
+import { MATERIALS } from '../../data/materials';
 
 const initialDungeonState = {
     status: 'idle',
@@ -180,6 +182,21 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             const achievementUnlocked = checkAllAchievements(updatedCharacter, state);
             if (achievementUnlocked.length > 0) {
                 updatedCharacter.unlockedAchievements = Array.from(new Set([...updatedCharacter.unlockedAchievements, ...achievementUnlocked]));
+            }
+
+            // Material Drops
+            const materialDrops = generateMaterialDrops(monster);
+            if (materialDrops.length > 0) {
+                updatedCharacter.materials = { ...updatedCharacter.materials };
+                materialDrops.forEach(drop => {
+                    updatedCharacter.materials[drop.materialId] = (updatedCharacter.materials[drop.materialId] || 0) + drop.amount;
+                    combatLogs.push({
+                        id: uuidv4(),
+                        type: 'gold', // Using gold type for loot highlight in log for now or 'special'
+                        message: `Looted ${drop.amount}x ${MATERIALS[drop.materialId]?.name || drop.materialId}`,
+                        actor: 'system'
+                    });
+                });
             }
 
             // Update Quest Progress
