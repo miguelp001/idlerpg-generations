@@ -1,6 +1,6 @@
 import React, { createContext, useReducer, useEffect, useContext, ReactNode, useCallback, useMemo } from 'react';
 import { GameState, Action, Character, DungeonState, RaidState } from '../types';
-import { SAVE_KEY } from '../constants';
+import { SAVE_KEY, MAX_GOLD } from '../constants';
 
 // Reducers
 import { characterReducer } from './reducers/characterReducer';
@@ -130,6 +130,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 children: char.children || [],
                 completedRaids: char.completedRaids || {},
                 endlessDungeonProgress: char.endlessDungeonProgress || 1,
+                gold: Math.min(char.gold || 0, MAX_GOLD),
             }));
             
             if (loadedState.guild) {

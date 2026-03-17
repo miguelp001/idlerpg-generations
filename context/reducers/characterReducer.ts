@@ -8,7 +8,8 @@ import {
     SELL_PRICE,
     PERSONALITY_TRAITS,
     RELATIONSHIP_THRESHOLDS,
-    RARITY_ORDER 
+    RARITY_ORDER,
+    MAX_GOLD 
 } from '../../constants';
 import { ITEMS } from '../../data/items';
 import { generateAdventurer } from '../../services/socialService';
@@ -399,7 +400,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
 
         return {
             ...state,
-            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold + goldValue, inventory: c.inventory.filter(i => i.id !== itemId) } : c)
+            characters: state.characters.map(c => c.id === characterId ? { ...c, gold: Math.min(c.gold + goldValue, MAX_GOLD), inventory: c.inventory.filter(i => i.id !== itemId) } : c)
         };
     }
 
@@ -424,7 +425,7 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
             ...state,
             characters: state.characters.map(c => c.id === characterId ? { 
                 ...c, 
-                gold: c.gold + totalGold, 
+                gold: Math.min(c.gold + totalGold, MAX_GOLD), 
                 inventory: newInventory 
             } : c)
         };

@@ -7,7 +7,7 @@ import { generateProceduralDungeon } from '../../services/proceduralDungeonServi
 import { generateScaledMonster } from '../../services/monsterScalingService';
 import { distributeEquipment } from '../../services/lootDistributionService';
 import { getGlobalModifiers, getFactionModifiers } from '../../services/worldEventService';
-import { calculateXpForLevel } from '../../constants';
+import { calculateXpForLevel, MAX_GOLD } from '../../constants';
 import { recalculateStats } from '../../services/statService';
 import { checkKillAchievements } from '../../services/achievementService';
 import { RAIDS } from '../../data/raids';
@@ -296,7 +296,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
 
         const updatedCharacter: Character = {
             ...activeCharacter,
-            gold: activeCharacter.gold + gold,
+            gold: Math.min(activeCharacter.gold + gold, MAX_GOLD),
             inventory: [...activeCharacter.inventory, ...newItems]
         };
 

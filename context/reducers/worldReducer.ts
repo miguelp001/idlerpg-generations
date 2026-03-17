@@ -5,7 +5,8 @@ import {
     GUILD_DONATION_XP, 
     GUILD_DONATION_GOLD, 
     GUILD_XP_TABLE, 
-    calculateXpForLevel 
+    calculateXpForLevel,
+    MAX_GOLD 
 } from '../../constants';
 import { QUESTS } from '../../data/quests';
 import { ITEMS } from '../../data/items';
@@ -115,7 +116,7 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
         
         let updatedCharacter = { ...character };
         updatedCharacter.experience += questDef.rewards.xp;
-        updatedCharacter.gold += questDef.rewards.gold;
+        updatedCharacter.gold = Math.min(updatedCharacter.gold + questDef.rewards.gold, MAX_GOLD);
         if (questDef.rewards.items) {
             const newItems = questDef.rewards.items.map(itemId => {
                 const itemTemplate = ITEMS[itemId];
