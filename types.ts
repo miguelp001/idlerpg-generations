@@ -85,6 +85,7 @@ export interface Adventurer {
     personality: PersonalityTrait;
     partnerId?: string;
     equipment: Equipment[];
+    accessorySlots: [Equipment | null, Equipment | null]; // Two accessory slots
     // Transient combat state
     currentHealth?: number;
     currentMana?: number;
@@ -408,8 +409,8 @@ export type Action =
   | { type: 'START_ENDLESS_DUNGEON'; payload: { characterId: string; floor: number } }
   | { type: 'DO_COMBAT_TURN' }
   | { type: 'LEAVE_DUNGEON' }
-  | { type: 'EQUIP_ITEM'; payload: { characterId: string; itemId: string; } }
-  | { type: 'UNEQUIP_ITEM'; payload: { characterId: string; itemId: string; } }
+  | { type: 'EQUIP_ITEM'; payload: { characterId: string; itemId: string; adventurerId?: string; } }
+  | { type: 'UNEQUIP_ITEM'; payload: { characterId: string; itemId: string; adventurerId?: string; } }
   | { type: 'UPGRADE_ITEM'; payload: { characterId: string; itemId:string; } }
   | { type: 'SELL_ITEM'; payload: { characterId: string; itemId: string; } }
   | { type: 'RETIRE_CHARACTER'; payload: { characterId: string; heirloomId: string; } }

@@ -100,6 +100,55 @@ const GiftModal: React.FC<{
     );
 };
 
+const EquipTargetModal: React.FC<{
+    item: Equipment;
+    onClose: () => void;
+    onEquip: (targetId: string | null) => void;
+}> = ({ item, onClose, onEquip }) => {
+    const { activeCharacter } = useGame();
+
+    return (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="equip-modal-title">
+            <Card className="w-full max-w-md animate-slide-up">
+                <h2 id="equip-modal-title" className="text-2xl font-bold mb-4 text-primary">Equip Item</h2>
+                <p className="mb-4">Who should equip <span className={`${RARITY_COLORS[item.rarity]}`}>{item.name}</span>?</p>
+                
+                <div className="space-y-2">
+                    <Button 
+                        variant="shadow" 
+                        className="w-full text-left justify-start" 
+                        onClick={() => onEquip(null)}
+                    >
+                        {activeCharacter?.name} (You)
+                    </Button>
+                    
+                    {activeCharacter && activeCharacter.party.length > 0 && (
+                        <div className="pt-2 border-t border-surface-2 mt-2">
+                            <p className="text-xs text-on-background/50 mb-2 uppercase tracking-wider font-semibold">Party Members</p>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {activeCharacter.party.map(adventurer => (
+                                    <Button 
+                                        key={adventurer.id} 
+                                        variant="void" 
+                                        className="w-full text-left justify-start" 
+                                        onClick={() => onEquip(adventurer.id)}
+                                    >
+                                        {adventurer.name}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                
+                <div className="mt-6 flex justify-end">
+                    <Button variant="bone" onClick={onClose}>Cancel</Button>
+                </div>
+            </Card>
+        </div>
+    );
+};
+
 interface ItemCardProps {
     item: Equipment;
     onAction: () => void;
@@ -250,13 +299,32 @@ const Inventory: React.FC = () => {
     const { dispatch, activeCharacter } = useGame();
     const [itemToSell, setItemToSell] = useState<Equipment | null>(null);
     const [itemToGive, setItemToGive] = useState<Equipment | null>(null);
+    const [itemToEquip, setItemToEquip] = useState<Equipment | null>(null);
     const [selectedBulkSellRarity, setSelectedBulkSellRarity] = useState<EquipmentRarity>('rare');
     const [isSellAllModalOpen, setSellAllModalOpen] = useState(false);
     
     if (!activeCharacter) return <div>Loading inventory...</div>
 
-    const handleEquip = (itemId: string) => {
-        dispatch({ type: 'EQUIP_ITEM', payload: { characterId: activeCharacter.id, itemId } });
+    const handleEquipClick = (item: Equipment) => {
+        if (activeCharacter.party.length > 0) {
+            setItemToEquip(item);
+        } else {
+            dispatch({ type: 'EQUIP_ITEM', payload: { characterId: activeCharacter.id, itemId: item.id } });
+        }
+    };
+
+    const confirmEquip = (targetId: string | null) => {
+        if (itemToEquip) {
+            dispatch({ 
+                type: 'EQUIP_ITEM', 
+                payload: { 
+                    characterId: activeCharacter.id, 
+                    itemId: itemToEquip.id, 
+                    adventurerId: targetId || undefined 
+                } 
+            });
+            setItemToEquip(null);
+        }
     };
 
     const handleUnequip = (itemId: string) => {
@@ -351,6 +419,13 @@ const Inventory: React.FC = () => {
                     onCancel={cancelSell}
                 />
             )}
+            {itemToEquip && (
+                <EquipTargetModal 
+                    item={itemToEquip} 
+                    onClose={() => setItemToEquip(null)} 
+                    onEquip={confirmEquip} 
+                />
+            )}
             {itemToGive && (
                 <GiftModal item={itemToGive} onClose={() => setItemToGive(null)} />
             )}
@@ -393,7 +468,7 @@ const Inventory: React.FC = () => {
                                                     <ItemCard
                                                         key={item.id}
                                                         item={item}
-                                                        onAction={() => handleEquip(item.id)}
+                                                        onAction={() => handleEquipClick(item)}
                                                         actionLabel="Equip"
                                                         onUpgrade={() => handleUpgrade(item.id)}
                                                         canAffordUpgrade={activeCharacter.gold >= upgradeCost}

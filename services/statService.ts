@@ -1,7 +1,55 @@
-import { Character, GameStats, Equipment } from '../types';
+import { Character, GameStats, Equipment, Adventurer, CharacterClassType } from '../types';
 import { CLASSES, GUILD_LEVEL_BONUS } from '../constants';
 import { SETS } from '../data/sets';
 import { getActivePassiveBonuses } from './abilityService';
+
+const applyEquipmentStats = (stats: GameStats, equipment: Equipment[], accessorySlots: (Equipment | null)[], characterClass: CharacterClassType) => {
+    const newStats = { ...stats };
+    
+    for (const item of equipment) {
+        const affinity = item.classAffinity?.[characterClass] ?? 1.0;
+        for (const [stat, value] of Object.entries(item.stats)) {
+            (newStats as any)[stat] = ((newStats as any)[stat] || 0) + Math.round(value * affinity);
+        }
+    }
+
+    for (const item of accessorySlots) {
+        if (item) {
+            const affinity = item.classAffinity?.[characterClass] ?? 1.0;
+            for (const [stat, value] of Object.entries(item.stats)) {
+                (newStats as any)[stat] = ((newStats as any)[stat] || 0) + Math.round(value * affinity);
+            }
+        }
+    }
+
+    const equippedSets: Record<string, number> = {};
+    for (const item of equipment) {
+        if (item.setId) {
+            equippedSets[item.setId] = (equippedSets[item.setId] || 0) + 1;
+        }
+    }
+
+    for (const item of accessorySlots) {
+        if (item && item.setId) {
+            equippedSets[item.setId] = (equippedSets[item.setId] || 0) + 1;
+        }
+    }
+    
+    for (const [setId, count] of Object.entries(equippedSets)) {
+        const set = SETS[setId];
+        if (set) {
+            for (const [requiredCount, bonus] of Object.entries(set.bonuses)) {
+                if (count >= Number(requiredCount)) {
+                    for (const [stat, value] of Object.entries(bonus)) {
+                        (newStats as any)[stat] = ((newStats as any)[stat] || 0) + (value as number);
+                    }
+                }
+            }
+        }
+    }
+
+    return newStats;
+};
 
 export const recalculateStats = (character: Character, guildLevel: number = 0): { stats: GameStats, maxStats: GameStats } => {
     const baseStats = { ...CLASSES[character.class].baseStats };
@@ -20,47 +68,7 @@ export const recalculateStats = (character: Character, guildLevel: number = 0): 
         (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + value;
     }
 
-    for (const item of character.equipment) {
-        const affinity = item.classAffinity?.[character.class] ?? 1.0;
-        for (const [stat, value] of Object.entries(item.stats)) {
-            (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + Math.round(value * affinity);
-        }
-    }
-
-    for (const item of character.accessorySlots) {
-        if (item) {
-            const affinity = item.classAffinity?.[character.class] ?? 1.0;
-            for (const [stat, value] of Object.entries(item.stats)) {
-                (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + Math.round(value * affinity);
-            }
-        }
-    }
-
-    const equippedSets: Record<string, number> = {};
-    for (const item of character.equipment) {
-        if (item.setId) {
-            equippedSets[item.setId] = (equippedSets[item.setId] || 0) + 1;
-        }
-    }
-
-    for (const item of character.accessorySlots) {
-        if (item && item.setId) {
-            equippedSets[item.setId] = (equippedSets[item.setId] || 0) + 1;
-        }
-    }
-    
-    for (const [setId, count] of Object.entries(equippedSets)) {
-        const set = SETS[setId];
-        if (set) {
-            for (const [requiredCount, bonus] of Object.entries(set.bonuses)) {
-                if (count >= Number(requiredCount)) {
-                    for (const [stat, value] of Object.entries(bonus)) {
-                        (newMaxStats as any)[stat] = ((newMaxStats as any)[stat] || 0) + value;
-                    }
-                }
-            }
-        }
-    }
+    newMaxStats = applyEquipmentStats(newMaxStats, character.equipment, character.accessorySlots, character.class);
 
     // Apply Guild Level Bonus if character is in a guild
     if (guildLevel > 0) {
@@ -77,4 +85,23 @@ export const recalculateStats = (character: Character, guildLevel: number = 0): 
     const newCurrentMana = Math.round(newMaxStats.mana * currentManaPercent);
 
     return { stats: { ...newMaxStats, health: newCurrentHealth, mana: newCurrentMana }, maxStats: newMaxStats };
+};
+
+export const recalculateAdventurerStats = (adventurer: Adventurer): Adventurer => {
+    // Start with scaled base stats for their level
+    const baseStats = CLASSES[adventurer.class].baseStats;
+    const scaledStats: GameStats = { ...baseStats };
+
+    for (const key in baseStats) {
+        const statKey = key as keyof GameStats;
+        const growth = (baseStats[statKey] * 0.15) * (adventurer.level - 1);
+        scaledStats[statKey] += Math.floor(growth);
+    }
+
+    const finalStats = applyEquipmentStats(scaledStats, adventurer.equipment, adventurer.accessorySlots || [null, null], adventurer.class);
+    
+    return {
+        ...adventurer,
+        stats: finalStats
+    };
 };

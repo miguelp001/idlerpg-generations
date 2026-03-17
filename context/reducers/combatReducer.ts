@@ -177,6 +177,17 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             const goldDropped = Math.floor((monster.goldDrop || 0) * goldGain);
             updatedCharacter.gold += goldDropped;
 
+            // Update Quest Progress
+            updatedCharacter.quests = (updatedCharacter.quests || []).map(q => ({
+                ...q,
+                objectives: q.objectives.map(obj => {
+                    if (obj.type === 'kill' && obj.targetId === monster.id) {
+                        return { ...obj, currentAmount: Math.min(obj.requiredAmount, obj.currentAmount + 1) };
+                    }
+                    return obj;
+                })
+            }));
+
             const isBoss = state.dungeonState.rooms[state.dungeonState.currentRoomIndex].type === 'boss';
             if (!isBoss) {
                 return {

@@ -99,10 +99,11 @@ const AbilityDisplay: React.FC<{ ability: Ability, characterId: string, isActive
     )
 });
 
-const AdventurerEquipmentDisplay: React.FC<{ adventurer: Adventurer }> = React.memo(({ adventurer }) => {
+const AdventurerEquipmentDisplay: React.FC<{ adventurer: Adventurer, characterId: string }> = React.memo(({ adventurer, characterId }) => {
+    const { dispatch } = useGame();
     const weaponItem = adventurer.equipment.find(e => e.slot === 'weapon');
     const armorItem = adventurer.equipment.find(e => e.slot === 'armor');
-    const accessoryItems = adventurer.equipment.filter(e => e.slot === 'accessory');
+    const accessoryItems = adventurer.accessorySlots || [null, null];
     
     const slots = [
         { type: 'weapon', item: weaponItem, label: 'weapon' },
@@ -110,12 +111,21 @@ const AdventurerEquipmentDisplay: React.FC<{ adventurer: Adventurer }> = React.m
         { type: 'accessory1', item: accessoryItems[0], label: 'accessory' },
         { type: 'accessory2', item: accessoryItems[1], label: 'accessory' }
     ];
+
+    const handleUnequip = (itemId: string) => {
+        dispatch({ type: 'UNEQUIP_ITEM', payload: { characterId, itemId, adventurerId: adventurer.id } });
+    };
     
     return (
         <div className="mt-2 grid grid-cols-2 gap-1">
             {slots.map((slot, index) => {
                 return (
-                    <div key={`${slot.type}-${index}`} className="bg-black/20 p-1 rounded text-center h-16 flex items-center justify-center" title={slot.item ? `${slot.item.name} (+${Object.values(slot.item.stats)[0]} ${Object.keys(slot.item.stats)[0]})` : `No ${slot.label} equipped`}>
+                    <div 
+                        key={`${slot.type}-${index}`} 
+                        className={`bg-black/20 p-1 rounded text-center h-16 flex items-center justify-center ${slot.item ? 'cursor-pointer hover:bg-black/40 border border-transparent hover:border-red-500/50' : ''}`} 
+                        title={slot.item ? `${slot.item.name} (Click to unequip)` : `No ${slot.label} equipped`}
+                        onClick={() => slot.item && handleUnequip(slot.item.id)}
+                    >
                         {slot.item ? (
                             <span className={`text-xs ${RARITY_COLORS[slot.item.rarity]}`}>{slot.item.name}</span>
                         ) : (
@@ -357,7 +367,7 @@ const CharacterSheet: React.FC = () => {
                         <div key={member.id} className="bg-surface-2 p-3 rounded-lg">
                             <p className="font-bold text-on-surface text-base sm:text-lg">{member.name}</p>
                             <p className={`text-sm ${CLASSES[member.class].color}`}>Lvl {member.level} {CLASSES[member.class].name}</p>
-                            <AdventurerEquipmentDisplay adventurer={member} />
+                            <AdventurerEquipmentDisplay adventurer={member} characterId={character.id} />
                         </div>
                     ))}
                 </div>

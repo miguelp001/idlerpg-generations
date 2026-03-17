@@ -1,19 +1,19 @@
-import { GameState, Action, Character, Equipment, RelationshipStatus, Adventurer, CharacterClassType, MercenaryHeir, PotentialHeir, GameStats, ParentInfo } from '../../types';
+import { GameState, Action, Character, Equipment, RelationshipStatus, PotentialHeir, GameStats } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { 
     CLASSES, 
-    RETIREMENT_LEVEL, 
     REFRESH_TAVERN_COST, 
     SHOP_REFRESH_COST, 
     UPGRADE_COST, 
     SELL_PRICE,
     PERSONALITY_TRAITS,
-    RELATIONSHIP_THRESHOLDS 
+    RELATIONSHIP_THRESHOLDS,
+    RARITY_ORDER 
 } from '../../constants';
 import { ITEMS } from '../../data/items';
 import { generateAdventurer } from '../../services/socialService';
 import { generateShopItems } from '../../services/shopService';
-import { recalculateStats } from '../../services/statService';
+import { recalculateStats, recalculateAdventurerStats } from '../../services/statService';
 import { checkAllAchievements } from '../../services/achievementService';
 
 export const characterReducer = (state: GameState, action: Action): GameState => {
@@ -106,78 +106,165 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         };
 
     case 'EQUIP_ITEM': {
-        const { characterId, itemId } = action.payload;
+        const { characterId, itemId, adventurerId } = action.payload;
         let character = state.characters.find(c => c.id === characterId)!;
         const itemToEquip = character.inventory.find(i => i.id === itemId)!;
         
         let newInventory = character.inventory.filter(i => i.id !== itemId);
-        let newEquipment = [...character.equipment];
-        let newAccessorySlots: [Equipment | null, Equipment | null] = [...character.accessorySlots];
 
-        if (itemToEquip.slot === 'accessory') {
-            if (newAccessorySlots[0] === null) {
-                newAccessorySlots[0] = itemToEquip;
-            } else if (newAccessorySlots[1] === null) {
-                newAccessorySlots[1] = itemToEquip;
+        if (adventurerId) {
+            const adventurerIndex = character.party.findIndex(p => p.id === adventurerId);
+            if (adventurerIndex === -1) return state;
+            
+            let adventurer = { ...character.party[adventurerIndex] };
+            let newAdvEquipment = [...adventurer.equipment];
+            let newAdvAccessorySlots: [Equipment | null, Equipment | null] = [...(adventurer.accessorySlots || [null, null])];
+
+            if (itemToEquip.slot === 'accessory') {
+                if (newAdvAccessorySlots[0] === null) {
+                    newAdvAccessorySlots[0] = itemToEquip;
+                } else if (newAdvAccessorySlots[1] === null) {
+                    newAdvAccessorySlots[1] = itemToEquip;
+                } else {
+                    if (newAdvAccessorySlots[0]) newInventory.push(newAdvAccessorySlots[0]);
+                    newAdvAccessorySlots[0] = itemToEquip;
+                }
             } else {
-                if (newAccessorySlots[0]) newInventory.push(newAccessorySlots[0]);
-                newAccessorySlots[0] = itemToEquip;
+                const existingItemIndex = newAdvEquipment.findIndex(i => i.slot === itemToEquip.slot);
+                if (existingItemIndex > -1) {
+                    newInventory.push(newAdvEquipment[existingItemIndex]);
+                    newAdvEquipment.splice(existingItemIndex, 1);
+                }
+                newAdvEquipment.push(itemToEquip);
             }
+
+            let updatedAdventurer = { 
+                ...adventurer, 
+                equipment: newAdvEquipment, 
+                accessorySlots: newAdvAccessorySlots 
+            };
+            updatedAdventurer = recalculateAdventurerStats(updatedAdventurer);
+
+            const newParty = [...character.party];
+            newParty[adventurerIndex] = updatedAdventurer;
+
+            const updatedCharacter = { ...character, inventory: newInventory, party: newParty };
+            return {
+                ...state,
+                characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
+            };
         } else {
-            const existingItemIndex = newEquipment.findIndex(i => i.slot === itemToEquip.slot);
-            if (existingItemIndex > -1) {
-                newInventory.push(newEquipment[existingItemIndex]);
-                newEquipment.splice(existingItemIndex, 1);
+            let newEquipment = [...character.equipment];
+            let newAccessorySlots: [Equipment | null, Equipment | null] = [...character.accessorySlots];
+
+            if (itemToEquip.slot === 'accessory') {
+                if (newAccessorySlots[0] === null) {
+                    newAccessorySlots[0] = itemToEquip;
+                } else if (newAccessorySlots[1] === null) {
+                    newAccessorySlots[1] = itemToEquip;
+                } else {
+                    if (newAccessorySlots[0]) newInventory.push(newAccessorySlots[0]);
+                    newAccessorySlots[0] = itemToEquip;
+                }
+            } else {
+                const existingItemIndex = newEquipment.findIndex(i => i.slot === itemToEquip.slot);
+                if (existingItemIndex > -1) {
+                    newInventory.push(newEquipment[existingItemIndex]);
+                    newEquipment.splice(existingItemIndex, 1);
+                }
+                newEquipment.push(itemToEquip);
             }
-            newEquipment.push(itemToEquip);
+
+            let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+            updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
+
+            return {
+                ...state,
+                characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
+            };
         }
-
-        let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
-        const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
-        updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
-
-        return {
-            ...state,
-            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
-        };
     }
 
     case 'UNEQUIP_ITEM': {
-        const { characterId, itemId } = action.payload;
+        const { characterId, itemId, adventurerId } = action.payload;
         let character = state.characters.find(c => c.id === characterId)!;
-        
-        let newEquipment = [...character.equipment];
         let newInventory = [...character.inventory];
-        let newAccessorySlots: [Equipment | null, Equipment | null] = [...character.accessorySlots];
 
-        let itemToUnequip: Equipment | undefined;
+        if (adventurerId) {
+            const adventurerIndex = character.party.findIndex(p => p.id === adventurerId);
+            if (adventurerIndex === -1) return state;
 
-        if (newAccessorySlots[0]?.id === itemId) {
-            itemToUnequip = newAccessorySlots[0]!;
-            newAccessorySlots[0] = null;
-        } else if (newAccessorySlots[1]?.id === itemId) {
-            itemToUnequip = newAccessorySlots[1]!;
-            newAccessorySlots[1] = null;
-        } else {
-            const existingItemIndex = newEquipment.findIndex(i => i.id === itemId);
-            if (existingItemIndex > -1) {
-                itemToUnequip = newEquipment[existingItemIndex];
-                newEquipment.splice(existingItemIndex, 1);
+            let adventurer = { ...character.party[adventurerIndex] };
+            let newAdvEquipment = [...adventurer.equipment];
+            let newAdvAccessorySlots: [Equipment | null, Equipment | null] = [...(adventurer.accessorySlots || [null, null])];
+
+            let itemToUnequip: Equipment | null = null;
+            
+            if (newAdvAccessorySlots[0]?.id === itemId) {
+                itemToUnequip = newAdvAccessorySlots[0];
+                newAdvAccessorySlots[0] = null;
+            } else if (newAdvAccessorySlots[1]?.id === itemId) {
+                itemToUnequip = newAdvAccessorySlots[1];
+                newAdvAccessorySlots[1] = null;
+            } else {
+                const idx = newAdvEquipment.findIndex(i => i.id === itemId);
+                if (idx > -1) {
+                    itemToUnequip = newAdvEquipment[idx];
+                    newAdvEquipment.splice(idx, 1);
+                }
             }
+
+            if (!itemToUnequip) return state;
+            newInventory.push(itemToUnequip);
+
+            let updatedAdventurer = { 
+                ...adventurer, 
+                equipment: newAdvEquipment, 
+                accessorySlots: newAdvAccessorySlots 
+            };
+            updatedAdventurer = recalculateAdventurerStats(updatedAdventurer);
+
+            const newParty = [...character.party];
+            newParty[adventurerIndex] = updatedAdventurer;
+
+            return {
+                ...state,
+                characters: state.characters.map(c => c.id === characterId ? { ...character, inventory: newInventory, party: newParty } : c)
+            };
+        } else {
+            let newEquipment = [...character.equipment];
+            let newAccessorySlots: [Equipment | null, Equipment | null] = [...character.accessorySlots];
+
+            let itemToUnequip: Equipment | undefined;
+
+            if (newAccessorySlots[0]?.id === itemId) {
+                itemToUnequip = newAccessorySlots[0]!;
+                newAccessorySlots[0] = null;
+            } else if (newAccessorySlots[1]?.id === itemId) {
+                itemToUnequip = newAccessorySlots[1]!;
+                newAccessorySlots[1] = null;
+            } else {
+                const existingItemIndex = newEquipment.findIndex(i => i.id === itemId);
+                if (existingItemIndex > -1) {
+                    itemToUnequip = newEquipment[existingItemIndex];
+                    newEquipment.splice(existingItemIndex, 1);
+                }
+            }
+
+            if (!itemToUnequip) return state;
+
+            newInventory.push(itemToUnequip);
+            
+            let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
+            const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
+            updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
+
+            return {
+                ...state,
+                characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
+            };
         }
-
-        if (!itemToUnequip) return state;
-
-        newInventory.push(itemToUnequip);
-        
-        let updatedCharacter: Character = { ...character, inventory: newInventory, equipment: newEquipment, accessorySlots: newAccessorySlots };
-        const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild?.level || 0);
-        updatedCharacter = { ...updatedCharacter, stats, maxStats, currentHealth: stats.health, currentMana: stats.mana };
-
-        return {
-            ...state,
-            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
-        };
     }
 
     case 'UPGRADE_ITEM': {
@@ -313,6 +400,33 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
         return {
             ...state,
             characters: state.characters.map(c => c.id === characterId ? { ...c, gold: c.gold + goldValue, inventory: c.inventory.filter(i => i.id !== itemId) } : c)
+        };
+    }
+
+    case 'SELL_ALL_BY_RARITY': {
+        const { characterId, maxRarity } = action.payload;
+        let character = state.characters.find(c => c.id === characterId)!;
+        
+        const maxRarityIndex = RARITY_ORDER.indexOf(maxRarity);
+        const raritiesToSell = new Set(RARITY_ORDER.slice(0, maxRarityIndex + 1));
+
+        const itemsToSell = character.inventory.filter(item => 
+            !item.isHeirloom && raritiesToSell.has(item.rarity)
+        );
+
+        if (itemsToSell.length === 0) return state;
+
+        const totalGold = itemsToSell.reduce((sum, item) => sum + SELL_PRICE(item), 0);
+        const soldItemIds = new Set(itemsToSell.map(i => i.id));
+        const newInventory = character.inventory.filter(item => !soldItemIds.has(item.id));
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === characterId ? { 
+                ...c, 
+                gold: c.gold + totalGold, 
+                inventory: newInventory 
+            } : c)
         };
     }
 

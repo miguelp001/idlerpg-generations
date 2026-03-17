@@ -37,6 +37,7 @@ export const generateAdventurer = (playerLevel: number): Adventurer => {
         stats: getScaledStats(level, randomClass),
         personality: randomPersonality,
         equipment: [],
+        accessorySlots: [null, null],
     };
 };
 

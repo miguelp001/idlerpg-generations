@@ -115,7 +115,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 inventory: char.inventory || [],
                 equipment: char.equipment || [],
                 accessorySlots: char.accessorySlots || [null, null],
-                party: char.party || [],
+                party: (char.party || []).map((p: any) => ({
+                    ...p,
+                    accessorySlots: p.accessorySlots || [null, null],
+                    equipment: p.equipment || []
+                })),
                 quests: char.quests || [],
                 completedQuests: char.completedQuests || [],
                 potentialHeirs: char.potentialHeirs || [],
