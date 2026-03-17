@@ -44,6 +44,33 @@ const initialRaidState = {
     cooldowns: {},
 };
 
+function resolveMonster(monsterId: string | null, state: GameState): any | null {
+    if (!monsterId) return null;
+    if (ALL_MONSTERS[monsterId]) return ALL_MONSTERS[monsterId];
+
+    // Attempt to reconstruct if it's a scaled monster from procedural data
+    if (monsterId.includes('_scaled_') && state.dungeonState.proceduralDungeonData) {
+        const parts = monsterId.split('_scaled_');
+        const baseId = parts[0];
+        const procedural = state.dungeonState.proceduralDungeonData;
+        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId);
+        
+        if (activeCharacter) {
+            const monster = generateScaledMonster(
+                baseId, 
+                activeCharacter.level, 
+                procedural.difficulty, 
+                procedural.floor
+            );
+            // Re-inject into local cache for this session
+            (ALL_MONSTERS as any)[monster.id] = monster;
+            return monster;
+        }
+    }
+    
+    return null;
+}
+
 export const combatReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case 'START_DUNGEON': {
@@ -58,7 +85,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
         ];
 
         const firstRoom = dungeonRooms[0];
-        const firstMonster = firstRoom.type === 'combat' || firstRoom.type === 'boss' ? (firstRoom.monsterId ? ALL_MONSTERS[firstRoom.monsterId] : null) : null;
+        const firstMonster = (firstRoom.type === 'combat' || firstRoom.type === 'boss') ? resolveMonster(firstRoom.monsterId || null, state) : null;
 
         const updatedCharacter = {
             ...activeCharacter,
@@ -131,7 +158,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
     case 'DO_COMBAT_TURN': {
         if (state.dungeonState.status !== 'fighting' || !state.activeCharacterId) return state;
         let activeCharacter = state.characters.find(c => c.id === state.activeCharacterId)!;
-        const monster = state.dungeonState.monsterId ? ALL_MONSTERS[state.dungeonState.monsterId] : null;
+        const monster = resolveMonster(state.dungeonState.monsterId, state);
         if (!activeCharacter || !monster) return state;
 
         const newTurnCount = state.dungeonState.turnCount + 1;
@@ -303,16 +330,7 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
         let monsterHealth = null;
 
         if (nextRoom.type === 'combat' || nextRoom.type === 'boss') {
-            let monster = nextRoom.monsterId ? ALL_MONSTERS[nextRoom.monsterId] : null;
-            if (state.dungeonState.proceduralDungeonData && nextRoom.monsterId) {
-                monster = generateScaledMonster(
-                    nextRoom.monsterId,
-                    activeCharacter.level,
-                    state.dungeonState.proceduralDungeonData.difficulty,
-                    state.dungeonState.proceduralDungeonData.floor
-                );
-                ALL_MONSTERS[monster.id] = monster;
-            }
+            const monster = resolveMonster(nextRoom.monsterId || null, state);
             monsterId = monster?.id || null;
             monsterHealth = monster?.stats.health || null;
         }
