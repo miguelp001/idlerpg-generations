@@ -55,7 +55,7 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
         const character = state.characters.find(c => c.id === characterId)!;
         if (state.guild || character.gold < GUILD_CREATE_COST) return state;
         
-        const newGuild: Guild = { id: uuidv4(), name: guildName, level: 1, xp: 0, members: [] };
+        const newGuild: Guild = { id: uuidv4(), name: guildName, level: 1, experience: 0, members: [] };
         const updatedCharacter = { ...character, gold: character.gold - GUILD_CREATE_COST, guildId: newGuild.id };
 
         return {
@@ -72,7 +72,7 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
 
         const updatedCharacter = { ...character, gold: character.gold - amount };
         const xpGained = Math.floor(amount * (GUILD_DONATION_XP / GUILD_DONATION_GOLD));
-        let newXp = state.guild.xp + xpGained;
+        let newXp = state.guild.experience + xpGained;
         let newLevel = state.guild.level;
         let xpForNextLevel = GUILD_XP_TABLE[newLevel];
         
@@ -84,7 +84,7 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
 
         return {
             ...state,
-            guild: { ...state.guild, xp: newXp, level: newLevel },
+            guild: { ...state.guild, experience: newXp, level: newLevel },
             characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c),
         };
     }
@@ -164,7 +164,7 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
     case 'REQUEST_FORGE': {
         const char = state.characters.find(c => c.id === action.payload.characterId);
         if (!char) return state;
-        const { materials, gold } = calculateForgeCost(action.payload.order.rarity, action.payload.order.targetStats);
+        const { materials, gold } = calculateForgeCost(action.payload.order.rarity, action.payload.order.targetStats, char.level);
         
         if (char.gold < gold) return state;
         for (const req of materials) {

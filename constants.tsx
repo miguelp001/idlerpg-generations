@@ -178,21 +178,12 @@ export const ADVENTURER_FIRST_NAMES = [
 
 export const ADVENTURER_LAST_NAMES = [
     'Stonehand', 'Silverwood', 'Stormcaller', 'Blackwater', 'Ironhelm', 'Sunstrider', 'Shadowend', 'Swiftwind', 'Fireheart', 'Winterfall',
-    // Additional last names
-    'Axehammer', 'Brightblade', 'Deepriver', 'Fairwind', 'Grimfang', 'Hardrock', 'Lightfoot', 'Moonwhisper', 'Oakhart', 'Proudfoot',
-    'Redshield', 'Strongarm', 'Truearrow', 'Whisperwind', 'Wilder', 'Ashwood', 'Boulderfist', 'Cinderfall', 'Darkwood', 'Emberglow',
-    'Fellhammer', 'Goldenshield', 'Ironhide', 'Keeneye', 'Longstride', 'Mistwalker', 'Nightshade', 'Oakhaven', 'Proudbeard', 'Ravenscroft',
-    'Shadowbrook', 'Silentfoot', 'Stonemarch', 'Thornwood', 'Trueheart', 'Vancroft', 'Whitewater', 'Windrider', 'Wyvernfall', 'Youngblood',
-    'Barrelbottom', 'Blackbriar', 'Brightwood', 'Caskwick', 'Deepdelve', 'Everlight', 'Farhaven', 'Frostbeard', 'Grimstone', 'Hallowell',
-    'Ironfoot', 'Kindlewood', 'Lightbringer', 'Moonbrook', 'Nighthaven', 'Olden', 'Proudhand', 'Quickstep', 'Riverbend', 'Shadowglen',
-    'Silverstream', 'Stoutarm', 'Thistlewick', 'Trueblood', 'Underhill', 'Valeford', 'Whisperwood', 'Wilds', 'Winterborne', 'Woodcutter',
-    'Ashfall', 'Blackaxe', 'Brightstone', 'Cinderbrook', 'Darkheart', 'Emberwind', 'Fellstone', 'Goldhand', 'Ironwood', 'Keenblade',
-    'Longriver', 'Mistborn', 'Nightfall', 'Oakhaven', 'Proudfoot', 'Ravenswood', 'Shadowfen', 'Silentstep', 'Stonewick', 'Thornhill',
-    'Truegrip', 'Underwood', 'Valiant', 'Whispervale', 'Wildheart', 'Winterglen', 'Wolfsbane', 'Wyvernwood', 'Youngheart', 'Zweihander',
-    'Ashworth', 'Blackpine', 'Brightshield', 'Cinderwood', 'Darkmoon', 'Emberheart', 'Fellwater', 'Goldengate', 'Ironclad', 'Keenheart',
-    'Longshadow', 'Mistvale', 'Nightwhisper', 'Oakenshield', 'Proudstrike', 'Ravenshadow', 'Shadowmoon', 'Silentwood', 'Stonewall', 'Thornblade',
-    'Truevalor', 'Underfall', 'Valerius', 'Whisperwind', 'Wildfire', 'Wintermoon', 'Wolfheart', 'Wyvernclaw', 'Youngblood', 'Zemlin',
-    'Ashcroft', 'Blackthorn', 'Brightsun', 'Cinderstone', 'Darkwater', 'Emberstone', 'Fellglen', 'Goldwood', 'Ironwill', 'Keenwood',
-    'Longwood', 'Mistwood', 'Nightwood', 'Oakwood', 'Proudwood', 'Ravensong', 'Shadowwood', 'Silentriver', 'Stonewood', 'Thornbush',
+    // ... rest of names
     'Trueshot', 'Underbright', 'Valor', 'Whisperdale', 'Wildsong', 'Winterlight', 'Wolfsong', 'Wyvernwing', 'Youngwood', 'Zorn'
 ];
+
+// Forging Constants
+export const FORGE_BASE_STAT_VALUE = 5;
+export const FORGE_STAT_PER_LEVEL = 2;
+export const FORGE_EXTREME_POWER_THRESHOLD = 1.2; // 20% over standard limit starts extreme scaling
+export const FORGE_EXTREME_COST_EXPONENT = 2.5; // Quadratic-ish scaling for extreme power
