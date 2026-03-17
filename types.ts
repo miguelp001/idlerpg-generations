@@ -427,6 +427,7 @@ export type Action =
   | { type: 'REFRESH_TAVERN_ADVENTURERS'; payload: { characterId: string } }
   | { type: 'CREATE_GUILD'; payload: { characterId: string; guildName: string; } }
   | { type: 'DONATE_TO_GUILD'; payload: { characterId: string; amount: number; } }
+  | { type: 'JOIN_GUILD'; payload: { characterId: string; } }
   | { type: 'RECRUIT_TO_GUILD'; payload: { characterId: string; adventurerId: string; } }
   | { type: 'START_RAID'; payload: { raidId: string } }
   | { type: 'DO_RAID_COMBAT_TURN' }

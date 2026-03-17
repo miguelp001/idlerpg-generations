@@ -74,6 +74,19 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
         };
     }
 
+    case 'JOIN_GUILD': {
+        const { characterId } = action.payload;
+        const character = state.characters.find(c => c.id === characterId)!;
+        if (!state.guild || character.guildId === state.guild.id) return state;
+
+        const updatedCharacter = { ...character, guildId: state.guild.id };
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === characterId ? updatedCharacter : c)
+        };
+    }
+
     case 'DONATE_TO_GUILD': {
         const { characterId, amount } = action.payload;
         let character = state.characters.find(c => c.id === characterId)!;

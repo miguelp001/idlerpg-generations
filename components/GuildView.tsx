@@ -22,11 +22,12 @@ import ProgressBar from './ui/ProgressBar';
 import { ShieldCheckIcon, GoldIcon, BookOpenIcon } from './ui/Icons';
 
 const CreateGuildView: React.FC = () => {
-    const { dispatch, activeCharacter } = useGame();
+    const { state, dispatch, activeCharacter } = useGame();
     const [guildName, setGuildName] = useState('');
 
     if (!activeCharacter) return null;
 
+    const existingGuild = state.guild;
     const canAfford = activeCharacter.gold >= GUILD_CREATE_COST;
 
     const handleCreate = () => {
@@ -37,22 +38,43 @@ const CreateGuildView: React.FC = () => {
         dispatch({ type: 'CREATE_GUILD', payload: { characterId: activeCharacter.id, guildName } });
     };
 
+    const handleJoin = () => {
+        dispatch({ type: 'JOIN_GUILD', payload: { characterId: activeCharacter.id } });
+    };
+
     return (
         <Card className="text-center">
             <h2 className="text-3xl font-bold text-secondary mb-4">Found a Guild</h2>
-            <p className="text-on-background/80 mb-6">The world is dangerous. Forge an alliance to take on the greatest threats.</p>
-            <div className="max-w-md mx-auto space-y-4">
-                <input
-                    type="text"
-                    value={guildName}
-                    onChange={(e) => setGuildName(e.target.value)}
-                    placeholder="Enter Guild Name"
-                    className="w-full px-4 py-2 bg-surface-2 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <Button onClick={handleCreate} disabled={!canAfford || !guildName.trim()} className="w-full">
-                    Create Guild ({GUILD_CREATE_COST.toLocaleString()}G)
-                </Button>
-                {!canAfford && <p className="text-red-400">You don't have enough gold.</p>}
+            <p className="text-on-background/80 mb-6">
+                {existingGuild 
+                    ? `A guild named "${existingGuild.name}" already exists. You can join it or found your own (if none existed).`
+                    : "The world is dangerous. Forge an alliance to take on the greatest threats."}
+            </p>
+            
+            <div className="max-w-md mx-auto space-y-6">
+                {existingGuild ? (
+                    <div className="p-6 bg-surface-2 rounded-lg border border-primary/20">
+                        <h3 className="text-xl font-bold text-primary mb-2">{existingGuild.name}</h3>
+                        <p className="text-sm text-on-background/70 mb-4 font-semibold text-secondary">Level {existingGuild.level}</p>
+                        <Button onClick={handleJoin} className="w-full" variant="shadow">
+                            Join This Guild
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <input
+                            type="text"
+                            value={guildName}
+                            onChange={(e) => setGuildName(e.target.value)}
+                            placeholder="Enter Guild Name"
+                            className="w-full px-4 py-2 bg-surface-2 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <Button onClick={handleCreate} disabled={!canAfford || !guildName.trim()} className="w-full">
+                            Create Guild ({GUILD_CREATE_COST.toLocaleString()}G)
+                        </Button>
+                        {!canAfford && <p className="text-red-400">You don't have enough gold.</p>}
+                    </div>
+                )}
             </div>
         </Card>
     );
