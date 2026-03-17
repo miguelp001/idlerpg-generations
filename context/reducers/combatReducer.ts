@@ -447,9 +447,19 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
     case 'START_RAID': {
         const raid = RAIDS.find(r => r.id === action.payload.raidId)!;
         const boss = ALL_MONSTERS[raid.bossId];
+        const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId);
+        if (!activeCharacter) return state;
+
+        const updatedCharacter = {
+            ...activeCharacter,
+            currentHealth: activeCharacter.maxStats.health,
+            currentMana: activeCharacter.maxStats.mana,
+            party: activeCharacter.party.map(p => ({ ...p, currentHealth: p.stats.health, currentMana: p.stats.mana }))
+        };
 
         return {
             ...state,
+            characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
             raidState: {
                 ...initialRaidState, status: 'fighting', raidId: raid.id, bossId: boss.id, currentBossHealth: boss.stats.health,
                 combatLog: [{ id: uuidv4(), type: 'info', message: `Raid started against ${boss.name}!`, actor: 'system' }],
@@ -463,9 +473,106 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
         const boss = ALL_MONSTERS[state.raidState.bossId!];
         if (!activeCharacter || !boss) return state;
 
-        processCombatTurn(activeCharacter, activeCharacter.party, boss, { ...state.raidState, turnCount: state.raidState.turnCount + 1 } as any);
-        // Simplified same as dungeon combat for brevity...
-        return state; // Placeholder for full implementation in final step
+        const newTurnCount = (state.raidState.turnCount || 0) + 1;
+        const turnResult = processCombatTurn(activeCharacter, activeCharacter.party, boss, { ...state.raidState, turnCount: newTurnCount } as any);
+
+        let updatedCharacter: Character = { ...activeCharacter };
+        for (const id in turnResult.updatedCombatants) {
+            const changes = turnResult.updatedCombatants[id];
+            if (id === activeCharacter.id) {
+                updatedCharacter.currentHealth = changes.currentHealth ?? updatedCharacter.currentHealth;
+                updatedCharacter.currentMana = changes.currentMana ?? updatedCharacter.currentMana;
+            } else {
+                const pIdx = updatedCharacter.party.findIndex(p => p.id === id);
+                if (pIdx > -1) {
+                    updatedCharacter.party[pIdx] = { ...updatedCharacter.party[pIdx], ...changes };
+                }
+            }
+        }
+        
+        let combatLogs = [...state.raidState.combatLog, ...turnResult.logs];
+
+        if ((updatedCharacter.currentHealth ?? 0) <= 0) {
+            return {
+                ...state,
+                characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+                raidState: { ...state.raidState, status: 'defeat', combatLog: [...combatLogs, { id: uuidv4(), type: 'defeat', message: "The raid party has fallen.", actor: 'system' }] } as any,
+            };
+        }
+
+        if (turnResult.newMonsterHealth <= 0) {
+            const raid = RAIDS.find(r => r.id === state.raidState.raidId)!;
+            
+            const globalMods = getGlobalModifiers(state.worldState.activeEvents);
+            const vaultBonus = 1 + (state.guild?.upgrades?.vault || 0) * GUILD_VAULT_BONUS;
+            const goldDropped = Math.floor(1000 * raid.guildLevelRequirement * globalMods.goldGain * vaultBonus);
+            
+            updatedCharacter.gold = Math.min((updatedCharacter.gold || 0) + goldDropped, MAX_GOLD);
+            updatedCharacter.completedRaids = { ...updatedCharacter.completedRaids, [raid.id]: new Date().toISOString() };
+
+            const rawLoot = raid.lootTable || [];
+            const lootFound: Equipment[] = rawLoot.map(lootItem => {
+                if (typeof lootItem === 'string') return instantiateItem(lootItem);
+                return lootItem;
+            }).filter((item): item is Equipment => item !== null);
+
+            const { playerItems, distributions } = distributeEquipment(lootFound, updatedCharacter, updatedCharacter.party);
+            updatedCharacter.inventory = [...updatedCharacter.inventory, ...playerItems];
+
+            distributions.forEach(d => {
+                combatLogs.push({
+                    id: uuidv4(),
+                    type: 'treasure',
+                    message: `${d.recipient.name} received ${d.item.name}!`,
+                    actor: 'system'
+                });
+            });
+
+            return {
+                ...state,
+                characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+                raidState: { 
+                    ...state.raidState, 
+                    status: 'victory', 
+                    goldGained: goldDropped,
+                    lootFound: lootFound,
+                    combatLog: [...combatLogs, { id: uuidv4(), type: 'victory', message: `${boss.name} has been vanquished!`, actor: 'system' }] 
+                } as any
+            };
+        }
+
+        return {
+            ...state,
+            characters: state.characters.map(c => c.id === updatedCharacter.id ? updatedCharacter : c),
+            raidState: { 
+                ...state.raidState, 
+                currentBossHealth: turnResult.newMonsterHealth, 
+                combatLog: combatLogs, 
+                cooldowns: turnResult.updatedCooldowns, 
+                turnCount: newTurnCount 
+            } as any,
+        };
+    }
+
+    case 'PAUSE_RAID_COMBAT': {
+        return {
+            ...state,
+            raidState: { ...state.raidState, status: 'paused' } as any
+        };
+    }
+
+    case 'RESUME_RAID_COMBAT': {
+        return {
+            ...state,
+            raidState: { ...state.raidState, status: 'fighting' } as any
+        };
+    }
+
+    case 'END_RAID': {
+        return {
+            ...state,
+            raidState: { ...initialRaidState } as any
+        };
     }
 
     case 'SET_GRINDING': {

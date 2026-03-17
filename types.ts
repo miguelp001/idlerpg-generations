@@ -431,6 +431,8 @@ export type Action =
   | { type: 'RECRUIT_TO_GUILD'; payload: { characterId: string; adventurerId: string; } }
   | { type: 'START_RAID'; payload: { raidId: string } }
   | { type: 'DO_RAID_COMBAT_TURN' }
+  | { type: 'PAUSE_RAID_COMBAT' }
+  | { type: 'RESUME_RAID_COMBAT' }
   | { type: 'END_RAID' }
   | { type: 'ACCEPT_QUEST'; payload: { characterId: string; questId: string } }
   | { type: 'TURN_IN_QUEST'; payload: { characterId: string; questId: string } }
