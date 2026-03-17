@@ -343,7 +343,7 @@ const CharacterSheet: React.FC = () => {
                       <h3 className="text-lg sm:text-xl font-semibold mb-2 text-secondary">Passive Abilities</h3>
                        <div className="space-y-2">
                         {passiveAbilities.length > 0 ? passiveAbilities.map(ability => (
-                            <AbilityDisplay key={ability.id} ability={ability} characterId={character.id} isPassive={true} isActive={character.activePassives.includes(ability.id)} />
+                            <AbilityDisplay key={ability.id} ability={ability} characterId={character.id} isPassive={true} isActive={(character.activePassives || []).includes(ability.id)} />
                         )) : <p className="text-on-background/70 text-sm sm:text-base">No passive abilities learned.</p>}
                       </div>
                   </div>
@@ -351,9 +351,9 @@ const CharacterSheet: React.FC = () => {
           </Card>
           <Card>
               <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-primary">Party</h2>
-              {character.party.length > 0 ? (
+              {(character.party || []).length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {character.party.map((member: Adventurer) => (
+                    {(character.party || []).map((member: Adventurer) => (
                         <div key={member.id} className="bg-surface-2 p-3 rounded-lg">
                             <p className="font-bold text-on-surface text-base sm:text-lg">{member.name}</p>
                             <p className={`text-sm ${CLASSES[member.class].color}`}>Lvl {member.level} {CLASSES[member.class].name}</p>

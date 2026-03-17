@@ -95,11 +95,11 @@ const QuestView: React.FC = () => {
 
     const availableQuests = useMemo(() => Object.values(QUESTS).filter(q => 
         q.levelRequirement <= activeCharacter.level &&
-        !activeCharacter.quests.some(pq => pq.questId === q.id) &&
-        !activeCharacter.completedQuests.includes(q.id)
+        !(activeCharacter.quests || []).some(pq => pq.questId === q.id) &&
+        !(activeCharacter.completedQuests || []).includes(q.id)
     ), [activeCharacter.level, activeCharacter.quests, activeCharacter.completedQuests]);
     
-    const activeQuests = activeCharacter.quests;
+    const activeQuests = activeCharacter.quests || [];
 
     const checkCompletion = (playerQuest: PlayerQuest) => {
         return playerQuest.objectives.every(obj => obj.currentAmount >= obj.requiredAmount);

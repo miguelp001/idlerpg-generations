@@ -19,7 +19,7 @@ const AchievementsView: React.FC = () => {
     const { dispatch, activeCharacter } = useGame();
     if (!activeCharacter) return <div>Loading...</div>;
 
-    const unlockedSet = new Set(activeCharacter.unlockedAchievements);
+    const unlockedSet = new Set(activeCharacter.unlockedAchievements || []);
 
     const handleEquipTitle = (title: string) => {
         const newTitle = activeCharacter.equippedTitle === title ? null : title;

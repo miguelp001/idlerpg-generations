@@ -109,8 +109,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 loadedState.raidState = { ...initialState.raidState, ...action.payload.raidState };
             }
 
-            // Ensure arrays exist
-            loadedState.characters = loadedState.characters || [];
+            // Ensure arrays and objects exist
+            loadedState.characters = (loadedState.characters || []).map((char: Character) => ({
+                ...char,
+                inventory: char.inventory || [],
+                equipment: char.equipment || [],
+                accessorySlots: char.accessorySlots || [null, null],
+                party: char.party || [],
+                quests: char.quests || [],
+                completedQuests: char.completedQuests || [],
+                potentialHeirs: char.potentialHeirs || [],
+                activePassives: char.activePassives || [],
+                unlockedAchievements: char.unlockedAchievements || [],
+                materials: char.materials || {},
+                parentIds: char.parentIds || [],
+                children: char.children || [],
+                completedRaids: char.completedRaids || {},
+            }));
             loadedState.tavernAdventurers = loadedState.tavernAdventurers || [];
             loadedState.shopItems = loadedState.shopItems || [];
             loadedState.relationships = loadedState.relationships || [];

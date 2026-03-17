@@ -292,7 +292,7 @@ const Inventory: React.FC = () => {
         const maxRarityIndex = RARITY_ORDER.indexOf(selectedBulkSellRarity);
         const raritiesToSell = new Set(RARITY_ORDER.slice(0, maxRarityIndex + 1));
 
-        const items = activeCharacter.inventory.filter(item => 
+        const items = (activeCharacter.inventory || []).filter(item => 
             !item.isHeirloom && raritiesToSell.has(item.rarity)
         );
 
@@ -328,7 +328,7 @@ const Inventory: React.FC = () => {
             armor: [],
             accessory: [],
         };
-        activeCharacter.inventory.forEach(item => {
+        (activeCharacter.inventory || []).forEach(item => {
             grouped[item.slot]?.push(item);
         });
         
