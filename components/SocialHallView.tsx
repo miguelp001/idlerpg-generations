@@ -129,8 +129,7 @@ const ItemCard: React.FC<{
     actionLabel: string;
     characterClass: CharacterClassType;
 }> = React.memo(({ item, onAction, actionLabel, characterClass }) => {
-    const affinityBonus = item.classAffinity?.[characterClass] ?? 0;
-    const affinityMultiplier = 1 + (affinityBonus / 100);
+    const affinityMultiplier = item.classAffinity?.[characterClass] ?? 1.0;
     const hasLowAffinity = affinityMultiplier < 1.0; 
     const affinityTitle = hasLowAffinity ? `Ineffective for your class` : undefined;
 

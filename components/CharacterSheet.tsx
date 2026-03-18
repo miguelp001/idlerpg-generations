@@ -371,6 +371,8 @@ const CharacterSheet: React.FC = () => {
                                     <p className={`text-sm ${CLASSES[member.class].color}`}>Lvl {member.level} {CLASSES[member.class].name}</p>
                                 </div>
                                 <div className="text-right text-[10px] space-y-0.5 opacity-80">
+                                    <p>HP: {member.currentHealth ?? member.stats.health}/{member.stats.health}</p>
+                                    <p>MP: {member.currentMana ?? member.stats.mana}/{member.stats.mana}</p>
                                     <p>ATK: {member.stats.attack}</p>
                                     <p>DEF: {member.stats.defense}</p>
                                     <p>AGI: {member.stats.agility}</p>

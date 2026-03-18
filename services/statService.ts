@@ -7,8 +7,7 @@ const applyEquipmentStats = (stats: GameStats, equipment: Equipment[], accessory
     const newStats = { ...stats };
     
     for (const item of equipment) {
-        const affinityBonus = item.classAffinity?.[characterClass] ?? 0;
-        const affinityMultiplier = 1 + (affinityBonus / 100);
+        const affinityMultiplier = item.classAffinity?.[characterClass] ?? 1.0;
         for (const [stat, value] of Object.entries(item.stats)) {
             (newStats as any)[stat] = ((newStats as any)[stat] || 0) + Math.round(value * affinityMultiplier);
         }
@@ -16,8 +15,7 @@ const applyEquipmentStats = (stats: GameStats, equipment: Equipment[], accessory
 
     for (const item of accessorySlots) {
         if (item) {
-            const affinityBonus = item.classAffinity?.[characterClass] ?? 0;
-            const affinityMultiplier = 1 + (affinityBonus / 100);
+            const affinityMultiplier = item.classAffinity?.[characterClass] ?? 1.0;
             for (const [stat, value] of Object.entries(item.stats)) {
                 (newStats as any)[stat] = ((newStats as any)[stat] || 0) + Math.round(value * affinityMultiplier);
             }
@@ -108,11 +106,16 @@ export const recalculateAdventurerStats = (adventurer: Adventurer): Adventurer =
         (scaledStats as any)[stat] = ((scaledStats as any)[stat] || 0) + value;
     }
 
+    const currentHealthPercent = (adventurer.stats && adventurer.stats.health > 0) ? (adventurer.currentHealth ?? adventurer.stats.health) / adventurer.stats.health : 1;
+    const currentManaPercent = (adventurer.stats && adventurer.stats.mana > 0) ? (adventurer.currentMana ?? adventurer.stats.mana) / adventurer.stats.mana : 1;
+
     const finalStats = applyEquipmentStats(scaledStats, adventurer.equipment, adventurer.accessorySlots || [null, null], adventurer.class);
     
     return {
         ...adventurer,
         stats: finalStats,
+        currentHealth: Math.round(finalStats.health * currentHealthPercent),
+        currentMana: Math.round(finalStats.mana * currentManaPercent),
         activePassives: adventurer.activePassives || []
     };
 };
