@@ -1,0 +1,20 @@
+name = "idlerpg-backend"
+main = "src/index.ts"
+compatibility_date = "2024-03-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "idlerpg_db"
+database_id = "YOUR_D1_DATABASE_ID" # Placeholder for user to fill or for me to use in local dev
+
+[[durable_objects.bindings]]
+name = "PLAYER_DO"
+class_name = "PlayerDO"
+
+[[durable_objects.bindings]]
+name = "WORLD_DO"
+class_name = "WorldDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["PlayerDO", "WorldDO"]

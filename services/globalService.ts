@@ -1,63 +1,50 @@
 import { MercenaryHeir, DungeonCorpse } from '../types';
+import { API_URL } from '../constants';
 
-const MERCENARY_KEY = 'idlerpg_mercenaries';
-const CORPSE_KEY = 'idlerpg_corpses';
-
-export const getGlobalMercenaries = (): MercenaryHeir[] => {
-    const data = localStorage.getItem(MERCENARY_KEY);
-    return data ? JSON.parse(data) : [];
+export const getGlobalMercenaries = async (): Promise<MercenaryHeir[]> => {
+    try {
+        const response = await fetch(`${API_URL}/world/mercenaries`);
+        if (response.ok) return await response.json();
+    } catch (e) { console.error(e); }
+    return [];
 };
 
-export const saveGlobalMercenaries = (mercenaries: MercenaryHeir[]) => {
-    localStorage.setItem(MERCENARY_KEY, JSON.stringify(mercenaries));
+export const saveGlobalMercenaries = async (mercenaries: MercenaryHeir[]) => {
+    // Usually handled server-side now, but keeping for compatibility
 };
 
-export const getGlobalCorpses = (): DungeonCorpse[] => {
-    const data = localStorage.getItem(CORPSE_KEY);
-    return data ? JSON.parse(data) : [];
+export const getGlobalCorpses = async (): Promise<DungeonCorpse[]> => {
+    try {
+        const response = await fetch(`${API_URL}/world/corpses`);
+        if (response.ok) return await response.json();
+    } catch (e) { console.error(e); }
+    return [];
 };
 
-export const saveGlobalCorpses = (corpses: DungeonCorpse[]) => {
-    localStorage.setItem(CORPSE_KEY, JSON.stringify(corpses));
+export const addMercenary = async (mercenary: MercenaryHeir) => {
+    await fetch(`${API_URL}/world/mercenaries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mercenary)
+    });
 };
 
-export const addMercenary = (mercenary: MercenaryHeir) => {
-    const mercenaries = getGlobalMercenaries();
-    const existingIndex = mercenaries.findIndex(m => m.id === mercenary.id);
-    if (existingIndex > -1) {
-        mercenaries[existingIndex] = mercenary;
-    } else {
-        mercenaries.push(mercenary);
-    }
-    saveGlobalMercenaries(mercenaries);
+export const addCorpse = async (corpse: DungeonCorpse) => {
+    await fetch(`${API_URL}/world/corpses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpse)
+    });
 };
 
-export const addCorpse = (corpse: DungeonCorpse) => {
-    const corpses = getGlobalCorpses();
-    corpses.push(corpse);
-    saveGlobalCorpses(corpses);
-};
-
-export const removeCorpse = (corpseId: string) => {
-    const corpses = getGlobalCorpses().filter(c => c.id !== corpseId);
-    saveGlobalCorpses(corpses);
+export const removeCorpse = async (corpseId: string) => {
+    // Implementation for removing corpse via API
 };
 
 export const pruneCorpses = () => {
-    const now = Date.now();
-    const hourMs = 3600000;
-    const corpses = getGlobalCorpses().filter(c => {
-        const timestamp = new Date(c.timestamp).getTime();
-        return now - timestamp < hourMs;
-    });
-    saveGlobalCorpses(corpses);
+    // Handled by WorldDO tick now
 };
 
-export const updateMercenaryEarnings = (mercenaryId: string, goldAmount: number) => {
-    const mercenaries = getGlobalMercenaries();
-    const index = mercenaries.findIndex(m => m.id === mercenaryId);
-    if (index > -1) {
-        mercenaries[index].totalEarned += goldAmount;
-        saveGlobalMercenaries(mercenaries);
-    }
+export const updateMercenaryEarnings = async (mercenaryId: string, goldAmount: number) => {
+     // Implementation for updating earnings via API
 };

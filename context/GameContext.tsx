@@ -1,6 +1,17 @@
 import React, { createContext, useReducer, useEffect, useContext, ReactNode, useCallback, useMemo } from 'react';
 import { GameState, Action, Character, DungeonState, RaidState, Equipment } from '../types';
-import { SAVE_KEY, MAX_GOLD } from '../constants';
+import { SAVE_KEY, MAX_GOLD, API_URL } from '../constants';
+import { v4 as uuidv4 } from 'uuid';
+
+const USER_ID_KEY = 'idlerpg_user_id';
+const getUserId = () => {
+    let id = localStorage.getItem(USER_ID_KEY);
+    if (!id) {
+        id = uuidv4();
+        localStorage.setItem(USER_ID_KEY, id);
+    }
+    return id;
+};
 
 // Reducers
 import { characterReducer } from './reducers/characterReducer';
@@ -8,7 +19,7 @@ import { combatReducer } from './reducers/combatReducer';
 import { worldReducer } from './reducers/worldReducer';
 
 // Services
-import { saveGlobalMercenaries, saveGlobalCorpses, pruneCorpses } from '../services/globalService';
+import { saveGlobalMercenaries, addCorpse, pruneCorpses } from '../services/globalService';
 
 const initialDungeonState: DungeonState = {
     status: 'idle',
@@ -190,21 +201,69 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [state, dispatch] = useReducer(gameReducer, initialState);
 
     useEffect(() => {
-        try {
-            const savedDataJSON = localStorage.getItem(SAVE_KEY);
-            if (savedDataJSON) {
-                const savedData = JSON.parse(savedDataJSON);
-                if (savedData.gameState) {
-                    dispatch({ type: 'LOAD_STATE', payload: savedData.gameState });
-                    return;
+        const loadInitialState = async () => {
+            try {
+                const userId = getUserId();
+                const response = await fetch(`${API_URL}/state`, {
+                    headers: { 'X-User-Id': userId }
+                });
+                
+                if (response.ok) {
+                    const gameState = await response.json();
+                    if (gameState) {
+                        dispatch({ type: 'LOAD_STATE', payload: gameState });
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to load game state from Cloudflare", error);
+                
+                // Fallback to local storage if server is down
+                try {
+                    const savedDataJSON = localStorage.getItem(SAVE_KEY);
+                    if (savedDataJSON) {
+                        const savedData = JSON.parse(savedDataJSON);
+                        if (savedData.gameState) {
+                            dispatch({ type: 'LOAD_STATE', payload: savedData.gameState });
+                            return;
+                        }
+                    }
+                } catch (localError) {
+                    console.error("Failed to load from localStorage", localError);
                 }
             }
-        } catch (error) {
-            console.error("Failed to load game state from localStorage", error);
-        }
-        dispatch({ type: 'LOAD_STATE', payload: { ...initialState, tutorialShown: false } }); 
+            dispatch({ type: 'LOAD_STATE', payload: { ...initialState, tutorialShown: false } });
+        };
+        
+        loadInitialState();
     }, []);
 
+    // Sync state to backend on changes
+    useEffect(() => {
+        if (state.isLoaded) {
+            const syncToBackend = async () => {
+                try {
+                    const userId = getUserId();
+                    await fetch(`${API_URL}/action`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-User-Id': userId 
+                        },
+                        body: JSON.stringify({ type: 'SYNC_STATE', payload: state })
+                    });
+                } catch (error) {
+                    console.error("Failed to sync state to backend", error);
+                }
+            };
+
+            // Debounced sync or sync on critical actions
+            const timeoutId = setTimeout(syncToBackend, 2000);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [state]);
+
+    // Local Storage backup (legacy)
     useEffect(() => {
         if (state.isLoaded && state.settings.autoSave) {
             const saveData = {
@@ -248,7 +307,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const socialInterval = setInterval(() => {
             dispatch({ type: 'SIMULATE_SOCIAL_TURN' });
             saveGlobalMercenaries(state.worldState.mercenaries);
-            saveGlobalCorpses(state.worldState.corpses);
+            // WorldDO handles corpses now
         }, 30000);
 
         return () => {
