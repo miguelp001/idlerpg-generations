@@ -29,6 +29,7 @@ export interface ForgeOrder {
   targetStats: Partial<GameStats>;
   requiredMaterials: { materialId: string; amount: number }[];
   goldCost: number;
+  level: number;
 }
 
 export interface Equipment {
@@ -43,7 +44,8 @@ export interface Equipment {
   isHeirloom?: boolean;
   classAffinity?: { [key in CharacterClassType]?: number };
   setId?: string;
-  price: number; // New property for shop items
+  price: number;
+  level: number; // Item level for scaling and upgrades
 }
 
 export interface Ability {

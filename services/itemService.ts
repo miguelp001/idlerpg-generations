@@ -28,6 +28,7 @@ export function instantiateItem(baseId: string): Equipment | null {
         baseId: baseId,
         baseName: itemDef.name,
         upgradeLevel: 0,
-        price: calculateItemPrice(itemDef.rarity, itemDef.levelRequirement)
+        price: calculateItemPrice(itemDef.rarity, itemDef.levelRequirement),
+        level: itemDef.levelRequirement || 1
     };
 }

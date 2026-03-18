@@ -135,9 +135,10 @@ export const RARITY_MULTIPLIER: { [key in EquipmentRarity]: number } = {
 export const UPGRADE_COST = (item: Equipment): number => {
     const baseCost = 50;
     const upgradeLevel = item.upgradeLevel || 0;
-    const levelMultiplier = Math.pow(1.6, upgradeLevel);
+    const levelMultiplier = Math.pow(1.25, upgradeLevel);
+    const itemLevelFactor = Math.max(1, (item.level || 1) / 5);
     const rarityMultiplier = RARITY_MULTIPLIER[item.rarity] || 1;
-    return Math.floor(baseCost * levelMultiplier * rarityMultiplier);
+    return Math.floor(baseCost * levelMultiplier * itemLevelFactor * rarityMultiplier);
 };
 
 export const RARITY_SELL_VALUE: { [key in EquipmentRarity]: number } = {

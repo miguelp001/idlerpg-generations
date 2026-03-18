@@ -13,7 +13,10 @@ const calculateItemPrice = (item: ItemDefinition): number => {
 
 export const generateShopItems = (playerLevel: number, priceMultiplier: number = 1): Equipment[] => {
     const items: Equipment[] = [];
-    const availableItems = Object.values(ITEMS) as ItemDefinition[]; // Explicitly cast to ItemDefinition[]
+    const availableItems = Object.values(ITEMS) as ItemDefinition[];
+
+    // Multiplier for shop prices based on player level to provide a gold sink
+    const levelPriceScaling = 1 + (playerLevel / 40);
 
     // Generate 2-3 static items around player's level (reduced from 4 to make room for procedural items)
     const staticItemCount = 2 + Math.floor(Math.random() * 2); // 2-3 static items
@@ -32,10 +35,11 @@ export const generateShopItems = (playerLevel: number, priceMultiplier: number =
             items.push({
                 ...randomItem,
                 id: uuidv4(),
-                baseId: randomItem.name.toLowerCase().replace(/[^a-z0-9]/g, '_'), // Generate baseId from name
+                baseId: randomItem.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
                 baseName: randomItem.name,
                 upgradeLevel: 0,
-                price: Math.floor(calculateItemPrice(randomItem) * priceMultiplier),
+                price: Math.floor(calculateItemPrice(randomItem) * priceMultiplier * levelPriceScaling),
+                level: randomItem.levelRequirement || targetLevel
             });
         }
     }
@@ -58,7 +62,7 @@ export const generateShopItems = (playerLevel: number, priceMultiplier: number =
         const shopPriceMultiplier = 1.2 + (proceduralItem.rarity === 'legendary' ? 0.5 : 
                                           proceduralItem.rarity === 'epic' ? 0.3 : 
                                           proceduralItem.rarity === 'rare' ? 0.2 : 0.1);
-        proceduralItem.price = Math.floor(proceduralItem.price * shopPriceMultiplier * priceMultiplier);
+        proceduralItem.price = Math.floor(proceduralItem.price * shopPriceMultiplier * priceMultiplier * levelPriceScaling);
         
         items.push(proceduralItem);
     }
@@ -81,7 +85,8 @@ export const generateShopItems = (playerLevel: number, priceMultiplier: number =
                 baseId: randomHighItem.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
                 baseName: randomHighItem.name,
                 upgradeLevel: 0,
-                price: Math.floor(calculateItemPrice(randomHighItem) * priceMultiplier),
+                price: Math.floor(calculateItemPrice(randomHighItem) * priceMultiplier * levelPriceScaling),
+                level: randomHighItem.levelRequirement || veryHighLevel
             });
         } else if (availableItems.length > 0) {
             // Fallback: if no very high-level items, just pick a random high-rarity item
@@ -93,7 +98,8 @@ export const generateShopItems = (playerLevel: number, priceMultiplier: number =
                 baseId: itemToPush.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
                 baseName: itemToPush.name,
                 upgradeLevel: 0,
-                price: Math.floor(calculateItemPrice(itemToPush) * priceMultiplier),
+                price: Math.floor(calculateItemPrice(itemToPush) * priceMultiplier * levelPriceScaling),
+                level: itemToPush.levelRequirement || playerLevel + 10
             });
         }
     } else {
@@ -107,7 +113,7 @@ export const generateShopItems = (playerLevel: number, priceMultiplier: number =
         // Premium pricing for high-level procedural items
         const premiumMultiplier = 2.0 + (highProceduralItem.rarity === 'legendary' ? 1.0 : 
                                         highProceduralItem.rarity === 'epic' ? 0.7 : 0.5);
-        highProceduralItem.price = Math.floor(highProceduralItem.price * premiumMultiplier * priceMultiplier);
+        highProceduralItem.price = Math.floor(highProceduralItem.price * premiumMultiplier * priceMultiplier * levelPriceScaling);
         
         items.push(highProceduralItem);
     }

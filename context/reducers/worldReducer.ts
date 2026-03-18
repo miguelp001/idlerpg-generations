@@ -151,7 +151,8 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
                     baseName: itemTemplate.name, 
                     upgradeLevel: 0, 
                     rarity: itemTemplate.rarity || 'common',
-                    price: 0 
+                    price: 0,
+                    level: character.level 
                 } as Equipment;
             }).filter((i): i is Equipment => i !== null);
             updatedCharacter.inventory = [...updatedCharacter.inventory, ...newItems];

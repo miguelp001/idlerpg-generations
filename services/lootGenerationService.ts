@@ -32,7 +32,8 @@ export function generateProceduralItem(targetLevel: number, difficulty: number, 
         stats: baseStats,
         upgradeLevel: 0,
         classAffinity,
-        price
+        price,
+        level: targetLevel
     };
     
     return item;
@@ -101,6 +102,9 @@ function generateBaseStats(targetLevel: number, rarity: EquipmentRarity, slot: E
     
     const stats: Partial<GameStats> = {};
     
+    // Level-based stat floor: higher level items have a higher minimum roll
+    const statFloor = 5 + (targetLevel / 10);
+    
     // Slot-based stat preferences
     const slotPreferences = getSlotStatPreferences(slot);
     
@@ -114,7 +118,7 @@ function generateBaseStats(targetLevel: number, rarity: EquipmentRarity, slot: E
         availableStats.splice(statIndex, 1); // Remove to avoid duplicates
         
         const preference = slotPreferences[stat] || 1;
-        const baseValue = Math.floor((5 + Math.random() * 15) * baseMultiplier * preference);
+        const baseValue = Math.floor((statFloor + Math.random() * 15) * baseMultiplier * preference);
         
         if (baseValue > 0) {
             stats[stat] = baseValue;

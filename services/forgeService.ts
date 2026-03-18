@@ -38,10 +38,13 @@ export function calculateForgeCost(rarity: EquipmentRarity, stats: Partial<GameS
         }
     });
 
+    // Level-based multiplier for costs to provide a gold/material sink at higher levels
+    const levelScale = 1 + (characterLevel / 25);
+
     // Material cost damping: materials shouldn't scale as aggressively as gold
     // We use a log-based damping for high material amounts
     const baseMaterial = FORGE_MATERIAL_COSTS[rarity];
-    const rawMaterialAmount = baseMaterial.baseAmount * (1 + totalMagnitude * 0.5) * (1 + (statCount * 0.2));
+    const rawMaterialAmount = baseMaterial.baseAmount * (1 + totalMagnitude * 0.5) * (1 + (statCount * 0.2)) * levelScale;
     const materialAmount = Math.max(
         baseMaterial.baseAmount,
         Math.floor(rawMaterialAmount > 1000 ? 1000 + Math.log10(rawMaterialAmount - 999) * 100 : rawMaterialAmount)
@@ -52,7 +55,8 @@ export function calculateForgeCost(rarity: EquipmentRarity, stats: Partial<GameS
         FORGE_GOLD_BASE_COST * 
         rarityMultiplier * 
         (1 + totalMagnitude * 2) * 
-        (1 + (statCount * 0.5))
+        (1 + (statCount * 0.5)) *
+        levelScale
     );
     
     return {
@@ -73,6 +77,7 @@ export function generateForgeItem(order: ForgeOrder): Equipment {
         rarity: order.rarity,
         stats: order.targetStats,
         upgradeLevel: 0,
-        price: order.goldCost * 0.5 // Sell price is half the forge gold cost
+        price: order.goldCost * 0.5, // Sell price is half the forge gold cost
+        level: order.level
     };
 }

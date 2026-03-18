@@ -13,9 +13,11 @@ const RARITY_OPTIONS: EquipmentRarity[] = ['common', 'uncommon', 'rare', 'epic',
 const SLOT_OPTIONS: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
 // Helper for logarithmic mapping
-// slider 0-1000 -> multiplier 1-1000
-const sliderToMultiplier = (slider: number) => Math.pow(10, (slider / 1000) * 3);
-const multiplierToSlider = (mult: number) => (Math.log10(mult) / 3) * 1000;
+// slider 0-1000 -> multiplier 1 to (10^exponent)
+// Exponent scales with level: 3.0 at lvl 1, 4.0 at lvl 100, etc.
+const getExponent = (level: number) => 3.0 + (level / 100);
+const sliderToMultiplier = (slider: number, level: number) => Math.pow(10, (slider / 1000) * getExponent(level));
+const multiplierToSlider = (mult: number, level: number) => (Math.log10(mult) / getExponent(level)) * 1000;
 
 export const ForgeView: React.FC = () => {
     const { activeCharacter, dispatch } = useGame();
@@ -68,7 +70,8 @@ export const ForgeView: React.FC = () => {
     };
 
     const handleMultiplierChange = (stat: keyof GameStats, sliderVal: number) => {
-        setSelectedMultipliers(prev => ({ ...prev, [stat]: sliderToMultiplier(sliderVal) }));
+        const level = activeCharacter?.level || 1;
+        setSelectedMultipliers(prev => ({ ...prev, [stat]: sliderToMultiplier(sliderVal, level) }));
     };
 
     const handleRequestForge = () => {
@@ -79,7 +82,8 @@ export const ForgeView: React.FC = () => {
                 order: {
                     slot: selectedSlot,
                     rarity: selectedRarity,
-                    targetStats: selectedStats
+                    targetStats: selectedStats,
+                    level: activeCharacter.level
                 }
             }
         });
@@ -219,7 +223,7 @@ export const ForgeView: React.FC = () => {
                                                         min="0" 
                                                         max="1000" 
                                                         step="1"
-                                                        value={multiplierToSlider(mult)} 
+                                                        value={multiplierToSlider(mult, activeCharacter.level)} 
                                                         onChange={(e) => handleMultiplierChange(stat, parseInt(e.target.value))}
                                                         className="w-full h-1.5 accent-red-600 rounded-lg appearance-none cursor-pointer bg-surface-2"
                                                     />

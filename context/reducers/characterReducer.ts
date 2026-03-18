@@ -290,16 +290,24 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
 
         const newGold = character.gold - cost;
         const newUpgradeLevel = item.upgradeLevel + 1;
+        const newItemLevel = (item.level || 1) + 1;
         const newStats = { ...item.stats };
         
-        const firstStat = Object.keys(newStats)[0] as keyof GameStats;
-        if (firstStat && typeof newStats[firstStat] === 'number') {
-            (newStats[firstStat] as any) += 1;
-        }
+        // multivariate stat growth: increase all stats on the item
+        Object.keys(newStats).forEach(statKey => {
+            const stat = statKey as keyof GameStats;
+            const currentVal = newStats[stat] || 0;
+            // Base growth is 5% of current value OR a level-based flat amount, whichever is higher
+            // Level-based flat amount: (playerLevel / 5) * rarityMultiplier
+            const levelBonus = Math.max(1, Math.floor(character.level / 5));
+            const growth = Math.max(levelBonus, Math.ceil(currentVal * 0.05));
+            (newStats[stat] as any) += growth;
+        });
 
         const upgradedItem: Equipment = {
             ...item,
             upgradeLevel: newUpgradeLevel,
+            level: newItemLevel,
             name: `${item.baseName} +${newUpgradeLevel}`,
             stats: newStats,
         };
