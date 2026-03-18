@@ -5,7 +5,7 @@ compatibility_date = "2024-03-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "idlerpg_db"
-database_id = "YOUR_D1_DATABASE_ID" # Placeholder for user to fill or for me to use in local dev
+database_id = "02672a10-3e59-47b9-9534-ed33b2da9513"
 
 [[durable_objects.bindings]]
 name = "PLAYER_DO"
@@ -17,4 +17,4 @@ class_name = "WorldDO"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["PlayerDO", "WorldDO"]
+new_sqlite_classes = ["PlayerDO", "WorldDO"]

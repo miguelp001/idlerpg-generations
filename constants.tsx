@@ -1,7 +1,7 @@
 import React from 'react';
 export const SAVE_KEY = 'idleRpgSaveData';
 export const MAX_GOLD = 9999999999;
-export const API_URL = 'http://localhost:8787'; // Default for local wrangler dev
+export const API_URL = 'https://idlerpg-backend.miguelp001.workers.dev';
 import { CharacterClassType, GameStats, Equipment, EquipmentRarity, PersonalityTrait, RelationshipStatus } from './types';
 import { ShieldExclamationIcon, SparklesIcon, BoltIcon, HeartIcon } from './components/ui/Icons';
 
