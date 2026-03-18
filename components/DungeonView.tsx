@@ -259,7 +259,7 @@ const DungeonView: React.FC = () => {
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [dungeonState.status, isGrinding, dispatch]);
+    }, [dungeonState.status, isGrinding, dispatch, dungeonState.currentRoomIndex]);
     
 
 
