@@ -155,6 +155,7 @@ const ManageGuildView: React.FC = () => {
                     {xpForNextLevel ? (
                         <>
                             <p className="text-on-background/80 mb-4">Donate gold to help your guild grow and unlock new challenges. (100 XP per 500G)</p>
+                            <p className="text-xs text-yellow-500/80 italic mb-4">Note: Guild membership and progress persist across generations!</p>
                             <div className="space-y-3">
                                 <div>
                                     <label htmlFor="donation-amount" className="sr-only">Donation Amount</label>

@@ -48,8 +48,9 @@ An immersive idle RPG where you manage a lineage of heroes across generations, e
 - **Auto-Progression:** Automatically advance to the next floor as long as you are strong enough.
 
 #### **Raid System**
-- **Guild-Based Content:** Team up with your guild to tackle massive raid bosses.
-- **Epic Loot:** Exclusive raid-only equipment and materials.
+- **Guild-Based Content:** Team up with your guild to tackle massive raid bosses. Access requires reaching specific Guild Levels.
+- **Daily Challenges:** Raids have a daily cooldown, encouraging regular guild participation.
+- **Epic Loot:** Exclusive raid-only equipment and materials that scale with the raid's difficulty.
 
 ### 🌍 World Dynamics
 
@@ -67,12 +68,15 @@ An immersive idle RPG where you manage a lineage of heroes across generations, e
 #### **Loot & Inventory**
 - **Five Rarity Tiers:** Common, Uncommon, Rare, Epic, and Legendary.
 - **Item Sets:** Collect matching equipment pieces for powerful set bonuses.
-- **Upgrade System:** Enhance equipment up to +10 for massive stat improvements.
+- **Dynamic Stat Floor:** As your player level increases, the minimum stats (Stat Floor) of dropped and shop-purchased loot also increases.
+- **Upgrade System:** Enhance equipment for massive stat improvements. Upgrades now affect **all stats** on an item and scale with your player level.
 
 #### **Forge System**
 - **Custom Crafting:** Commission specific equipment slots and rarities from the Blacksmith.
+- **Dynamic Stat Ceiling:** The maximum potential power of forged items increases proportionally to your player level.
 - **Material Gathering:** Collect *Scrap Metal*, *Essence*, and other materials dropped by monsters to craft your perfect gear.
 - **Stat Customization:** Request specific stat focuses for your forged items.
+- **Level-Based Costs:** Gold and material costs scale with your level to provide a balanced economic sink.
 
 #### **Heirloom System**
 - **Generational Power:** Retired characters pass down enhanced equipment to their heirs.
@@ -86,7 +90,8 @@ An immersive idle RPG where you manage a lineage of heroes across generations, e
 - **Marriage System:** Characters can marry party members for special bonuses.
 
 #### **Guild Mechanics**
-- **Guild Progression:** Level up your guild through donations to unlock raid content and stat bonuses.
+- **Guild Progression:** Level up your guild through gold donations to unlock difficult raid content and powerful stat bonuses.
+- **Persistent Legacy:** Your guild membership and the guild's level **persist across retirements**, allowing you to build a collective legacy over generations.
 - **Social Events:** Dynamic interactions between guild members in the Social Hall.
 
 ### 📜 Quest & Achievement Systems

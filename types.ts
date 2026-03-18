@@ -65,6 +65,7 @@ export interface Ability {
     };
     target?: 'enemy' | 'self' | 'ally';
     bonus?: Partial<GameStats>;
+    scalingBonus?: Partial<GameStats>;
 }
 
 export interface ItemSet {
@@ -89,6 +90,7 @@ export interface Adventurer {
     equipment: Equipment[];
     accessorySlots: [Equipment | null, Equipment | null]; // Two accessory slots
     recruitmentCost: number;
+    activePassives: string[];
     // Transient combat state
     currentHealth?: number;
     currentMana?: number;
@@ -142,6 +144,7 @@ export interface ParentInfo {
     name: string;
     class: CharacterClassType;
     stats: GameStats;
+    personality: PersonalityTrait;
 }
 
 export interface PotentialHeir {
@@ -151,6 +154,10 @@ export interface PotentialHeir {
     parents: [ParentInfo, ParentInfo];
     legacyBonus: Partial<GameStats>;
     baseStats: GameStats;
+    activePassives: string[];
+    equipment: Equipment[];
+    accessorySlots: [Equipment | null, Equipment | null];
+    personality: PersonalityTrait;
 }
 
 export interface Achievement {

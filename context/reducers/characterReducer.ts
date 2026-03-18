@@ -588,6 +588,10 @@ export const characterReducer = (state: GameState, action: Action): GameState =>
             parents: [parent1, parent2],
             legacyBonus,
             baseStats: CLASSES[childClass].baseStats,
+            activePassives: [],
+            equipment: [],
+            accessorySlots: [null, null],
+            personality: parent1.personality, // Inherit from first parent for now
         };
 
         return { 

@@ -19,6 +19,7 @@ import { RAIDS } from '../../data/raids';
 import { instantiateItem } from '../../services/itemService';
 import { generateMaterialDrops } from '../../services/lootGenerationService';
 import { MATERIALS } from '../../data/materials';
+import { ABILITIES } from '../../data/abilities';
 
 const initialDungeonState = {
     status: 'idle',
@@ -297,6 +298,9 @@ export const combatReducer = (state: GameState, action: Action): GameState => {
             while (updatedCharacter.experience >= calculateXpForLevel(updatedCharacter.level)) {
                 updatedCharacter.experience -= calculateXpForLevel(updatedCharacter.level);
                 updatedCharacter.level++;
+                updatedCharacter.activePassives = Object.values(ABILITIES)
+                    .filter(a => a.class === updatedCharacter.class && a.type === 'passive' && updatedCharacter.level >= a.levelRequirement)
+                    .map(a => a.id);
             }
             
             const { stats, maxStats } = recalculateStats(updatedCharacter, state.guild);

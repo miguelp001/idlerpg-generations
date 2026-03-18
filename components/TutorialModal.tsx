@@ -19,6 +19,7 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ onClose }) => {
                             <li><strong>Create Your Character:</strong> Start by creating your first character. Choose a class (Warrior, Mage, Rogue, Cleric) and customize their appearance.</li>
                             <li><strong>Level Up:</strong> Your character will automatically gain experience and levels by engaging in activities.</li>
                             <li><strong>Stats and Equipment:</strong> As your character levels up, their stats will increase. Equip new items from your inventory or the shop to further boost your power. Pay attention to class affinities for bonus stats!</li>
+                            <li><strong>Upgrading Gear:</strong> You can upgrade equipment in your inventory. Upgrades now improve **all stats** on an item and scale with your player level, making them more powerful as you grow.</li>
                             <li><strong>Retirement:</strong> Once your character reaches a certain level, they can retire. Retiring a character allows them to pass on a powerful heirloom and a legacy bonus to their heir, making future generations stronger.</li>
                         </ul>
                     </section>
@@ -27,7 +28,7 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ onClose }) => {
                         <h3 className="text-2xl font-semibold mb-3 text-secondary">Adventures and Combat</h3>
                         <ul className="list-disc list-inside space-y-2">
                             <li><strong>Dungeons:</strong> Send your character into dungeons to fight monsters, gain experience, and find loot. Dungeons have a recommended level and a boss at the end.</li>
-                            <li><strong>Raids:</strong> For higher-level characters and guilds, raids offer greater challenges and rewards. You'll need to join or create a guild to participate in raids.</li>
+                            <li><strong>Raids:</strong> For higher-level characters and guilds, raids offer greater challenges and rewards. You'll need to join or create a guild to participate. Raids have a **daily cooldown**, so check back often!</li>
                             <li><strong>Combat:</strong> Combat is automated. Your character and their party will fight enemies based on their stats and abilities.</li>
                         </ul>
                     </section>
@@ -37,8 +38,8 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ onClose }) => {
                         <ul className="list-disc list-inside space-y-2">
                             <li><strong>Tavern:</strong> Visit the tavern to recruit new adventurers to join your party. A larger party means more combat power! You can refresh the available adventurers for a small gold cost.</li>
                             <li><strong>Relationships:</strong> Your character and their party members will develop relationships over time, which can influence various aspects of the game.</li>
-                            <li><strong>Guilds:</strong> Create or join a guild to team up with other players (NPCs in this single-player version) for shared goals and raid progression. Donate gold to your guild to level it up.</li>
-                            <li><strong>Shop:</strong> The shop offers a rotating selection of equipment, including both traditional items and unique procedurally generated gear. Items around your current level will be available, along with rare, high-level items. You can refresh the shop's inventory for 200 gold.</li>
+                            <li><strong>Guilds:</strong> Create or join a guild to team up with others for shared goals and raid progression. Donate gold to level up your guild. **Guild membership and levels persist across retirements!**</li>
+                            <li><strong>Shop & Forge Scaling:</strong> Shop items and Forge results scale with you. As you level up, the **minimum stats** of shop items and the **maximum potential** of forged gear both increase!</li>
                         </ul>
                     </section>
 

@@ -2,6 +2,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Adventurer, CharacterClassType, GameStats, PersonalityTrait } from '../types';
 import { CLASSES, ADVENTURER_FIRST_NAMES, ADVENTURER_LAST_NAMES, PERSONALITY_TRAITS } from '../constants';
+import { ABILITIES } from '../data/abilities';
+import { recalculateAdventurerStats } from './statService';
 
 export const getScaledStats = (level: number, classKey: CharacterClassType): GameStats => {
     const baseStats = CLASSES[classKey].baseStats;
@@ -33,7 +35,7 @@ export const generateAdventurer = (playerLevel: number): Adventurer => {
     const personalityKeys = Object.keys(PERSONALITY_TRAITS) as PersonalityTrait[];
     const randomPersonality = personalityKeys[Math.floor(Math.random() * personalityKeys.length)];
 
-    return {
+    const adventurer: Adventurer = {
         id: uuidv4(),
         name,
         class: randomClass,
@@ -44,7 +46,12 @@ export const generateAdventurer = (playerLevel: number): Adventurer => {
         equipment: [],
         accessorySlots: [null, null],
         recruitmentCost: calculateRecruitmentCost(level),
+        activePassives: Object.values(ABILITIES)
+            .filter(a => a.class === randomClass && a.type === 'passive' && level >= a.levelRequirement)
+            .map(a => a.id),
     };
+
+    return recalculateAdventurerStats(adventurer);
 };
 
 export const calculateMaxPartySize = (level: number): number => {

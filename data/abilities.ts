@@ -28,7 +28,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'warrior',
         levelRequirement: 3,
-        bonus: { health: 50 },
+        bonus: { health: 20 },
+        scalingBonus: { health: 10 }
     },
     'warrior_weapon_mastery': {
         id: 'warrior_weapon_mastery',
@@ -38,7 +39,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'warrior',
         levelRequirement: 7,
-        bonus: { attack: 10 },
+        bonus: { attack: 5 },
+        scalingBonus: { attack: 1 }
     },
      'warrior_heroic_strike': {
         id: 'warrior_heroic_strike',
@@ -65,7 +67,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'warrior',
         levelRequirement: 18,
-        bonus: { defense: 15 },
+        bonus: { defense: 5 },
+        scalingBonus: { defense: 1 }
     },
 
     // === MAGE ===
@@ -111,7 +114,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'mage',
         levelRequirement: 3,
-        bonus: { intelligence: 10 },
+        bonus: { intelligence: 5 },
+        scalingBonus: { intelligence: 1 }
     },
     'mage_mana_font': {
         id: 'mage_mana_font',
@@ -121,7 +125,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'mage',
         levelRequirement: 7,
-        bonus: { mana: 50 },
+        bonus: { mana: 20 },
+        scalingBonus: { mana: 5 }
     },
     'mage_arcane_blast': {
         id: 'mage_arcane_blast',
@@ -148,7 +153,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'mage',
         levelRequirement: 18,
-        bonus: { health: 40 },
+        bonus: { health: 20 },
+        scalingBonus: { health: 5 }
     },
 
     // === ROGUE ===
@@ -177,7 +183,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'rogue',
         levelRequirement: 3,
-        bonus: { agility: 10 },
+        bonus: { agility: 5 },
+        scalingBonus: { agility: 1 }
     },
     'rogue_lethality': {
         id: 'rogue_lethality',
@@ -187,7 +194,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'rogue',
         levelRequirement: 7,
-        bonus: { attack: 10 },
+        bonus: { attack: 5 },
+        scalingBonus: { attack: 1 }
     },
     'rogue_shadowstrike': {
         id: 'rogue_shadowstrike',
@@ -214,7 +222,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'rogue',
         levelRequirement: 18,
-        bonus: { defense: 10 },
+        bonus: { defense: 5 },
+        scalingBonus: { defense: 1 }
     },
 
     // === CLERIC ===
@@ -243,7 +252,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'cleric',
         levelRequirement: 3,
-        bonus: { intelligence: 8, mana: 25 },
+        bonus: { intelligence: 5, mana: 10 },
+        scalingBonus: { intelligence: 1, mana: 5 }
     },
     'cleric_faithful_resilience': {
         id: 'cleric_faithful_resilience',
@@ -253,7 +263,8 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'cleric',
         levelRequirement: 7,
-        bonus: { defense: 10 },
+        bonus: { defense: 5 },
+        scalingBonus: { defense: 1 }
     },
     'cleric_smite': {
         id: 'cleric_smite',
@@ -280,6 +291,7 @@ export const ABILITIES: { [id: string]: Ability } = {
         type: 'passive',
         class: 'cleric',
         levelRequirement: 18,
-        bonus: { health: 60 },
+        bonus: { health: 30 },
+        scalingBonus: { health: 10 }
     },
 };

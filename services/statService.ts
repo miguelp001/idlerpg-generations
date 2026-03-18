@@ -103,10 +103,16 @@ export const recalculateAdventurerStats = (adventurer: Adventurer): Adventurer =
         scaledStats[statKey] += Math.floor(growth);
     }
 
+    const passiveBonuses = getActivePassiveBonuses(adventurer);
+    for (const [stat, value] of Object.entries(passiveBonuses)) {
+        (scaledStats as any)[stat] = ((scaledStats as any)[stat] || 0) + value;
+    }
+
     const finalStats = applyEquipmentStats(scaledStats, adventurer.equipment, adventurer.accessorySlots || [null, null], adventurer.class);
     
     return {
         ...adventurer,
-        stats: finalStats
+        stats: finalStats,
+        activePassives: adventurer.activePassives || []
     };
 };

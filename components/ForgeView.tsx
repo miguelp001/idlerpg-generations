@@ -184,7 +184,10 @@ export const ForgeView: React.FC = () => {
                             </div>
 
                             <div>
-                                <p className="text-sm font-bold mb-2 uppercase text-on-background/60">Statistical Multipliers (Max 3)</p>
+                                <div className="flex justify-between items-center mb-2">
+                                    <p className="text-sm font-bold uppercase text-on-background/60">Statistical Multipliers (Max 3)</p>
+                                    <span className="text-[10px] text-yellow-500/80 italic">Max potential increases with your level</span>
+                                </div>
                                 <div className="grid grid-cols-1 gap-4">
                                     {STAT_OPTIONS.map(stat => {
                                         const mult = selectedMultipliers[stat];

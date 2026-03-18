@@ -12,6 +12,7 @@ import {
 } from '../../constants';
 import { QUESTS } from '../../data/quests';
 import { ITEMS } from '../../data/items';
+import { ABILITIES } from '../../data/abilities';
 import { updateActiveEvents, rollForNewEvent } from '../../services/worldEventService';
 import { calculateForgeCost, generateForgeItem } from '../../services/forgeService';
 import { checkAllAchievements } from '../../services/achievementService';
@@ -161,6 +162,9 @@ export const worldReducer = (state: GameState, action: Action): GameState => {
         while (updatedCharacter.experience >= calculateXpForLevel(updatedCharacter.level)) {
             updatedCharacter.experience -= calculateXpForLevel(updatedCharacter.level);
             updatedCharacter.level += 1;
+            updatedCharacter.activePassives = Object.values(ABILITIES)
+                .filter(a => a.class === updatedCharacter.class && a.type === 'passive' && updatedCharacter.level >= a.levelRequirement)
+                .map(a => a.id);
         }
 
         updatedCharacter.quests = updatedCharacter.quests.filter(q => q.questId !== questId);
