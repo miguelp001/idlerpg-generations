@@ -4,6 +4,8 @@ import { useGame } from '../context/GameContext';
 import { ACHIEVEMENTS } from '../data/achievements';
 import Card from './ui/Card';
 import Button from './ui/Button';
+import { API_URL } from '../constants';
+import { useEffect, useState } from 'react';
 
 const TrophyIcon = ({ unlocked }: { unlocked: boolean }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
@@ -17,6 +19,23 @@ const TrophyIcon = ({ unlocked }: { unlocked: boolean }) => (
 
 const AchievementsView: React.FC = () => {
     const { dispatch, activeCharacter } = useGame();
+    const [stats, setStats] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await fetch(`${API_URL}/achievements/stats`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setStats(data);
+                }
+            } catch (e) {
+                console.error("Failed to fetch achievement stats:", e);
+            }
+        };
+        fetchStats();
+    }, []);
+
     if (!activeCharacter) return <div>Loading...</div>;
 
     const unlockedSet = new Set(activeCharacter.unlockedAchievements || []);
@@ -47,7 +66,14 @@ const AchievementsView: React.FC = () => {
                                     <TrophyIcon unlocked={isUnlocked} />
                                     <div>
                                         <h2 className={`text-xl font-bold ${isUnlocked ? 'text-on-surface' : 'text-on-background/60'}`}>{ach.name}</h2>
-                                        {isUnlocked && <p className="text-sm font-semibold text-yellow-400">Title: "{ach.title}"</p>}
+                                        <div className="flex items-center gap-2">
+                                            {isUnlocked && <p className="text-sm font-semibold text-yellow-400">Title: "{ach.title}"</p>}
+                                            {stats[ach.id] !== undefined && (
+                                                <span className="text-xs text-on-background/40">
+                                                    ({stats[ach.id]}% of players)
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <p className="text-on-background/80 text-sm">{ach.description}</p>

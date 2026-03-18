@@ -23,10 +23,12 @@ export class PlayerDO implements DurableObject {
         
         if (url.pathname === "/action" && request.method === "POST") {
             const action: Action = await request.json();
-            return this.handleAction(action);
+            return this.handleAction(action, request);
         }
 
         if (url.pathname === "/state" && request.method === "GET") {
+            const userId = request.headers.get("X-User-Id");
+            if (userId) await this.persistToD1(userId); // Auto-save on load
             return new Response(JSON.stringify(this.gameState), {
                 headers: { "Content-Type": "application/json" }
             });
@@ -35,7 +37,7 @@ export class PlayerDO implements DurableObject {
         return new Response("Not Found", { status: 404 });
     }
 
-    async handleAction(action: Action): Promise<Response> {
+    async handleAction(action: Action, request: Request): Promise<Response> {
         if (!this.gameState && action.type !== 'CREATE_CHARACTER' && action.type !== 'LOAD_STATE') {
             return new Response("No game state", { status: 400 });
         }
@@ -47,9 +49,9 @@ export class PlayerDO implements DurableObject {
         // Save to DO storage
         await this.state.storage.put("gameState", this.gameState);
         
-        // Flushes to D1 database periodically (handled via alarms or after specific actions)
-        if (action.type === 'SAVE_GAME' || Math.random() < 0.1) {
-            await this.persistToD1();
+        const userId = request.headers.get("X-User-Id");
+        if (userId && (action.type === 'SAVE_GAME' || Math.random() < 0.1)) {
+            await this.persistToD1(userId);
         }
 
         return new Response(JSON.stringify(this.gameState), {
@@ -57,15 +59,30 @@ export class PlayerDO implements DurableObject {
         });
     }
 
-    async persistToD1() {
+    async persistToD1(userId: string) {
         if (!this.gameState) return;
         const char = this.gameState.characters.find(c => c.id === this.gameState?.activeCharacterId);
         if (!char) return;
 
+        // Ensure user exists
         await this.env.DB.prepare(
-            "INSERT INTO characters (id, name, class, level, experience, gold, state_json) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET level=excluded.level, experience=excluded.experience, gold=excluded.gold, state_json=excluded.state_json"
+            "INSERT INTO users (id) VALUES (?) ON CONFLICT(id) DO UPDATE SET last_login=CURRENT_TIMESTAMP"
+        ).bind(userId).run();
+
+        // Update character
+        await this.env.DB.prepare(
+            "INSERT INTO characters (id, user_id, name, class, level, experience, gold, state_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET level=excluded.level, experience=excluded.experience, gold=excluded.gold, state_json=excluded.state_json"
         ).bind(
-            char.id, char.name, char.class, char.level, char.experience, char.gold, JSON.stringify(this.gameState)
+            char.id, userId, char.name, char.class, char.level, char.experience, char.gold, JSON.stringify(this.gameState)
         ).run();
+
+        // Update achievements
+        if (char.unlockedAchievements && char.unlockedAchievements.length > 0) {
+            for (const achId of char.unlockedAchievements) {
+                await this.env.DB.prepare(
+                    "INSERT INTO user_achievements (user_id, achievement_id) VALUES (?, ?) ON CONFLICT(user_id, achievement_id) DO NOTHING"
+                ).bind(userId, achId).run();
+            }
+        }
     }
 }

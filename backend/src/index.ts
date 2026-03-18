@@ -31,6 +31,28 @@ export default {
             return obj.fetch(request);
         }
 
+        // Achievement Stats Routing
+        if (url.pathname === "/achievements/stats" && request.method === "GET") {
+            const totalUsers = await env.DB.prepare("SELECT COUNT(*) as count FROM users").first<{count: number}>();
+            const counts = await env.DB.prepare(
+                "SELECT achievement_id, COUNT(*) as count FROM user_achievements GROUP BY achievement_id"
+            ).all<{achievement_id: string, count: number}>();
+
+            const stats: Record<string, number> = {};
+            if (totalUsers && totalUsers.count > 0) {
+                counts.results.forEach(row => {
+                    stats[row.achievement_id] = Math.round((row.count / totalUsers.count) * 100);
+                });
+            }
+
+            return new Response(JSON.stringify(stats), {
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*" 
+                }
+            });
+        }
+
         // Player Actions Routing
         const userId = request.headers.get("X-User-Id");
         if (!userId) {
